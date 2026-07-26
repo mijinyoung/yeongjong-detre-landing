@@ -1,0 +1,29 @@
+/* v3.2 — 입지 상세 패널 시간 숫자 수직 정렬 개선 */
+.locationV3Time{
+  display:flex;
+  align-items:baseline;
+  gap:.12em;
+  margin-top:30px;
+  color:#dfb167;
+  font-family:Georgia,"Times New Roman",serif;
+  line-height:1;
+  white-space:nowrap;
+}
+.locationV3Time .timePrefix,
+.locationV3Time .timeUnit{
+  display:inline-block;
+  font-size:.62em;
+  font-weight:500;
+  line-height:1;
+}
+.locationV3Time .timeNumber{
+  display:inline-block;
+  font-size:1em;
+  font-weight:500;
+  line-height:.88;
+  font-variant-numeric:lining-nums tabular-nums;
+  transform:translateY(-.025em);
+}
+@media(max-width:560px){
+  .locationV3Time{font-size:50px}
+}

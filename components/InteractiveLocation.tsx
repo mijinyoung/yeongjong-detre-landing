@@ -6,28 +6,40 @@ import { openLeadModal } from "@/lib/analytics";
 const places = [
   {
     id: "bridge",
-    time: "약 5분",
+    timePrefix: "약",
+    timeValue: "5",
+    timeUnit: "분",
+    shortTime: "약 5분",
     title: "청라하늘대교 통과",
     label: "청라 연결",
     description: "영종과 청라를 잇는 새로운 연결축으로 생활 반경의 확장을 기대할 수 있습니다.",
   },
   {
     id: "cheongna",
-    time: "약 7분",
+    timePrefix: "약",
+    timeValue: "7",
+    timeUnit: "분",
+    shortTime: "약 7분",
     title: "청라 생활권",
     label: "생활 인프라",
     description: "교통 여건 변화에 따라 청라의 쇼핑·의료·문화 인프라 접근성이 개선될 것으로 기대됩니다.",
   },
   {
     id: "airport",
-    time: "약 15분",
+    timePrefix: "약",
+    timeValue: "15",
+    timeUnit: "분",
+    shortTime: "약 15분",
     title: "인천국제공항",
     label: "직주근접",
     description: "공항 및 관련 산업 종사자에게 편리한 직주근접 생활권을 제공합니다.",
   },
   {
     id: "yeouido",
-    time: "약 30분",
+    timePrefix: "약",
+    timeValue: "30",
+    timeUnit: "분",
+    shortTime: "약 30분",
     title: "여의도 방향",
     label: "광역 이동",
     description: "도로 및 교통 상황에 따라 이동시간은 달라질 수 있으며 실제 경로를 반드시 확인해야 합니다.",
@@ -67,7 +79,7 @@ export default function InteractiveLocation() {
                 onClick={() => setSelected(place)}
                 aria-pressed={selected.id === place.id}
               >
-                <span>{place.time}</span>
+                <span>{place.shortTime}</span>
                 <strong>{place.title}</strong>
               </button>
             ))}
@@ -75,7 +87,11 @@ export default function InteractiveLocation() {
 
           <aside className="locationV3Detail" aria-live="polite">
             <span className="locationV3Badge">{selected.label}</span>
-            <strong className="locationV3Time">{selected.time}</strong>
+            <div className="locationV3Time" aria-label={selected.shortTime}>
+              <span className="timePrefix">{selected.timePrefix}</span>
+              <strong className="timeNumber">{selected.timeValue}</strong>
+              <span className="timeUnit">{selected.timeUnit}</span>
+            </div>
             <h3>{selected.title}</h3>
             <p>{selected.description}</p>
             <button type="button" onClick={() => openLeadModal(`location-${selected.id}`)}>

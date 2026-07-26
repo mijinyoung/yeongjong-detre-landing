@@ -2,21 +2,26 @@
 
 import { FormEvent, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { formatPhoneInput, getLeadAttribution } from "@/lib/client-lead";
+import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type State = "idle" | "sending" | "done" | "error";
 
 export default function QuickLead() {
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState("");
+  const [phone, setPhone] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    if (state === "sending") return;
+
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const name = String(form.get("name") || "").trim();
-    const phone = String(form.get("phone") || "").trim();
     const consent = form.get("consent") === "on";
 
-    if (!name || !/^01[016789]-?\d{3,4}-?\d{4}$/.test(phone) || !consent) {
+    if (!name || !/^01[016789]-\d{3,4}-\d{4}$/.test(phone) || !consent) {
       setState("error");
       setMessage("이름, 휴대폰 번호, 개인정보 동의를 확인해 주세요.");
       return;
@@ -24,8 +29,7 @@ export default function QuickLead() {
 
     setState("sending");
     setMessage("");
-
-    const params = new URLSearchParams(window.location.search);
+    const attribution = getLeadAttribution();
 
     try {
       const response = await fetch("/api/leads", {
@@ -36,9 +40,7 @@ export default function QuickLead() {
           phone,
           consent,
           website: String(form.get("website") || ""),
-          source: params.get("utm_source") || "direct",
-          campaign: params.get("utm_campaign") || "",
-          content: params.get("utm_content") || "",
+          ...attribution,
           referrer: document.referrer,
           pageUrl: window.location.href,
           placement: "quick-lead",
@@ -50,11 +52,9 @@ export default function QuickLead() {
 
       setState("done");
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
-      event.currentTarget.reset();
-      trackEvent("lead_complete", {
-        placement: "quick-lead",
-        source: params.get("utm_source") || sessionStorage.getItem("utm_source") || "direct",
-      });
+      formElement.reset();
+      setPhone("");
+      trackEvent("lead_complete", { placement: "quick-lead", source: attribution.source });
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");
@@ -75,13 +75,24 @@ export default function QuickLead() {
         ) : (
           <form className="quickLeadForm" onSubmit={submit} noValidate>
             <input name="name" placeholder="이름" aria-label="이름" autoComplete="name" />
-            <input name="phone" placeholder="010-0000-0000" aria-label="휴대폰 번호" inputMode="tel" autoComplete="tel" />
+            <input
+              name="phone"
+              value={phone}
+              onChange={(event) => setPhone(formatPhoneInput(event.target.value))}
+              placeholder="010-0000-0000"
+              aria-label="휴대폰 번호"
+              inputMode="tel"
+              autoComplete="tel"
+            />
             <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-            <label className="quickAgree"><input type="checkbox" name="consent" /> 개인정보 수집 동의</label>
+            <div className="consentRow quickAgree">
+              <label><input type="checkbox" name="consent" /> 개인정보 수집 및 이용에 동의합니다.</label>
+              <PrivacyPolicyButton />
+            </div>
             <button className="primaryButton" type="submit" disabled={state === "sending"}>
               {state === "sending" ? "등록 중..." : "관심고객 등록"}
             </button>
-            {state === "error" && <p className="quickError">{message}</p>}
+            {state === "error" && <p className="quickError" role="alert">{message}</p>}
           </form>
         )}
       </div>

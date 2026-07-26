@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { getLeadAttribution } from "@/lib/client-lead";
+import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -60,7 +62,7 @@ export default function LeadModal() {
 
     setStatus("sending");
     setMessage("");
-    const params = new URLSearchParams(window.location.search);
+    const attribution = getLeadAttribution();
 
     try {
       const response = await fetch("/api/leads", {
@@ -71,9 +73,7 @@ export default function LeadModal() {
           phone,
           consent,
           website: String(form.get("website") || ""),
-          source: params.get("utm_source") || sessionStorage.getItem("utm_source") || "direct",
-          campaign: params.get("utm_campaign") || sessionStorage.getItem("utm_campaign") || "",
-          content: params.get("utm_content") || sessionStorage.getItem("utm_content") || "",
+          ...attribution,
           referrer: document.referrer,
           pageUrl: window.location.href,
           placement,
@@ -84,7 +84,7 @@ export default function LeadModal() {
       if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
       setStatus("done");
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
-      trackEvent("lead_complete", { placement, source: params.get("utm_source") || "direct" });
+      trackEvent("lead_complete", { placement, source: attribution.source });
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");
@@ -113,7 +113,7 @@ export default function LeadModal() {
               <label>이름<input ref={nameRef} name="name" placeholder="성함을 입력하세요" autoComplete="name" /></label>
               <label>휴대폰 번호<input name="phone" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" /></label>
               <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-              <label className="agree"><input type="checkbox" name="consent" /> 개인정보 수집 및 상담 연락에 동의합니다.</label>
+              <div className="consentRow agree"><label><input type="checkbox" name="consent" /> 개인정보 수집 및 상담 연락에 동의합니다.</label><PrivacyPolicyButton /></div>
               {status === "error" && <p className="formError" role="alert">{message}</p>}
               <button className="primaryButton wide" type="submit" disabled={status === "sending"}>{status === "sending" ? "등록 중..." : "관심고객 등록하기"}</button>
               <small>입력 정보는 분양 상담 안내 목적으로만 사용됩니다.</small>

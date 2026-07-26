@@ -171,3 +171,76 @@
     font-size: 50px;
   }
 }
+
+/* ===== v4.3 운영 안정화: 동의 안내·모달 ===== */
+.consentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.consentRow > label { display: inline-flex; align-items: center; gap: 7px; }
+.privacyOpenButton,
+.footerPrivacy {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  opacity: .78;
+}
+.privacyOpenButton:hover,
+.footerPrivacy:hover { opacity: 1; }
+.privacyBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 10, 24, .68);
+  backdrop-filter: blur(8px);
+}
+.privacyDialog {
+  position: relative;
+  width: min(620px, 100%);
+  max-height: min(760px, calc(100vh - 40px));
+  overflow: auto;
+  border-radius: 26px;
+  padding: 38px;
+  background: #fff;
+  color: #0c1c36;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .28);
+}
+.privacyClose {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: #eef1f5;
+  color: #0c1c36;
+  font-size: 25px;
+  cursor: pointer;
+}
+.privacyEyebrow { margin: 0 0 10px; color: #b77716; font-size: 12px; font-weight: 700; letter-spacing: .18em; }
+.privacyDialog h2 { margin: 0 0 24px; font-size: clamp(25px, 4vw, 36px); }
+.privacyContent dl { margin: 0; }
+.privacyContent dl > div { display: grid; grid-template-columns: 145px 1fr; gap: 18px; padding: 17px 0; border-top: 1px solid #e4e8ee; }
+.privacyContent dt { font-weight: 700; }
+.privacyContent dd { margin: 0; color: #536176; line-height: 1.7; }
+.privacyDraftNote { margin: 18px 0 24px; padding: 15px 17px; border-radius: 14px; background: #fff6e7; color: #6e4a13; font-size: 13px; line-height: 1.65; }
+.footerInner { display: grid; gap: 14px; }
+.footerPrivacy { justify-self: start; color: rgba(255,255,255,.72); }
+@media (max-width: 560px) {
+  .privacyDialog { padding: 34px 22px 24px; border-radius: 20px; }
+  .privacyContent dl > div { grid-template-columns: 1fr; gap: 7px; }
+  .consentRow { align-items: flex-start; }
+}

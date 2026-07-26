@@ -19,6 +19,7 @@ import MetaPixel from "@/components/MetaPixel";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import ConversionTracker from "@/components/ConversionTracker";
 import UtmCapture from "@/components/UtmCapture";
+import PrivacyPolicy from "@/components/PrivacyPolicy";
 
 export default function Home() {
   return (
@@ -44,6 +45,7 @@ export default function Home() {
       <Footer />
       <FloatingActions />
       <LeadModal />
+      <PrivacyPolicy />
     </main>
   );
 }

@@ -55,10 +55,15 @@ export default function InteractiveLocation() {
         <div className="locationV3Heading">
           <div>
             <p className="sectionEyebrow">CONNECTED LIFESTYLE</p>
-            <h2 className="sectionTitle">영종에서 시작되는<br />확장된 생활 반경</h2>
+            <h2 className="sectionTitle">
+              영종에서 시작되는
+              <br />
+              확장된 생활 반경
+            </h2>
           </div>
           <p className="bodyCopy">
-            아래 소요시간은 홍보물의 안내를 바탕으로 한 참고 정보입니다. 출발지·경로·교통상황에 따라 달라질 수 있습니다.
+            아래 소요시간은 홍보물의 안내를 바탕으로 한 참고 정보입니다.
+            출발지·경로·교통상황에 따라 달라질 수 있습니다.
           </p>
         </div>
 
@@ -68,7 +73,11 @@ export default function InteractiveLocation() {
             <div className="mapRoute" aria-hidden="true" />
             <div className="mapOrigin">
               <span>현재 위치</span>
-              <strong>영종 디에트르<br />라 메르</strong>
+              <strong>
+                영종 디에트르
+                <br />
+                라 메르
+              </strong>
             </div>
 
             {places.map((place, index) => (
@@ -87,14 +96,19 @@ export default function InteractiveLocation() {
 
           <aside className="locationV3Detail" aria-live="polite">
             <span className="locationV3Badge">{selected.label}</span>
-            <div className="locationV3Time" aria-label={selected.shortTime}>
-              <span className="timePrefix">{selected.timePrefix}</span>
-              <strong className="timeNumber">{selected.timeValue}</strong>
-              <span className="timeUnit">{selected.timeUnit}</span>
+
+            <div className="locationTimeV33" aria-label={selected.shortTime}>
+              <span className="locationTimeWordV33">{selected.timePrefix}</span>
+              <strong className="locationTimeNumberV33">{selected.timeValue}</strong>
+              <span className="locationTimeWordV33">{selected.timeUnit}</span>
             </div>
+
             <h3>{selected.title}</h3>
             <p>{selected.description}</p>
-            <button type="button" onClick={() => openLeadModal(`location-${selected.id}`)}>
+            <button
+              type="button"
+              onClick={() => openLeadModal(`location-${selected.id}`)}
+            >
               입지 상세 상담 <span aria-hidden="true">→</span>
             </button>
           </aside>

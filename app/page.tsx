@@ -1,8 +1,10 @@
 import Hero from "@/components/Hero";
 import QuickLead from "@/components/QuickLead";
 import Stats from "@/components/Stats";
+import BusinessOverview from "@/components/BusinessOverview";
 import InteractiveLocation from "@/components/InteractiveLocation";
 import Premium from "@/components/Premium";
+import CommunityHighlights from "@/components/CommunityHighlights";
 import DevelopmentTimeline from "@/components/DevelopmentTimeline";
 import FloorPlans from "@/components/FloorPlans";
 import Landmark from "@/components/Landmark";
@@ -23,9 +25,11 @@ export default function Home() {
       <Hero />
       <QuickLead />
       <Stats />
+      <BusinessOverview />
       <InteractiveLocation />
       <Premium />
       <DevelopmentTimeline />
+      <CommunityHighlights />
       <FloorPlans />
       <Landmark />
       <Faq />

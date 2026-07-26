@@ -5,7 +5,7 @@ import { openLeadModal } from "@/lib/analytics";
 const milestones = [
   {
     step: "01",
-    title: "제3연륙교 연결",
+    title: "청라하늘대교 연결",
     text: "영종과 청라를 연결하는 교통축을 통해 생활권의 확장이 기대됩니다.",
   },
   {

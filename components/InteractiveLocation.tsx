@@ -7,7 +7,7 @@ const places = [
   {
     id: "bridge",
     time: "약 5분",
-    title: "제3연륙교 통과",
+    title: "청라하늘대교 통과",
     label: "청라 연결",
     description: "영종과 청라를 잇는 새로운 연결축으로 생활 반경의 확장을 기대할 수 있습니다.",
   },

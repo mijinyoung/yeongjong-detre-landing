@@ -4,7 +4,7 @@ import Image from "next/image";
 import { openLeadModal } from "@/lib/analytics";
 
 const benefits = [
-  { value: "5분", label: "제3연륙교 통과" },
+  { value: "5분", label: "청라하늘대교 통과" },
   { value: "15분", label: "인천국제공항" },
   { value: "30분", label: "여의도" },
 ];
@@ -58,7 +58,7 @@ export default function Hero() {
             <em>라 메르</em>
           </h1>
           <p className="heroV2Copy">
-            제3연륙교 개통으로 더 가까워지는 영종
+            청라하늘대교 개통으로 더 가까워지는 영종
             <br />
             최고 49층 스카이라인과 오션뷰 프리미엄
           </p>

@@ -1,10 +1,13 @@
 import Hero from "@/components/Hero";
 import QuickLead from "@/components/QuickLead";
 import Stats from "@/components/Stats";
-import Location from "@/components/Location";
+import InteractiveLocation from "@/components/InteractiveLocation";
 import Premium from "@/components/Premium";
-import Landmark from "@/components/Landmark";
+import DevelopmentTimeline from "@/components/DevelopmentTimeline";
 import FloorPlans from "@/components/FloorPlans";
+import Landmark from "@/components/Landmark";
+import Faq from "@/components/Faq";
+import FinalCta from "@/components/FinalCta";
 import LeadSection from "@/components/LeadSection";
 import FloatingActions from "@/components/FloatingActions";
 import Footer from "@/components/Footer";
@@ -20,10 +23,13 @@ export default function Home() {
       <Hero />
       <QuickLead />
       <Stats />
-      <Location />
+      <InteractiveLocation />
       <Premium />
+      <DevelopmentTimeline />
       <FloorPlans />
       <Landmark />
+      <Faq />
+      <FinalCta />
       <LeadSection />
       <Footer />
       <FloatingActions />

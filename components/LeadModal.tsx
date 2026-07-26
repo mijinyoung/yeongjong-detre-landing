@@ -20,6 +20,7 @@ export default function LeadModal() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
+  const [leadId, setLeadId] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function LeadModal() {
       setPlacement(custom.detail?.placement || "modal");
       setStatus("idle");
       setMessage("");
+      setLeadId("");
       setOpen(true);
       trackEvent("lead_modal_open", { placement: custom.detail?.placement || "modal" });
     };
@@ -83,6 +85,7 @@ export default function LeadModal() {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
       setStatus("done");
+      setLeadId(String(data.leadId || ""));
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
       trackEvent("lead_complete", { placement, source: attribution.source });
     } catch (error) {
@@ -102,6 +105,7 @@ export default function LeadModal() {
             <span>✓</span>
             <h2>관심고객 등록 완료</h2>
             <p>{message}</p>
+            {leadId && <small className="leadReceipt">접수번호 {leadId}</small>}
             <a href="tel:18338384">지금 전화하기 1833-8384</a>
           </div>
         ) : (

@@ -13,6 +13,7 @@ export default function LeadSection() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
+  const [leadId, setLeadId] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,6 +51,7 @@ export default function LeadSection() {
       if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
 
       setStatus("done");
+      setLeadId(String(data.leadId || ""));
       setMessage(data.message);
       trackEvent("lead_complete", { placement: "lead-section", source: attribution.source });
     } catch (error) {
@@ -69,8 +71,8 @@ export default function LeadSection() {
         </div>
         {status === "done" ? (
           <div className="successBox">
-            <span>✓</span><h3>등록이 완료되었습니다.</h3><p>{message}</p>
-            <button className="textButton" type="button" onClick={() => { setStatus("idle"); setName(""); setPhone(""); setAgree(false); }}>다른 고객 등록하기</button>
+            <span>✓</span><h3>등록이 완료되었습니다.</h3><p>{message}</p>{leadId && <small className="leadReceipt">접수번호 {leadId}</small>}
+            <button className="textButton" type="button" onClick={() => { setStatus("idle"); setName(""); setPhone(""); setAgree(false); setLeadId(""); }}>다른 고객 등록하기</button>
           </div>
         ) : (
           <form className="leadForm" onSubmit={submit} noValidate>

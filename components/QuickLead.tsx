@@ -11,6 +11,7 @@ export default function QuickLead() {
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
+  const [leadId, setLeadId] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +52,7 @@ export default function QuickLead() {
       if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
 
       setState("done");
+      setLeadId(String(data.leadId || ""));
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
       formElement.reset();
       setPhone("");
@@ -71,7 +73,7 @@ export default function QuickLead() {
         </div>
 
         {state === "done" ? (
-          <div className="quickSuccess" role="status">✓ {message}</div>
+          <div className="quickSuccess" role="status"><strong>✓ {message}</strong>{leadId && <small className="leadReceipt">접수번호 {leadId}</small>}</div>
         ) : (
           <form className="quickLeadForm" onSubmit={submit} noValidate>
             <input name="name" placeholder="이름" aria-label="이름" autoComplete="name" />

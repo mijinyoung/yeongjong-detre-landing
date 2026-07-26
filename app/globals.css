@@ -87,7 +87,7 @@
 .locationTimeNumberV33 {
   display: block !important;
   position: relative !important;
-  top: -.16em !important;
+  top: -.08em !important;
   transform: none !important;
   margin: 0 .01em;
   font-family: Arial,Helvetica,sans-serif !important;
@@ -131,3 +131,23 @@
   .communityV33Card{min-height:260px;border-right:0;border-bottom:1px solid rgba(255,255,255,.16)}
   .communityV33Card:last-child{border-bottom:0}
 }
+
+
+/* ===== v4.1 integrated sales guide and refinements ===== */
+.consultationV41{background:#f4f1ea}
+.consultationV41Heading{display:grid;grid-template-columns:1.08fr .92fr;gap:70px;align-items:end;margin-bottom:54px}
+.consultationV41Intro button{display:inline-flex;align-items:center;gap:34px;margin-top:18px;padding:15px 19px;border:1px solid #19324f;border-radius:9px;background:transparent;color:#19324f;font-weight:900;cursor:pointer;transition:background .18s ease,color .18s ease,transform .18s ease}
+.consultationV41Intro button:hover{background:#19324f;color:#fff;transform:translateY(-2px)}
+.consultationV41Grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #d9d4ca;border-left:1px solid #d9d4ca;background:#fff}
+.consultationV41Card{position:relative;min-height:310px;padding:34px 28px;border-right:1px solid #d9d4ca;border-bottom:1px solid #d9d4ca}
+.consultationV41Number{position:absolute;right:24px;top:24px;color:#d8c7ad;font-family:Georgia,serif;font-size:37px}
+.consultationV41Card>p{margin:74px 0 13px;color:#a36f2d;font-size:11px;font-weight:900;letter-spacing:.18em}
+.consultationV41Card h3{margin:0;color:#172b44;font-size:clamp(24px,2vw,31px);letter-spacing:-.03em}
+.consultationV41Divider{display:block;width:32px;height:1px;margin:27px 0 20px;background:#b67c31}
+.consultationV41Card small{display:block;color:#697482;font-size:14px;line-height:1.75}
+.consultationV41Notice{margin:20px 0 0;color:#7b8189;font-size:12px;line-height:1.65}
+
+:where(a,button,input):focus-visible{outline:3px solid rgba(214,166,91,.72);outline-offset:3px}
+
+@media(max-width:900px){.consultationV41Heading{grid-template-columns:1fr;gap:20px}.consultationV41Grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.consultationV41Grid{grid-template-columns:1fr}.consultationV41Card{min-height:245px;padding:28px 24px}.consultationV41Card>p{margin-top:52px}}

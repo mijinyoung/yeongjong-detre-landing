@@ -38,9 +38,10 @@ export default function Hero() {
         </a>
 
         <nav className="desktopNav heroV2Nav" aria-label="주요 메뉴">
-          <a href="#overview">사업개요</a>
-          <a href="#location">입지환경</a>
+          <a href="#business-overview">사업개요</a>
+          <a href="#location-v3">입지환경</a>
           <a href="#premium">프리미엄</a>
+          <a href="#community">커뮤니티</a>
           <a href="#lead-form">관심고객등록</a>
         </nav>
 

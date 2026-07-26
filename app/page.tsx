@@ -16,12 +16,16 @@ import FloatingActions from "@/components/FloatingActions";
 import Footer from "@/components/Footer";
 import LeadModal from "@/components/LeadModal";
 import MetaPixel from "@/components/MetaPixel";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
+import ConversionTracker from "@/components/ConversionTracker";
 import UtmCapture from "@/components/UtmCapture";
 
 export default function Home() {
   return (
     <main>
       <MetaPixel />
+      <GoogleAnalytics />
+      <ConversionTracker />
       <UtmCapture />
       <Hero />
       <QuickLead />

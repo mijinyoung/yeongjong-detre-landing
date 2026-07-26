@@ -97,10 +97,8 @@ export default function InteractiveLocation() {
           <aside className="locationV3Detail" aria-live="polite">
             <span className="locationV3Badge">{selected.label}</span>
 
-            <div className="locationTimeV33" aria-label={selected.shortTime}>
-              <span className="locationTimeWordV33">{selected.timePrefix}</span>
-              <strong className="locationTimeNumberV33">{selected.timeValue}</strong>
-              <span className="locationTimeWordV33">{selected.timeUnit}</span>
+            <div className="locationTimeV42" aria-label={selected.shortTime}>
+              {selected.shortTime}
             </div>
 
             <h3>{selected.title}</h3>

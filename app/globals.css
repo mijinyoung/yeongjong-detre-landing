@@ -151,3 +151,23 @@
 
 @media(max-width:900px){.consultationV41Heading{grid-template-columns:1fr;gap:20px}.consultationV41Grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.consultationV41Grid{grid-template-columns:1fr}.consultationV41Card{min-height:245px;padding:28px 24px}.consultationV41Card>p{margin-top:52px}}
+
+
+/* ===== v4.2: 소요시간 단일 텍스트 정렬 =====
+   숫자와 한글을 따로 배치하지 않아 브라우저/폰트별 baseline 차이를 제거합니다. */
+.locationTimeV42 {
+  margin: 30px 0 18px;
+  color: #dfb167;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(58px, 5.2vw, 86px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .locationTimeV42 {
+    font-size: 50px;
+  }
+}

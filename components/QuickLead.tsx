@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 type State = "idle" | "sending" | "done" | "error";
 
@@ -40,6 +41,7 @@ export default function QuickLead() {
           content: params.get("utm_content") || "",
           referrer: document.referrer,
           pageUrl: window.location.href,
+          placement: "quick-lead",
         }),
       });
 
@@ -49,7 +51,10 @@ export default function QuickLead() {
       setState("done");
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
       event.currentTarget.reset();
-      window.dispatchEvent(new CustomEvent("lead-complete", { detail: { placement: "quick" } }));
+      trackEvent("lead_complete", {
+        placement: "quick-lead",
+        source: params.get("utm_source") || sessionStorage.getItem("utm_source") || "direct",
+      });
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");

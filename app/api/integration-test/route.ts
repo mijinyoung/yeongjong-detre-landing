@@ -1,5 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { isSolapiConfigured, sendSolapiLeadNotification } from "@/lib/solapi";
 
 export const runtime = "nodejs";
 
@@ -114,30 +115,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const url =
-      input.target === "googleSheets"
-        ? process.env.GOOGLE_SHEET_WEBHOOK_URL
-        : process.env.SMS_WEBHOOK_URL;
+    const lead = createTestLead();
+    let responsePreview = "";
 
-    if (!url) {
+    if (input.target === "googleSheets") {
+      const url = process.env.GOOGLE_SHEET_WEBHOOK_URL;
+      if (!url) {
+        return NextResponse.json(
+          { ok: false, message: "GOOGLE_SHEET_WEBHOOK_URL이 설정되지 않았습니다." },
+          { status: 503 },
+        );
+      }
+      responsePreview = await postWebhook(url, lead, process.env.WEBHOOK_SECRET);
+    } else if (process.env.SMS_WEBHOOK_URL) {
+      responsePreview = await postWebhook(
+        process.env.SMS_WEBHOOK_URL,
+        lead,
+        process.env.WEBHOOK_SECRET,
+      );
+    } else if (isSolapiConfigured()) {
+      const result = await sendSolapiLeadNotification(lead);
+      responsePreview = result.sent ? `SOLAPI group: ${result.groupId || "registered"}` : "";
+    } else {
       return NextResponse.json(
-        {
-          ok: false,
-          message:
-            input.target === "googleSheets"
-              ? "GOOGLE_SHEET_WEBHOOK_URL이 설정되지 않았습니다."
-              : "SMS_WEBHOOK_URL이 설정되지 않았습니다.",
-        },
+        { ok: false, message: "SOLAPI 문자 환경변수가 설정되지 않았습니다." },
         { status: 503 },
       );
     }
-
-    const lead = createTestLead();
-    const responsePreview = await postWebhook(
-      url,
-      lead,
-      process.env.WEBHOOK_SECRET,
-    );
 
     return NextResponse.json({
       ok: true,

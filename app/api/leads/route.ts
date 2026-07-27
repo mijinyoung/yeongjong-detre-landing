@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { validateLead, type LeadPayload } from "@/lib/lead";
 import { sendMetaLeadEvent } from "@/lib/meta-capi";
+import { sendSolapiLeadNotification } from "@/lib/solapi";
 
 export const runtime = "nodejs";
 
@@ -61,7 +62,22 @@ async function postWebhook(url: string, payload: unknown, secret?: string) {
       signal: controller.signal,
     });
 
-    if (!response.ok) throw new Error(`Webhook failed: ${response.status}`);
+    const detail = await response.text();
+    if (!response.ok) {
+      throw new Error(`Webhook failed: ${response.status} ${detail.slice(0, 200)}`);
+    }
+
+    if (detail) {
+      try {
+        const parsed = JSON.parse(detail) as { ok?: boolean; message?: string };
+        if (parsed.ok === false) {
+          throw new Error(parsed.message || "Webhook rejected the request.");
+        }
+      } catch (error) {
+        if (error instanceof SyntaxError) return;
+        throw error;
+      }
+    }
   } finally {
     clearTimeout(timer);
   }
@@ -100,16 +116,34 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get("user-agent") || "",
     };
 
-    const jobs: Promise<void>[] = [];
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-    const smsWebhook = process.env.SMS_WEBHOOK_URL;
     const secret = process.env.WEBHOOK_SECRET;
 
-    if (sheetWebhook) jobs.push(postWebhook(sheetWebhook, lead, secret));
-    if (smsWebhook) jobs.push(postWebhook(smsWebhook, lead, secret));
+    // Store the lead first. When storage fails, do not send a notification.
+    if (sheetWebhook) {
+      try {
+        await postWebhook(sheetWebhook, lead, secret);
+      } catch (error) {
+        console.error("Google Sheets integration error", error);
+        return NextResponse.json(
+          { ok: false, message: "접수 저장 중 오류가 발생했습니다. 1833-8384로 연락해 주세요." },
+          { status: 502 },
+        );
+      }
+    }
+
+    const backgroundJobs: Promise<unknown>[] = [];
+
+    if (process.env.SMS_WEBHOOK_URL) {
+      backgroundJobs.push(
+        postWebhook(process.env.SMS_WEBHOOK_URL, lead, secret),
+      );
+    } else {
+      backgroundJobs.push(sendSolapiLeadNotification(lead));
+    }
 
     if (result.data.analyticsConsent && result.data.eventId) {
-      jobs.push(
+      backgroundJobs.push(
         sendMetaLeadEvent({
           eventId: result.data.eventId,
           eventSourceUrl: result.data.pageUrl,
@@ -123,27 +157,23 @@ export async function POST(request: NextRequest) {
           placement: result.data.placement,
           source: result.data.source,
           campaign: result.data.campaign,
-        }).then(() => undefined),
+        }),
       );
     }
 
-    if (jobs.length === 0) {
+    const settled = await Promise.allSettled(backgroundJobs);
+    const failed = settled.filter((item) => item.status === "rejected");
+    if (failed.length) {
+      console.error("Lead notification/analytics error", failed);
+    }
+
+    if (!sheetWebhook && backgroundJobs.length === 0) {
       console.info("[LEAD:TEST_MODE]", {
         leadId,
         placement: lead.placement,
         source: lead.source,
         phoneLast4: lead.phone.slice(-4),
       });
-    } else {
-      const settled = await Promise.allSettled(jobs);
-      const failed = settled.filter((item) => item.status === "rejected");
-      if (failed.length) console.error("Lead integration error", failed);
-      if (failed.length === settled.length) {
-        return NextResponse.json(
-          { ok: false, message: "접수 중 오류가 발생했습니다. 1833-8384로 연락해 주세요." },
-          { status: 502 },
-        );
-      }
     }
 
     return NextResponse.json({

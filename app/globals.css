@@ -466,3 +466,159 @@ body{background:#fff;color:var(--v50-text)}
 .floorV60Panel .floorInfo dd{color:#fff}
 @media(max-width:900px){.officialV60Heading{grid-template-columns:1fr;gap:22px}.officialV60Panel,.floorV60Panel{grid-template-columns:1fr}.officialV60Image,.floorV60Image{min-height:460px}.officialV60Copy{padding:38px 26px}.floorV60Panel .floorInfo{padding:34px 24px}}
 @media(max-width:560px){.officialV60Tabs{overflow-x:auto;padding-bottom:4px}.officialV60Tabs button{white-space:nowrap}.officialV60Image,.floorV60Image{min-height:340px}.officialV60Image img,.floorV60Image img{padding:8px}}
+
+/* ===== v6.1 official image cleanup + uncropped responsive plans ===== */
+.officialV60Panel,
+.floorV60Panel {
+  min-height: 0;
+  align-items: stretch;
+}
+
+.officialV61ImageButton,
+.floorV61ImageButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: 22px;
+  border: 0;
+  background: #f1f3f5;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.floorV61ImageButton {
+  background: #f8f8f6;
+}
+
+.officialV61Image,
+.floorV61Image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 680px;
+  object-fit: contain;
+}
+
+.imageZoomHint {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(8, 25, 49, 0.82);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.officialV61ImageButton:hover .imageZoomHint,
+.floorV61ImageButton:hover .imageZoomHint,
+.officialV61ImageButton:focus-visible .imageZoomHint,
+.floorV61ImageButton:focus-visible .imageZoomHint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.brochureZoom {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 64px 24px 24px;
+  background: rgba(4, 12, 25, 0.92);
+  backdrop-filter: blur(10px);
+}
+
+.brochureZoomClose {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255,255,255,.38);
+  border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.brochureZoomCanvas {
+  width: min(94vw, 1500px);
+  max-height: calc(100vh - 90px);
+  overflow: auto;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 30px 100px rgba(0,0,0,.5);
+}
+
+.brochureZoomImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .officialV61ImageButton,
+  .floorV61ImageButton {
+    padding: 14px;
+  }
+
+  .officialV61Image,
+  .floorV61Image {
+    max-height: none;
+  }
+
+  .imageZoomHint {
+    opacity: 1;
+    transform: none;
+    right: 12px;
+    bottom: 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 560px) {
+  .officialV60Panel,
+  .floorV60Panel {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .officialV61ImageButton,
+  .floorV61ImageButton {
+    padding: 8px;
+  }
+
+  .imageZoomHint {
+    padding: 6px 9px;
+  }
+
+  .brochureZoom {
+    padding: 60px 8px 12px;
+  }
+
+  .brochureZoomCanvas {
+    width: 100%;
+    max-height: calc(100vh - 72px);
+  }
+
+  .floorZoomCanvas {
+    overflow-x: auto;
+  }
+
+  .floorZoomCanvas .brochureZoomImage {
+    width: max(100%, 1000px);
+    max-width: none;
+  }
+}

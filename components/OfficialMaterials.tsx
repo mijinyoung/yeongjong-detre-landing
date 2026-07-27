@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { openLeadModal } from "@/lib/analytics";
 
 const materials = [
@@ -36,6 +36,20 @@ const materials = [
 
 export default function OfficialMaterials() {
   const [selected, setSelected] = useState(materials[0]);
+  const [zoomOpen, setZoomOpen] = useState(false);
+
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setZoomOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", close);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", close);
+    };
+  }, [zoomOpen]);
 
   return (
     <section className="section officialV60" id="official-materials">
@@ -43,7 +57,11 @@ export default function OfficialMaterials() {
         <div className="officialV60Heading">
           <div>
             <p className="sectionEyebrow">OFFICIAL BROCHURE</p>
-            <h2 className="sectionTitle">상담북으로 확인하는<br />디에트르의 실제 계획</h2>
+            <h2 className="sectionTitle">
+              상담북으로 확인하는
+              <br />
+              디에트르의 실제 계획
+            </h2>
           </div>
           <p className="bodyCopy">
             임의의 예시 이미지가 아닌, 제공된 상담북과 홍보물의 내용을 웹에서 보기 편하도록 재구성했습니다.
@@ -67,15 +85,24 @@ export default function OfficialMaterials() {
         </div>
 
         <div className="officialV60Panel">
-          <div className="officialV60Image">
+          <button
+            className="officialV61ImageButton"
+            type="button"
+            onClick={() => setZoomOpen(true)}
+            aria-label={`${selected.label} 크게 보기`}
+          >
             <Image
               key={selected.image}
               src={selected.image}
               alt={selected.alt}
-              fill
+              width={1467}
+              height={693}
               sizes="(max-width: 900px) 100vw, 68vw"
+              className="officialV61Image"
             />
-          </div>
+            <span className="imageZoomHint">클릭하여 크게 보기</span>
+          </button>
+
           <aside className="officialV60Copy">
             <span>{selected.label}</span>
             <h3>{selected.title}</h3>
@@ -86,6 +113,15 @@ export default function OfficialMaterials() {
           </aside>
         </div>
       </div>
+
+      {zoomOpen && (
+        <div className="brochureZoom" role="dialog" aria-modal="true" aria-label={`${selected.label} 확대 이미지`} onClick={() => setZoomOpen(false)}>
+          <button type="button" className="brochureZoomClose" onClick={() => setZoomOpen(false)} aria-label="확대 이미지 닫기">×</button>
+          <div className="brochureZoomCanvas" onClick={(event) => event.stopPropagation()}>
+            <Image src={selected.image} alt={selected.alt} width={1467} height={693} className="brochureZoomImage" priority />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

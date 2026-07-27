@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
-import { getLeadAttribution } from "@/lib/client-lead";
+import { getLeadAttribution, goToThankYou } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -88,6 +88,7 @@ export default function LeadModal() {
       setLeadId(String(data.leadId || ""));
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
       trackEvent("lead_complete", { placement, source: attribution.source });
+      goToThankYou(String(data.leadId || ""), placement);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");

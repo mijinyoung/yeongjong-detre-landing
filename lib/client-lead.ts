@@ -22,3 +22,11 @@ export function openPrivacyPolicy() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("open-privacy-policy"));
 }
+
+export function goToThankYou(leadId: string, placement: string) {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams();
+  if (leadId) params.set("receipt", leadId);
+  if (placement) params.set("placement", placement);
+  window.location.assign(`/thank-you?${params.toString()}`);
+}

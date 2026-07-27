@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
-import { formatPhoneInput, getLeadAttribution } from "@/lib/client-lead";
+import { formatPhoneInput, getLeadAttribution, goToThankYou } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type State = "idle" | "sending" | "done" | "error";
@@ -57,6 +57,7 @@ export default function QuickLead() {
       formElement.reset();
       setPhone("");
       trackEvent("lead_complete", { placement: "quick-lead", source: attribution.source });
+      goToThankYou(String(data.leadId || ""), "quick-lead");
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");

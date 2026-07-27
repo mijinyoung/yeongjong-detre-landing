@@ -45,13 +45,18 @@ async function postWebhook(url: string, payload: unknown, secret?: string) {
   const timer = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
 
   try {
+    const body =
+      payload && typeof payload === "object"
+        ? { ...(payload as Record<string, unknown>), _webhookSecret: secret || "" }
+        : payload;
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(secret ? { "x-webhook-secret": secret } : {}),
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
       cache: "no-store",
       signal: controller.signal,
     });

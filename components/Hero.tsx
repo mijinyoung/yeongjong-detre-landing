@@ -1,97 +1,114 @@
 "use client";
 
 import Image from "next/image";
-import { openLeadModal } from "@/lib/analytics";
+import { openLeadModal, trackEvent } from "@/lib/analytics";
 
-const benefits = [
-  { value: "5분", label: "청라하늘대교 통과" },
-  { value: "15분", label: "인천국제공항" },
-  { value: "30분", label: "여의도" },
+const proofPoints = [
+  "청라하늘대교 생활권",
+  "최고 49층 스카이라인",
+  "총 1,009세대",
+  "84·104·113㎡",
 ];
 
 const facts = [
-  { value: "최고 49층", label: "랜드마크 스카이라인" },
-  { value: "총 1,009세대", label: "대단지 프리미엄" },
-  { value: "세대당 약 1.9대", label: "여유로운 주차 계획" },
-  { value: "84·104·113㎡", label: "다양한 주거 타입" },
+  { value: "약 5분", label: "청라하늘대교 통과" },
+  { value: "약 15분", label: "인천국제공항" },
+  { value: "2029.10", label: "입주 예정" },
+  { value: "1833-8384", label: "분양 문의" },
 ];
 
 export default function Hero() {
-  const goToForm = () => openLeadModal("hero");
+  const openForm = (source: string) => openLeadModal(source);
 
   return (
-    <section className="heroV2" id="top">
+    <section className="heroV50" id="top">
       <Image
         src="/images/hero-v2.png"
         alt="영종 디에트르 라 메르 투시도"
         fill
         priority
         sizes="100vw"
-        className="heroV2Image"
+        className="heroV50Image"
       />
-      <div className="heroV2Overlay" />
+      <div className="heroV50Shade" aria-hidden="true" />
 
-      <header className="heroV2Header shell">
-        <a className="brand brandV2" href="#top" aria-label="영종 디에트르 라 메르 홈">
+      <header className="heroV50Header shell">
+        <a className="heroV50Brand" href="#top" aria-label="영종 디에트르 라 메르 홈">
           <strong>DÉTRE</strong>
           <span>LA MER</span>
         </a>
 
-        <nav className="desktopNav heroV2Nav" aria-label="주요 메뉴">
+        <nav className="heroV50Nav" aria-label="주요 메뉴">
+          <a href="#why-now">핵심가치</a>
           <a href="#business-overview">사업개요</a>
           <a href="#location-v3">입지환경</a>
-          <a href="#premium">프리미엄</a>
           <a href="#community">커뮤니티</a>
-          <a href="#lead-form">관심고객등록</a>
+          <a href="#floor-plans">평면안내</a>
         </nav>
 
-        <a className="heroV2Call" href="tel:18338384" aria-label="1833-8384로 전화하기">
-          <span>☎</span> 1833-8384
+        <a
+          className="heroV50Phone"
+          href="tel:18338384"
+          onClick={() => trackEvent("phone_click", { source: "hero-header" })}
+        >
+          <small>분양문의</small>
+          <strong>1833-8384</strong>
         </a>
       </header>
 
-      <div className="heroV2Content shell">
-        <div className="heroV2CopyBlock">
-          <p className="heroV2Eyebrow">YEONGJONG INTERNATIONAL CITY</p>
+      <div className="heroV50Content shell">
+        <div className="heroV50Copy">
+          <p className="heroV50Eyebrow">YEONGJONG INTERNATIONAL CITY</p>
           <h1>
-            영종 디에트르
+            청라하늘대교로
             <br />
-            <em>라 메르</em>
+            더욱 가까워진 영종
           </h1>
-          <p className="heroV2Copy">
-            청라하늘대교 개통으로 더 가까워지는 영종
-            <br />
-            최고 49층 스카이라인과 오션뷰 프리미엄
+          <p className="heroV50Project">영종 디에트르 라 메르</p>
+          <p className="heroV50Description">
+            최고 49층의 새로운 스카이라인과 바다를 품은 주거 가치.
+            <br className="desktopOnly" />
+            관심고객 등록으로 분양 안내를 먼저 받아보세요.
           </p>
 
-          <div className="heroV2Benefits" aria-label="주요 입지 정보">
-            {benefits.map((item) => (
-              <div key={item.label}>
-                <strong>{item.value}</strong>
-                <span>{item.label}</span>
-              </div>
+          <ul className="heroV50Proof" aria-label="단지 핵심 특징">
+            {proofPoints.map((point) => (
+              <li key={point}>{point}</li>
             ))}
-          </div>
+          </ul>
 
-          <div className="heroV2Buttons">
-            <button className="heroV2Primary" onClick={goToForm}>
+          <div className="heroV50Actions">
+            <button type="button" onClick={() => openForm("hero-primary")}> 
               관심고객 등록 <span aria-hidden="true">→</span>
             </button>
-            <a className="heroV2Ghost" href="tel:18338384">
-              전화 상담
-            </a>
+            <button
+              type="button"
+              className="heroV50Secondary"
+              onClick={() => openForm("hero-brochure")}
+            >
+              분양자료 상담
+            </button>
           </div>
+        </div>
+
+        <div className="heroV50Vertical" aria-hidden="true">
+          <span>THE VALUABLE LIFESTYLE</span>
         </div>
       </div>
 
-      <div className="heroV2Facts shell" aria-label="단지 핵심 정보">
-        {facts.map((item) => (
-          <div key={item.label}>
-            <strong>{item.value}</strong>
-            <span>{item.label}</span>
+      <div className="heroV50Facts shell" aria-label="핵심 정보">
+        {facts.map((fact) => (
+          <div key={fact.label}>
+            <strong>{fact.value}</strong>
+            <span>{fact.label}</span>
           </div>
         ))}
       </div>
+
+      <a className="heroV50Scroll" href="#quick-lead" aria-label="다음 내용으로 이동">
+        <span>SCROLL</span>
+        <i aria-hidden="true" />
+      </a>
     </section>
   );
 }

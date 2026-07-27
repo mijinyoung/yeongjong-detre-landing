@@ -1,5 +1,6 @@
 import Hero from "@/components/Hero";
 import QuickLead from "@/components/QuickLead";
+import WhyNow from "@/components/WhyNow";
 import Stats from "@/components/Stats";
 import BusinessOverview from "@/components/BusinessOverview";
 import InteractiveLocation from "@/components/InteractiveLocation";
@@ -30,9 +31,9 @@ export default function Home() {
       <UtmCapture />
       <Hero />
       <QuickLead />
-      <Stats />
-      <BusinessOverview />
+      <WhyNow />
       <InteractiveLocation />
+      <BusinessOverview />
       <Premium />
       <DevelopmentTimeline />
       <CommunityHighlights />

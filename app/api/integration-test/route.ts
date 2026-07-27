@@ -1,0 +1,166 @@
+import { randomUUID, timingSafeEqual } from "node:crypto";
+import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+
+const WEBHOOK_TIMEOUT_MS = 7000;
+
+type IntegrationTarget = "googleSheets" | "sms";
+
+function safeEqual(value: string, expected: string) {
+  const valueBuffer = Buffer.from(value);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (valueBuffer.length !== expectedBuffer.length) return false;
+  return timingSafeEqual(valueBuffer, expectedBuffer);
+}
+
+async function postWebhook(
+  url: string,
+  payload: Record<string, unknown>,
+  secret?: string,
+) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { "x-webhook-secret": secret } : {}),
+      },
+      body: JSON.stringify({
+        ...payload,
+        _webhookSecret: secret || "",
+      }),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    const detail = await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        `Webhook failed: ${response.status} ${detail.slice(0, 200)}`,
+      );
+    }
+
+    return detail.slice(0, 300);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function createTestLead() {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10).replaceAll("-", "");
+  const random = randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
+
+  return {
+    leadId: `TEST-${date}-${random}`,
+    submittedAt: now.toISOString(),
+    name: "연동 테스트",
+    phone: "010-0000-0000",
+    source: "system-check",
+    medium: "internal",
+    campaign: "integration-test",
+    content: "",
+    term: "",
+    placement: "system-check",
+    pageUrl: "",
+    referrer: "",
+    consentAt: now.toISOString(),
+    analyticsConsent: false,
+    ip: "system-check",
+    userAgent: "Vercel integration test",
+  };
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const configuredToken = process.env.SYSTEM_CHECK_TOKEN;
+
+    if (!configuredToken) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            "SYSTEM_CHECK_TOKEN 환경변수가 설정되지 않았습니다.",
+        },
+        { status: 503 },
+      );
+    }
+
+    const input = (await request.json()) as {
+      target?: IntegrationTarget;
+      token?: string;
+    };
+
+    if (
+      !input.token ||
+      !safeEqual(input.token.trim(), configuredToken.trim())
+    ) {
+      return NextResponse.json(
+        { ok: false, message: "점검용 비밀번호가 올바르지 않습니다." },
+        { status: 401 },
+      );
+    }
+
+    if (input.target !== "googleSheets" && input.target !== "sms") {
+      return NextResponse.json(
+        { ok: false, message: "점검 대상을 선택해 주세요." },
+        { status: 400 },
+      );
+    }
+
+    const url =
+      input.target === "googleSheets"
+        ? process.env.GOOGLE_SHEET_WEBHOOK_URL
+        : process.env.SMS_WEBHOOK_URL;
+
+    if (!url) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            input.target === "googleSheets"
+              ? "GOOGLE_SHEET_WEBHOOK_URL이 설정되지 않았습니다."
+              : "SMS_WEBHOOK_URL이 설정되지 않았습니다.",
+        },
+        { status: 503 },
+      );
+    }
+
+    const lead = createTestLead();
+    const responsePreview = await postWebhook(
+      url,
+      lead,
+      process.env.WEBHOOK_SECRET,
+    );
+
+    return NextResponse.json({
+      ok: true,
+      target: input.target,
+      leadId: lead.leadId,
+      message:
+        input.target === "googleSheets"
+          ? "Google Sheets 테스트 전송이 완료되었습니다."
+          : "문자 알림 테스트 전송이 완료되었습니다.",
+      responsePreview,
+    });
+  } catch (error) {
+    console.error("Integration test failed", error);
+
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "연동 테스트 중 오류가 발생했습니다.",
+      },
+      { status: 502 },
+    );
+  }
+}

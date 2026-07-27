@@ -24,6 +24,7 @@ import UtmCapture from "@/components/UtmCapture";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
 import StructuredData from "@/components/StructuredData";
 import VisitProcess from "@/components/VisitProcess";
+import AnalyticsConsentManager from "@/components/AnalyticsConsent";
 
 export default function Home() {
   return (
@@ -53,6 +54,7 @@ export default function Home() {
       <FloatingActions />
       <LeadModal />
       <PrivacyPolicy />
+      <AnalyticsConsentManager />
     </main>
   );
 }

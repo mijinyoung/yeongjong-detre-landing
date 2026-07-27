@@ -755,3 +755,108 @@ body.mobileNavOpen{overflow:hidden}
   .visitProcessContact{align-items:stretch;flex-direction:column;padding:24px 20px}
   .visitProcessContact a{width:100%}
 }
+
+
+/* ===== v6.4 방문 분석 동의 ===== */
+.analyticsConsent {
+  position: fixed;
+  z-index: 1200;
+  right: 24px;
+  bottom: 24px;
+  left: 24px;
+  margin-inline: auto;
+  max-width: 1040px;
+  color: #fff;
+  background: rgba(7, 22, 43, 0.97);
+  border: 1px solid rgba(218, 169, 80, 0.35);
+  border-radius: 22px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(18px);
+}
+
+.analyticsConsentInner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 36px;
+  padding: 26px 28px;
+}
+
+.analyticsConsentEyebrow {
+  margin: 0 0 7px;
+  color: #d9aa55;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.analyticsConsent h2 {
+  margin: 0 0 8px;
+  font-size: clamp(20px, 2.2vw, 27px);
+  line-height: 1.35;
+}
+
+.analyticsConsent p:not(.analyticsConsentEyebrow) {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.analyticsConsentActions {
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.analyticsConsentActions button {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.analyticsConsentReject {
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.analyticsConsentAccept {
+  color: #101722;
+  background: #d9aa55;
+  border: 1px solid #d9aa55;
+}
+
+.footerPolicyLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+@media (max-width: 760px) {
+  .analyticsConsent {
+    right: 12px;
+    bottom: 76px;
+    left: 12px;
+    border-radius: 18px;
+  }
+
+  .analyticsConsentInner {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 22px 20px;
+  }
+
+  .analyticsConsentActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .analyticsConsentActions button {
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+}

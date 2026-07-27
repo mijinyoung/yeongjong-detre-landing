@@ -59,6 +59,7 @@ export default function PrivacyPolicy() {
             <div><dt>이용 목적</dt><dd>분양 상담, 방문 일정 및 관련 정보 안내</dd></div>
             <div><dt>보유 및 이용 기간</dt><dd>상담 목적 달성 또는 동의 철회 시까지. 관계 법령에 따른 보관 의무가 있는 경우 해당 기간 동안 보관할 수 있습니다.</dd></div>
             <div><dt>동의 거부 권리</dt><dd>동의를 거부할 수 있으나, 거부 시 상담 신청이 제한됩니다.</dd></div>
+            <div><dt>방문 분석 도구</dt><dd>별도 동의한 경우에만 Meta Pixel과 Google Analytics가 실행됩니다. 푸터의 방문 분석 설정에서 언제든 선택을 변경할 수 있습니다.</dd></div>
           </dl>
           <p className="privacyDraftNote">
             운영 전 실제 개인정보 처리 주체, 위탁사, 보유기간 및 연락처를 입주자모집공고와 운영 정책에 맞게 최종 확인해 주세요.

@@ -3,6 +3,7 @@ import QuickLead from "@/components/QuickLead";
 import WhyNow from "@/components/WhyNow";
 import Stats from "@/components/Stats";
 import BusinessOverview from "@/components/BusinessOverview";
+import OfficialMaterials from "@/components/OfficialMaterials";
 import InteractiveLocation from "@/components/InteractiveLocation";
 import Premium from "@/components/Premium";
 import CommunityHighlights from "@/components/CommunityHighlights";
@@ -34,6 +35,7 @@ export default function Home() {
       <WhyNow />
       <InteractiveLocation />
       <BusinessOverview />
+      <OfficialMaterials />
       <Premium />
       <DevelopmentTimeline />
       <CommunityHighlights />

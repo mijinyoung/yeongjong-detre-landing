@@ -441,3 +441,28 @@ body{background:#fff;color:var(--v50-text)}
   .whyV50Heading{grid-template-columns:1fr;gap:25px}.whyV50Grid{grid-template-columns:1fr}.whyV50Card,.whyV50Card:last-child{grid-column:auto;min-height:265px}
   .whyV50Card>p{margin-top:52px}
 }
+
+/* ===== v6.0 counseling-book based content ===== */
+.officialV60{background:#f7f4ed}
+.officialV60Heading{display:grid;grid-template-columns:1.1fr .9fr;gap:70px;align-items:end;margin-bottom:48px}
+.officialV60Tabs{display:flex;gap:8px;margin-bottom:18px}
+.officialV60Tabs button{padding:12px 18px;border:1px solid #cfc7b8;background:transparent;color:#3c4b5f;font-weight:800;cursor:pointer}
+.officialV60Tabs button.active{border-color:#102641;background:#102641;color:#fff}
+.officialV60Panel{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,.65fr);min-height:620px;background:#fff;box-shadow:0 28px 70px rgba(20,32,48,.12)}
+.officialV60Image{position:relative;min-height:620px;background:#eef1f4;overflow:hidden}
+.officialV60Image img{object-fit:contain;padding:18px}
+.officialV60Copy{display:flex;flex-direction:column;justify-content:center;padding:52px 42px;background:#0b1c35;color:#fff}
+.officialV60Copy>span{color:#d8a957;font-size:11px;font-weight:900;letter-spacing:.18em}
+.officialV60Copy h3{margin:20px 0 0;font-size:clamp(28px,3vw,42px);line-height:1.25;letter-spacing:-.04em}
+.officialV60Copy p{margin:22px 0 0;color:rgba(255,255,255,.68);font-size:15px;line-height:1.85}
+.officialV60Copy button{margin-top:34px;min-height:54px;border:0;background:#d7a64f;color:#10213a;font-weight:900;cursor:pointer}
+.floorV60{background:#fff}
+.floorV60Panel{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.65fr);min-height:610px;border:1px solid #e1ddd5;background:#fff;box-shadow:0 25px 70px rgba(25,35,48,.1)}
+.floorV60Image{position:relative;min-height:610px;background:#f8f8f6;overflow:hidden}
+.floorV60Image img{object-fit:contain;padding:22px}
+.floorV60Panel .floorInfo{padding:48px 38px;background:#0b1c35;color:#fff}
+.floorV60Panel .floorInfo dl>div{border-color:rgba(255,255,255,.14)}
+.floorV60Panel .floorInfo dt{color:rgba(255,255,255,.55)}
+.floorV60Panel .floorInfo dd{color:#fff}
+@media(max-width:900px){.officialV60Heading{grid-template-columns:1fr;gap:22px}.officialV60Panel,.floorV60Panel{grid-template-columns:1fr}.officialV60Image,.floorV60Image{min-height:460px}.officialV60Copy{padding:38px 26px}.floorV60Panel .floorInfo{padding:34px 24px}}
+@media(max-width:560px){.officialV60Tabs{overflow-x:auto;padding-bottom:4px}.officialV60Tabs button{white-space:nowrap}.officialV60Image,.floorV60Image{min-height:340px}.officialV60Image img,.floorV60Image img{padding:8px}}

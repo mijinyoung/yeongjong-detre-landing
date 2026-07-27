@@ -20,7 +20,7 @@ type TestTarget = "googleSheets" | "sms";
 
 const labels: Array<[keyof HealthData["integrations"], string, string]> = [
   ["googleSheets", "Google Sheets", "관심고객 DB 자동 저장"],
-  ["sms", "문자 알림", "신규 문의 담당자 알림"],
+  ["sms", "문자 알림", "신규 문의 담당자 알림 및 시트 상태 기록"],
   ["metaPixel", "Meta Pixel", "브라우저 광고 전환 측정"],
   ["metaConversionsApi", "Meta CAPI", "서버 광고 전환 측정"],
   ["googleAnalytics", "Google Analytics", "방문 행동 분석"],
@@ -49,7 +49,7 @@ const setupSteps = [
     number: "04",
     title: "실제 상담폼 최종 점검",
     description:
-      "테스트 완료 후 홈페이지에서 본인 번호로 관심고객 등록을 한 번 진행합니다.",
+      "테스트 완료 후 홈페이지에서 본인 번호로 관심고객 등록하고, 관심고객 탭의 문자상태 열까지 확인합니다.",
   },
 ];
 

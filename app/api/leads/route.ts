@@ -108,12 +108,23 @@ export async function POST(request: NextRequest) {
     }
 
     const leadId = createLeadId();
+    const smsConfigured = Boolean(
+      process.env.SMS_WEBHOOK_URL ||
+      (
+        process.env.SOLAPI_API_KEY &&
+        process.env.SOLAPI_API_SECRET &&
+        process.env.SOLAPI_SENDER_NUMBER &&
+        process.env.SMS_RECIPIENT_NUMBER
+      )
+    );
+
     const lead = {
       ...result.data,
       leadId,
       consentAt: new Date().toISOString(),
       ip,
       userAgent: request.headers.get("user-agent") || "",
+      smsConfigured,
     };
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
@@ -132,19 +143,56 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const backgroundJobs: Promise<unknown>[] = [];
+    let smsStatus = smsConfigured ? "대기" : "미설정";
+    let smsDetail = "";
+    let smsProcessedAt = "";
 
-    if (process.env.SMS_WEBHOOK_URL) {
-      backgroundJobs.push(
-        postWebhook(process.env.SMS_WEBHOOK_URL, lead, secret),
-      );
-    } else {
-      backgroundJobs.push(sendSolapiLeadNotification(lead));
+    if (smsConfigured) {
+      try {
+        if (process.env.SMS_WEBHOOK_URL) {
+          await postWebhook(process.env.SMS_WEBHOOK_URL, lead, secret);
+          smsStatus = "성공";
+          smsDetail = "SMS webhook delivered";
+        } else {
+          const smsResult = await sendSolapiLeadNotification(lead);
+          smsStatus = smsResult.sent ? "성공" : "미설정";
+          smsDetail = smsResult.groupId
+            ? `SOLAPI group ${smsResult.groupId}`
+            : "SOLAPI accepted";
+        }
+      } catch (error) {
+        smsStatus = "실패";
+        smsDetail =
+          error instanceof Error
+            ? error.message.slice(0, 240)
+            : "문자 발송 중 알 수 없는 오류";
+        console.error("Lead SMS error", error);
+      }
+
+      smsProcessedAt = new Date().toISOString();
+
+      if (sheetWebhook) {
+        try {
+          await postWebhook(
+            sheetWebhook,
+            {
+              action: "updateDelivery",
+              leadId,
+              smsStatus,
+              smsProcessedAt,
+              smsDetail,
+            },
+            secret,
+          );
+        } catch (error) {
+          console.error("Google Sheets SMS status update error", error);
+        }
+      }
     }
 
     if (result.data.analyticsConsent && result.data.eventId) {
-      backgroundJobs.push(
-        sendMetaLeadEvent({
+      try {
+        await sendMetaLeadEvent({
           eventId: result.data.eventId,
           eventSourceUrl: result.data.pageUrl,
           name: result.data.name,
@@ -157,17 +205,13 @@ export async function POST(request: NextRequest) {
           placement: result.data.placement,
           source: result.data.source,
           campaign: result.data.campaign,
-        }),
-      );
+        });
+      } catch (error) {
+        console.error("Meta conversion error", error);
+      }
     }
 
-    const settled = await Promise.allSettled(backgroundJobs);
-    const failed = settled.filter((item) => item.status === "rejected");
-    if (failed.length) {
-      console.error("Lead notification/analytics error", failed);
-    }
-
-    if (!sheetWebhook && backgroundJobs.length === 0) {
+    if (!sheetWebhook && !smsConfigured) {
       console.info("[LEAD:TEST_MODE]", {
         leadId,
         placement: lead.placement,
@@ -179,7 +223,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       leadId,
-      message: "관심고객 등록이 완료되었습니다.",
+      smsStatus,
+      message:
+        smsStatus === "실패"
+          ? "관심고객 등록은 완료되었지만 담당자 문자 알림은 확인이 필요합니다."
+          : "관심고객 등록이 완료되었습니다.",
     });
   } catch (error) {
     console.error(error);

@@ -22,10 +22,13 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 import ConversionTracker from "@/components/ConversionTracker";
 import UtmCapture from "@/components/UtmCapture";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
+import StructuredData from "@/components/StructuredData";
+import VisitProcess from "@/components/VisitProcess";
 
 export default function Home() {
   return (
     <main id="main-content">
+      <StructuredData />
       <MetaPixel />
       <GoogleAnalytics />
       <ConversionTracker />
@@ -42,6 +45,7 @@ export default function Home() {
       <ConsultationGuide />
       <FloorPlans />
       <Landmark />
+      <VisitProcess />
       <Faq />
       <FinalCta />
       <LeadSection />

@@ -667,3 +667,91 @@ body.mobileNavOpen{overflow:hidden}
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 }
+
+/* ===== v6.3 상담 전환·신뢰 섹션 ===== */
+.visitProcess{
+  background:#f3efe6;
+  color:#0b1c35;
+}
+.visitProcessHeading{
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  align-items:end;
+  gap:56px;
+  margin-bottom:54px;
+}
+.visitProcessIntro .bodyCopy{margin:0 0 24px}
+.visitProcessIntro button{
+  min-height:52px;
+  padding:0 24px;
+  border:0;
+  border-radius:6px;
+  background:#d7a64f;
+  color:#07162b;
+  font-weight:900;
+  cursor:pointer;
+}
+.visitProcessIntro button span{margin-left:20px}
+.visitProcessSteps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  margin:0;
+  padding:0;
+  list-style:none;
+  border-top:1px solid rgba(11,28,53,.2);
+  border-bottom:1px solid rgba(11,28,53,.2);
+}
+.visitProcessSteps li{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:24px;
+  min-height:220px;
+  padding:38px 30px;
+  border-right:1px solid rgba(11,28,53,.16);
+}
+.visitProcessSteps li:last-child{border-right:0}
+.visitProcessSteps>li>span{
+  color:#c38d31;
+  font-family:Georgia,serif;
+  font-size:36px;
+  line-height:1;
+}
+.visitProcessSteps h3{margin:3px 0 15px;font-size:24px}
+.visitProcessSteps p{margin:0;color:#667080;line-height:1.8}
+.visitProcessContact{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  margin-top:30px;
+  padding:28px 32px;
+  border-radius:8px;
+  background:#07162b;
+  color:#fff;
+}
+.visitProcessContact div{display:flex;flex-direction:column;gap:5px}
+.visitProcessContact small{color:rgba(255,255,255,.62)}
+.visitProcessContact strong{font-size:clamp(25px,3vw,38px);letter-spacing:.04em}
+.visitProcessContact a{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:50px;
+  padding:0 24px;
+  border:1px solid rgba(255,255,255,.48);
+  border-radius:6px;
+  color:#fff;
+  font-weight:900;
+  text-decoration:none;
+}
+@media(max-width:900px){
+  .visitProcessHeading{grid-template-columns:1fr;gap:20px}
+  .visitProcessSteps{grid-template-columns:1fr}
+  .visitProcessSteps li{min-height:0;border-right:0;border-bottom:1px solid rgba(11,28,53,.16)}
+  .visitProcessSteps li:last-child{border-bottom:0}
+}
+@media(max-width:560px){
+  .visitProcessSteps li{padding:28px 18px;gap:18px}
+  .visitProcessContact{align-items:stretch;flex-direction:column;padding:24px 20px}
+  .visitProcessContact a{width:100%}
+}

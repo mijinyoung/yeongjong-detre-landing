@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
+import MobileNavigation from "@/components/MobileNavigation";
 
 const proofPoints = [
   "청라하늘대교 생활권",
@@ -45,6 +46,8 @@ export default function Hero() {
           <a href="#community">커뮤니티</a>
           <a href="#floor-plans">평면안내</a>
         </nav>
+
+        <MobileNavigation />
 
         <a
           className="heroV50Phone"

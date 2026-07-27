@@ -1,11 +1,11 @@
 "use client";
 
-import { openLeadModal } from "@/lib/analytics";
+import { openLeadModal, trackEvent } from "@/lib/analytics";
 
 export default function FloatingActions() {
   return (
     <nav className="floatingActions" aria-label="빠른 상담">
-      <a href="tel:18338384">전화상담</a>
+      <a href="tel:18338384" data-placement="floating" onClick={() => trackEvent("phone_click", { placement: "floating" })}>전화상담</a>
       <button onClick={() => openLeadModal("floating")}>관심고객 등록</button>
     </nav>
   );

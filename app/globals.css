@@ -622,3 +622,48 @@ body{background:#fff;color:var(--v50-text)}
     max-width: none;
   }
 }
+
+/* ===== v6.2 mobile conversion + accessibility ===== */
+.skipLink{
+  position:fixed;
+  z-index:5000;
+  left:16px;
+  top:12px;
+  padding:11px 15px;
+  border-radius:8px;
+  background:#fff;
+  color:#0b1c35;
+  font-weight:900;
+  text-decoration:none;
+  transform:translateY(-160%);
+  transition:transform .18s ease;
+}
+.skipLink:focus{transform:translateY(0)}
+.mobileNavToggle{display:none}
+.mobileNavOverlay{position:fixed;inset:0;z-index:1000;background:rgba(2,8,18,.76);backdrop-filter:blur(10px)}
+.mobileNavPanel{position:absolute;right:0;top:0;width:min(90vw,390px);height:100%;padding:24px;background:#07162b;color:#fff;box-shadow:-24px 0 70px rgba(0,0,0,.34);overflow:auto}
+.mobileNavHeader{display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.14)}
+.mobileNavHeader>div{display:flex;flex-direction:column}.mobileNavHeader strong{font-family:Georgia,serif;font-size:24px;letter-spacing:.2em}.mobileNavHeader span{margin-top:5px;color:#d9aa59;font-size:10px;letter-spacing:.48em}
+.mobileNavHeader button{width:42px;height:42px;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:transparent;color:#fff;font-size:28px;cursor:pointer}
+.mobileNavLinks{display:grid;margin-top:20px}.mobileNavLinks a{display:grid;grid-template-columns:34px 1fr auto;align-items:center;min-height:58px;border-bottom:1px solid rgba(255,255,255,.11);color:#fff;text-decoration:none}.mobileNavLinks a span{color:#d8a957;font-size:11px}.mobileNavLinks a strong{font-size:17px}.mobileNavLinks a i{font-style:normal;color:rgba(255,255,255,.52)}
+.mobileNavActions{display:grid;gap:10px;margin-top:28px}.mobileNavActions a,.mobileNavActions button{display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:8px;font-weight:900;text-decoration:none}.mobileNavActions a{border:1px solid rgba(255,255,255,.45);color:#fff}.mobileNavActions button{border:0;background:#d7a64f;color:#0c1c31;cursor:pointer}
+body.mobileNavOpen{overflow:hidden}
+
+@media(max-width:1000px){
+  .mobileNavToggle{display:flex;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;margin-left:auto;margin-right:12px;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:rgba(4,15,31,.22);cursor:pointer}
+  .mobileNavToggle span{display:block;width:18px;height:1px;margin:0 auto;background:#fff}
+  .heroV50Phone{margin-left:0}
+}
+
+@media(max-width:560px){
+  .heroV50Phone{display:none}
+  .heroV50Header{gap:10px}
+  .mobileNavToggle{margin-right:0}
+  .floatingActions a,.floatingActions button{min-height:58px;padding:14px 10px}
+  .floatingActions{box-shadow:0 -10px 32px rgba(0,0,0,.16)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}

@@ -25,7 +25,7 @@ import PrivacyPolicy from "@/components/PrivacyPolicy";
 
 export default function Home() {
   return (
-    <main>
+    <main id="main-content">
       <MetaPixel />
       <GoogleAnalytics />
       <ConversionTracker />

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body><a className="skipLink" href="#main-content">본문으로 바로가기</a>{children}</body>
     </html>
   );
 }

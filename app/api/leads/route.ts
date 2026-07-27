@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { validateLead, type LeadPayload } from "@/lib/lead";
+import { sendMetaLeadEvent } from "@/lib/meta-capi";
 
 export const runtime = "nodejs";
 
@@ -102,8 +103,32 @@ export async function POST(request: NextRequest) {
     if (sheetWebhook) jobs.push(postWebhook(sheetWebhook, lead, secret));
     if (smsWebhook) jobs.push(postWebhook(smsWebhook, lead, secret));
 
+    if (result.data.analyticsConsent && result.data.eventId) {
+      jobs.push(
+        sendMetaLeadEvent({
+          eventId: result.data.eventId,
+          eventSourceUrl: result.data.pageUrl,
+          name: result.data.name,
+          phone: result.data.phone,
+          ip,
+          userAgent: request.headers.get("user-agent") || "",
+          fbp: result.data.fbp,
+          fbc: result.data.fbc,
+          leadId,
+          placement: result.data.placement,
+          source: result.data.source,
+          campaign: result.data.campaign,
+        }).then(() => undefined),
+      );
+    }
+
     if (jobs.length === 0) {
-      console.info("[LEAD:TEST_MODE]", lead);
+      console.info("[LEAD:TEST_MODE]", {
+        leadId,
+        placement: lead.placement,
+        source: lead.source,
+        phoneLast4: lead.phone.slice(-4),
+      });
     } else {
       const settled = await Promise.allSettled(jobs);
       const failed = settled.filter((item) => item.status === "rejected");

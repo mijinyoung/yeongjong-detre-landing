@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { trackEvent } from "@/lib/analytics";
-import { getLeadAttribution, goToThankYou } from "@/lib/client-lead";
+import { trackEvent, trackLeadComplete } from "@/lib/analytics";
+import { createLeadEventId, getLeadAttribution, getMetaLeadContext, goToThankYou } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -65,6 +65,8 @@ export default function LeadModal() {
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
+    const eventId = createLeadEventId();
+    const metaContext = getMetaLeadContext(eventId);
 
     try {
       const response = await fetch("/api/leads", {
@@ -79,6 +81,7 @@ export default function LeadModal() {
           referrer: document.referrer,
           pageUrl: window.location.href,
           placement,
+          ...metaContext,
         }),
       });
 
@@ -87,7 +90,7 @@ export default function LeadModal() {
       setStatus("done");
       setLeadId(String(data.leadId || ""));
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
-      trackEvent("lead_complete", { placement, source: attribution.source });
+      trackLeadComplete(eventId, { placement, source: attribution.source });
       goToThankYou(String(data.leadId || ""), placement);
     } catch (error) {
       setStatus("error");

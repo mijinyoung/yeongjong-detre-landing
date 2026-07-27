@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { trackEvent } from "@/lib/analytics";
-import { formatPhoneInput, getLeadAttribution, goToThankYou } from "@/lib/client-lead";
+import { trackEvent, trackLeadComplete } from "@/lib/analytics";
+import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -31,6 +31,8 @@ export default function LeadSection() {
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
+    const eventId = createLeadEventId();
+    const metaContext = getMetaLeadContext(eventId);
 
     try {
       const response = await fetch("/api/leads", {
@@ -45,6 +47,7 @@ export default function LeadSection() {
           referrer: document.referrer,
           pageUrl: window.location.href,
           placement: "lead-section",
+          ...metaContext,
         }),
       });
       const data = await response.json();
@@ -53,7 +56,7 @@ export default function LeadSection() {
       setStatus("done");
       setLeadId(String(data.leadId || ""));
       setMessage(data.message);
-      trackEvent("lead_complete", { placement: "lead-section", source: attribution.source });
+      trackLeadComplete(eventId, { placement: "lead-section", source: attribution.source });
       goToThankYou(String(data.leadId || ""), "lead-section");
     } catch (error) {
       setStatus("error");

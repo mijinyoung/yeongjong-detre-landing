@@ -30,3 +30,37 @@ export function goToThankYou(leadId: string, placement: string) {
   if (placement) params.set("placement", placement);
   window.location.assign(`/thank-you?${params.toString()}`);
 }
+
+
+function readCookie(name: string) {
+  if (typeof document === "undefined") return "";
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|; )${escaped}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+export function createLeadEventId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `lead-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+export function getMetaLeadContext(eventId: string) {
+  if (typeof window === "undefined") {
+    return {
+      eventId,
+      analyticsConsent: false,
+      fbp: "",
+      fbc: "",
+    };
+  }
+
+  return {
+    eventId,
+    analyticsConsent:
+      window.localStorage.getItem("yd_analytics_consent") === "accepted",
+    fbp: readCookie("_fbp"),
+    fbc: readCookie("_fbc"),
+  };
+}

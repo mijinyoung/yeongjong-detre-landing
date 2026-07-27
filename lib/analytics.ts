@@ -62,3 +62,25 @@ export function openLeadModal(placement: string) {
     new CustomEvent("open-lead-modal", { detail: { placement } }),
   );
 }
+
+
+export function trackLeadComplete(
+  eventId: string,
+  payload: TrackingPayload = {},
+) {
+  if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
+
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: "lead_complete", event_id: eventId, ...payload });
+
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "generate_lead", {
+      event_id: eventId,
+      ...payload,
+    });
+  }
+
+  if (typeof window.fbq === "function") {
+    window.fbq("track", "Lead", payload, { eventID: eventId });
+  }
+}

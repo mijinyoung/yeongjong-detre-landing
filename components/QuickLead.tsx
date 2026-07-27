@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { trackEvent } from "@/lib/analytics";
-import { formatPhoneInput, getLeadAttribution, goToThankYou } from "@/lib/client-lead";
+import { trackEvent, trackLeadComplete } from "@/lib/analytics";
+import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type State = "idle" | "sending" | "done" | "error";
@@ -31,6 +31,8 @@ export default function QuickLead() {
     setState("sending");
     setMessage("");
     const attribution = getLeadAttribution();
+    const eventId = createLeadEventId();
+    const metaContext = getMetaLeadContext(eventId);
 
     try {
       const response = await fetch("/api/leads", {
@@ -45,6 +47,7 @@ export default function QuickLead() {
           referrer: document.referrer,
           pageUrl: window.location.href,
           placement: "quick-lead",
+          ...metaContext,
         }),
       });
 
@@ -56,7 +59,7 @@ export default function QuickLead() {
       setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
       formElement.reset();
       setPhone("");
-      trackEvent("lead_complete", { placement: "quick-lead", source: attribution.source });
+      trackLeadComplete(eventId, { placement: "quick-lead", source: attribution.source });
       goToThankYou(String(data.leadId || ""), "quick-lead");
     } catch (error) {
       setState("error");

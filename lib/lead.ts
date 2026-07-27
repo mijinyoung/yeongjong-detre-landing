@@ -10,6 +10,10 @@ export type LeadPayload = {
   submittedAt?: string;
   website?: string;
   placement?: string;
+  eventId?: string;
+  analyticsConsent?: boolean;
+  fbp?: string;
+  fbc?: string;
 };
 
 export function normalizePhone(value: string) {

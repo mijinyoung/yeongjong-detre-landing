@@ -17,7 +17,7 @@ export function GET() {
 
   return NextResponse.json({
     ok: true,
-    version: "7.2.0",
+    version: "7.3.0",
     productionReady: integrations.googleSheets && integrations.sms,
     integrations,
     checkedAt: new Date().toISOString(),

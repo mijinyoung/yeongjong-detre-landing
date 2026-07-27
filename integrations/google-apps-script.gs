@@ -1,46 +1,24 @@
 /**
- * 영종 디에트르 관심고객 Google Sheets 저장용 Apps Script — v7.2
+ * 영종 디에트르 Google Sheets 저장용 Apps Script — v7.3 Stable
  *
- * 설치 순서
- * 1. Google 스프레드시트 → 확장 프로그램 → Apps Script
- * 2. 이 파일 전체 붙여넣기
- * 3. WEBHOOK_SECRET을 Vercel의 WEBHOOK_SECRET과 동일하게 입력
- * 4. 배포 → 배포 관리 → 기존 웹앱 수정 → 새 버전 → 배포
- *
- * 기존 관심고객 탭이 있어도 누락된 열은 자동으로 추가됩니다.
+ * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
+ * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
  */
-
 const SHEET_NAME = '관심고객';
 const WEBHOOK_SECRET = '여기에-Vercel과-동일한-비밀값-입력';
 
-const HEADERS = [
-  '접수번호',
-  '등록일시',
-  '이름',
-  '휴대폰',
-  '유입경로',
-  '캠페인',
-  '광고소재',
-  '신청위치',
-  '페이지',
-  '이전페이지',
-  '개인정보동의시각',
-  '방문분석동의',
-  'IP',
-  '브라우저',
-  '처리상태',
-  '상담메모',
-  '문자상태',
-  '문자처리시각',
-  '문자상세',
+const REQUIRED_HEADERS = [
+  '접수번호','등록일시','이름','휴대폰','유입경로','캠페인','광고소재',
+  '신청위치','페이지','이전페이지','개인정보동의시각','방문분석동의',
+  'IP','브라우저','처리상태','상담메모','문자상태','문자처리시각','문자상세'
 ];
 
 function doGet() {
   return jsonResponse({
     ok: true,
     service: 'yeongjong-detre-google-sheets',
-    version: '7.2.0',
-    checkedAt: new Date().toISOString(),
+    version: '7.3.0',
+    checkedAt: new Date().toISOString()
   });
 }
 
@@ -49,15 +27,10 @@ function doPost(e) {
 
   try {
     lock.waitLock(5000);
-
     const raw = e && e.postData ? e.postData.contents : '{}';
     const data = JSON.parse(raw || '{}');
 
-    if (
-      WEBHOOK_SECRET &&
-      WEBHOOK_SECRET !== '여기에-Vercel과-동일한-비밀값-입력' &&
-      data._webhookSecret !== WEBHOOK_SECRET
-    ) {
+    if (!isAuthorized(data)) {
       return jsonResponse({ ok: false, message: 'Unauthorized' });
     }
 
@@ -66,159 +39,127 @@ function doPost(e) {
       spreadsheet.getSheetByName(SHEET_NAME) ||
       spreadsheet.insertSheet(SHEET_NAME);
 
-    ensureSheetSchema(sheet);
+    const headerMap = ensureRequiredHeaders(sheet);
 
     if (data.action === 'updateDelivery') {
-      return updateDeliveryStatus(sheet, data);
+      return updateDeliveryStatus(sheet, headerMap, data);
     }
 
-    return appendLead(sheet, data);
+    return appendLead(sheet, headerMap, data);
   } catch (error) {
-    return jsonResponse({
-      ok: false,
-      message: String(error),
-    });
+    return jsonResponse({ ok: false, message: String(error) });
   } finally {
-    try {
-      lock.releaseLock();
-    } catch (_) {}
+    try { lock.releaseLock(); } catch (_) {}
   }
 }
 
-function appendLead(sheet, data) {
-  const leadId = String(data.leadId || '').trim();
+function isAuthorized(data) {
+  if (!WEBHOOK_SECRET ||
+      WEBHOOK_SECRET === '여기에-Vercel과-동일한-비밀값-입력') {
+    return true;
+  }
+  return data._webhookSecret === WEBHOOK_SECRET;
+}
 
-  if (leadId && isDuplicateLead(sheet, leadId)) {
-    return jsonResponse({
-      ok: true,
-      duplicate: true,
-      leadId,
+function ensureRequiredHeaders(sheet) {
+  const lastColumn = Math.max(sheet.getLastColumn(), 1);
+  let headers = [];
+
+  if (sheet.getLastRow() >= 1) {
+    headers = sheet.getRange(1, 1, 1, lastColumn)
+      .getDisplayValues()[0]
+      .map(function(value) { return String(value || '').trim(); });
+  }
+
+  const emptyHeader = headers.every(function(value) { return !value; });
+
+  if (sheet.getLastRow() === 0 || emptyHeader) {
+    sheet.getRange(1, 1, 1, REQUIRED_HEADERS.length)
+      .setValues([REQUIRED_HEADERS]);
+    headers = REQUIRED_HEADERS.slice();
+  } else {
+    REQUIRED_HEADERS.forEach(function(header) {
+      if (headers.indexOf(header) === -1) {
+        sheet.getRange(1, headers.length + 1).setValue(header);
+        headers.push(header);
+      }
     });
   }
 
-  sheet.appendRow([
-    leadId,
-    data.submittedAt || new Date().toISOString(),
-    data.name || '',
-    data.phone || '',
-    data.source || '',
-    data.campaign || '',
-    data.content || '',
-    data.placement || '',
-    data.pageUrl || '',
-    data.referrer || '',
-    data.consentAt || '',
-    data.analyticsConsent ? '동의' : '미동의',
-    data.ip || '',
-    data.userAgent || '',
-    '신규',
-    '',
-    data.smsConfigured === false ? '미설정' : '대기',
-    '',
-    '',
-  ]);
-
-  const lastRow = sheet.getLastRow();
-  sheet.getRange(lastRow, 2).setNumberFormat('yyyy-mm-dd hh:mm:ss');
-  sheet.getRange(lastRow, 11).setNumberFormat('yyyy-mm-dd hh:mm:ss');
-  sheet.getRange(lastRow, 18).setNumberFormat('yyyy-mm-dd hh:mm:ss');
-
-  return jsonResponse({
-    ok: true,
-    leadId,
-    row: lastRow,
+  const map = {};
+  headers.forEach(function(header, index) {
+    if (header) map[header] = index + 1;
   });
+  return map;
 }
 
-function updateDeliveryStatus(sheet, data) {
+function appendLead(sheet, map, data) {
   const leadId = String(data.leadId || '').trim();
-  if (!leadId) {
-    return jsonResponse({ ok: false, message: 'leadId is required' });
+
+  if (leadId && findLeadRow(sheet, map, leadId)) {
+    return jsonResponse({ ok: true, duplicate: true, leadId: leadId });
   }
 
-  const row = findLeadRow(sheet, leadId);
-  if (!row) {
-    return jsonResponse({
-      ok: false,
-      message: 'Lead row not found',
-      leadId,
-    });
-  }
+  const row = new Array(sheet.getLastColumn()).fill('');
+  put(row, map, '접수번호', leadId);
+  put(row, map, '등록일시', data.submittedAt || new Date().toISOString());
+  put(row, map, '이름', data.name || '');
+  put(row, map, '휴대폰', data.phone || '');
+  put(row, map, '유입경로', data.source || '');
+  put(row, map, '캠페인', data.campaign || '');
+  put(row, map, '광고소재', data.content || '');
+  put(row, map, '신청위치', data.placement || '');
+  put(row, map, '페이지', data.pageUrl || '');
+  put(row, map, '이전페이지', data.referrer || '');
+  put(row, map, '개인정보동의시각', data.consentAt || '');
+  put(row, map, '방문분석동의', data.analyticsConsent ? '동의' : '미동의');
+  put(row, map, 'IP', data.ip || '');
+  put(row, map, '브라우저', data.userAgent || '');
+  put(row, map, '처리상태', '신규');
+  put(row, map, '문자상태', data.smsConfigured === false ? '미설정' : '대기');
 
-  sheet.getRange(row, 17).setValue(data.smsStatus || '확인필요');
-  sheet.getRange(row, 18).setValue(data.smsProcessedAt || new Date().toISOString());
-  sheet.getRange(row, 19).setValue(data.smsDetail || '');
-  sheet.getRange(row, 18).setNumberFormat('yyyy-mm-dd hh:mm:ss');
-
-  return jsonResponse({
-    ok: true,
-    updated: true,
-    leadId,
-    row,
-  });
+  sheet.appendRow(row);
+  return jsonResponse({ ok: true, leadId: leadId, row: sheet.getLastRow() });
 }
 
-function ensureSheetSchema(sheet) {
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(HEADERS);
-  }
+function updateDeliveryStatus(sheet, map, data) {
+  const leadId = String(data.leadId || '').trim();
+  const row = findLeadRow(sheet, map, leadId);
 
-  const existingLastColumn = Math.max(sheet.getLastColumn(), 1);
-  const existingHeaders = sheet
-    .getRange(1, 1, 1, existingLastColumn)
-    .getValues()[0]
-    .map(String);
+  if (!leadId) return jsonResponse({ ok: false, message: 'leadId is required' });
+  if (!row) return jsonResponse({ ok: false, message: 'Lead row not found', leadId: leadId });
 
-  HEADERS.forEach(function(header) {
-    if (existingHeaders.indexOf(header) === -1) {
-      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
-      existingHeaders.push(header);
-    }
-  });
+  setByHeader(sheet, row, map, '문자상태', data.smsStatus || '확인필요');
+  setByHeader(sheet, row, map, '문자처리시각',
+    data.smsProcessedAt || new Date().toISOString());
+  setByHeader(sheet, row, map, '문자상세', data.smsDetail || '');
 
-  sheet.setFrozenRows(1);
-
-  const header = sheet.getRange(1, 1, 1, HEADERS.length);
-  header
-    .setFontWeight('bold')
-    .setBackground('#0b1730')
-    .setFontColor('#ffffff');
-
-  const widths = [
-    180, 160, 100, 140, 120, 180, 180, 140, 260, 260,
-    160, 110, 120, 260, 100, 280, 100, 160, 280,
-  ];
-
-  widths.forEach(function(width, index) {
-    sheet.setColumnWidth(index + 1, width);
-  });
-
-  const statusRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(['신규', '연락완료', '상담중', '방문예약', '계약', '보류'], true)
-    .setAllowInvalid(false)
-    .build();
-
-  sheet.getRange('O2:O').setDataValidation(statusRule);
+  return jsonResponse({ ok: true, updated: true, leadId: leadId, row: row });
 }
 
-function findLeadRow(sheet, leadId) {
-  if (sheet.getLastRow() < 2) return 0;
+function findLeadRow(sheet, map, leadId) {
+  const column = map['접수번호'];
+  if (!column || !leadId || sheet.getLastRow() < 2) return 0;
 
-  const finder = sheet
-    .getRange(2, 1, sheet.getLastRow() - 1, 1)
+  const found = sheet.getRange(2, column, sheet.getLastRow() - 1, 1)
     .createTextFinder(leadId)
     .matchEntireCell(true)
     .findNext();
 
-  return finder ? finder.getRow() : 0;
+  return found ? found.getRow() : 0;
 }
 
-function isDuplicateLead(sheet, leadId) {
-  return Boolean(findLeadRow(sheet, leadId));
+function put(row, map, header, value) {
+  const column = map[header];
+  if (column) row[column - 1] = value;
+}
+
+function setByHeader(sheet, row, map, header, value) {
+  const column = map[header];
+  if (column) sheet.getRange(row, column).setValue(value);
 }
 
 function jsonResponse(payload) {
-  return ContentService
-    .createTextOutput(JSON.stringify(payload))
+  return ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 }

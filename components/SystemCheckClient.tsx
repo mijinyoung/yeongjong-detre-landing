@@ -11,6 +11,7 @@ type HealthData = {
     sms: boolean;
     metaPixel: boolean;
     googleAnalytics: boolean;
+    googleAds: boolean;
     metaConversionsApi: boolean;
   };
   checkedAt: string;
@@ -24,6 +25,7 @@ const labels: Array<[keyof HealthData["integrations"], string, string]> = [
   ["metaPixel", "Meta Pixel", "브라우저 광고 전환 측정"],
   ["metaConversionsApi", "Meta CAPI", "서버 광고 전환 측정"],
   ["googleAnalytics", "Google Analytics", "방문 행동 분석"],
+  ["googleAds", "Google Ads", "상담 완료 전환 측정"],
 ];
 
 const setupSteps = [

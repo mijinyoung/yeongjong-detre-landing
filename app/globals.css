@@ -1361,3 +1361,83 @@ body.mobileNavOpen{overflow:hidden}
     width: max(100%, 1180px);
   }
 }
+
+
+/* ===== v7.4 advertising + UI final polish ===== */
+.heroV50Actions button,
+.finalCta button,
+.leadSubmit,
+.floatingActions a,
+.floatingActions button {
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    filter .18s ease;
+}
+
+.heroV50Actions button:hover,
+.finalCta button:hover,
+.leadSubmit:hover,
+.floatingActions a:hover,
+.floatingActions button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+}
+
+.heroV50Actions button:focus-visible,
+.finalCta button:focus-visible,
+.leadSubmit:focus-visible,
+.floatingActions a:focus-visible,
+.floatingActions button:focus-visible {
+  outline: 3px solid rgba(217, 170, 85, .6);
+  outline-offset: 3px;
+}
+
+.floatingActions {
+  padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 760px) {
+  .floatingActions {
+    right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px;
+  }
+
+  .floatingActions a,
+  .floatingActions button {
+    min-height: 54px;
+  }
+
+  .heroV50Content {
+    padding-bottom: 168px;
+  }
+
+  .heroV50Proof {
+    gap: 8px;
+  }
+
+  .heroV50Proof li {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroV50Actions button,
+  .finalCta button,
+  .leadSubmit,
+  .floatingActions a,
+  .floatingActions button {
+    transition: none;
+  }
+
+  .heroV50Actions button:hover,
+  .finalCta button:hover,
+  .leadSubmit:hover,
+  .floatingActions a:hover,
+  .floatingActions button:hover {
+    transform: none;
+  }
+}

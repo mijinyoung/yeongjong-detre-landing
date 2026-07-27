@@ -1261,3 +1261,103 @@ body.mobileNavOpen{overflow:hidden}
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ===== v7.1 brochure image final cleanup ===== */
+.officialV60Panel,
+.floorV60Panel {
+  overflow: hidden;
+  border-radius: 22px;
+}
+
+.officialV61ImageButton,
+.floorV61ImageButton {
+  align-self: stretch;
+  min-height: 0;
+}
+
+.officialV61Image,
+.floorV61Image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.floorV61ImageButton {
+  padding: clamp(10px, 2vw, 24px);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.86), rgba(245,242,235,.94));
+}
+
+.floorV61Image {
+  max-height: none;
+  border-radius: 8px;
+  box-shadow: 0 12px 34px rgba(16, 32, 59, .08);
+}
+
+.officialV61Image {
+  max-height: none;
+}
+
+@media (min-width: 901px) {
+  .floorV60Panel {
+    grid-template-columns: minmax(0, 1.78fr) minmax(310px, .62fr);
+  }
+
+  .floorV61ImageButton {
+    min-height: 560px;
+  }
+}
+
+@media (max-width: 900px) {
+  .officialV60Panel,
+  .floorV60Panel {
+    border-radius: 16px;
+  }
+
+  .officialV61ImageButton,
+  .floorV61ImageButton {
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .officialV61Image,
+  .floorV61Image {
+    width: 100%;
+    height: auto;
+  }
+
+  .floorV60Panel .floorInfo {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .officialV61ImageButton,
+  .floorV61ImageButton {
+    padding: 6px;
+  }
+
+  .floorV61Image {
+    border-radius: 5px;
+    box-shadow: none;
+  }
+
+  .planTabs {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .planTabs button {
+    flex: 0 0 78px;
+    scroll-snap-align: start;
+  }
+
+  .floorZoomCanvas .brochureZoomImage {
+    width: max(100%, 1180px);
+  }
+}

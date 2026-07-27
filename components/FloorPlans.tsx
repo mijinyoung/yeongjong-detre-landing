@@ -81,7 +81,7 @@ export default function FloorPlans() {
               src={plan.image}
               alt={`${plan.id} 타입 공식 평면도`}
               width={1867}
-              height={928}
+              height={882}
               sizes="(max-width: 900px) 100vw, 68vw"
               className="floorV61Image"
             />
@@ -108,7 +108,7 @@ export default function FloorPlans() {
         <div className="brochureZoom" role="dialog" aria-modal="true" aria-label={`${plan.id} 타입 평면도 확대 이미지`} onClick={() => setZoomOpen(false)}>
           <button type="button" className="brochureZoomClose" onClick={() => setZoomOpen(false)} aria-label="확대 이미지 닫기">×</button>
           <div className="brochureZoomCanvas floorZoomCanvas" onClick={(event) => event.stopPropagation()}>
-            <Image src={plan.image} alt={`${plan.id} 타입 공식 평면도`} width={1867} height={928} className="brochureZoomImage" priority />
+            <Image src={plan.image} alt={`${plan.id} 타입 공식 평면도`} width={1867} height={882} className="brochureZoomImage" priority />
           </div>
         </div>
       )}

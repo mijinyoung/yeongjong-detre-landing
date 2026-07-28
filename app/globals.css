@@ -1531,6 +1531,38 @@ body.mobileNavOpen{overflow:hidden}
   pointer-events: none;
 }
 
+.heroV50Play {
+  position: absolute;
+  z-index: 4;
+  top: 42%;
+  left: 50%;
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px;
+  color: #fff;
+  background: rgba(5, 16, 32, .78);
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 999px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, .25);
+  backdrop-filter: blur(8px);
+  transform: translate(-50%, -50%);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.heroV50Play span {
+  color: #d9aa55;
+}
+
+.heroV50Play:focus-visible {
+  outline: 3px solid rgba(217, 170, 85, .78);
+  outline-offset: 4px;
+}
+
 .videoShowcase {
   padding-block: clamp(88px, 10vw, 150px);
   background:
@@ -1694,7 +1726,7 @@ body.mobileNavOpen{overflow:hidden}
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroV50Video { display: none; }
+  .heroV50Video { display: block; }
   .heroV50 {
     background:
       linear-gradient(rgba(5, 16, 35, .35), rgba(5, 16, 35, .7)),
@@ -1799,12 +1831,17 @@ body.mobileNavOpen{overflow:hidden}
 .adminLogin button, .adminToolbar button { min-height: 46px; padding: 0 18px; color: #fff; background: #9c7035; border: 0; border-radius: 9px; font-weight: 900; cursor: pointer; }
 .adminLogin button:disabled { opacity: .6; cursor: wait; }
 .adminMessage { margin: 14px 0 0; padding: 13px 15px; color: #9f2e2e; background: #fff0f0; border-radius: 10px; }
-.adminStats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+.adminStats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 18px 0; }
 .adminStats article { padding: 20px; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
+.adminStats article.attention { background: #fff1ee; box-shadow: inset 0 0 0 1px #f1c8bf; }
+.adminStats article.attention strong { color: #a33b2a; }
 .adminStats span { display: block; margin-bottom: 8px; color: #737b85; font-size: 12px; font-weight: 800; }
 .adminStats strong { font-size: 24px; }
-.adminToolbar { display: flex; gap: 10px; margin-bottom: 12px; }
-.adminToolbar input { background: #fff; }
+.adminToolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.adminToolbar input { flex: 1; background: #fff; }
+.adminToolbar select { min-height: 46px; padding: 0 34px 0 13px; background: #fff; border: 1px solid #d7dce1; border-radius: 9px; font: inherit; }
+.adminToolbar > span { color: #69717c; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.adminToolbar button:disabled { cursor: not-allowed; opacity: .5; }
 .adminTableWrap { overflow-x: auto; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
 .adminTableWrap table { width: 100%; min-width: 920px; border-collapse: collapse; }
 .adminTableWrap th, .adminTableWrap td { padding: 14px 13px; border-bottom: 1px solid #edf0f2; text-align: left; white-space: nowrap; font-size: 13px; }
@@ -1816,6 +1853,9 @@ body.mobileNavOpen{overflow:hidden}
 .adminBadge.failed { color: #a82d2d; background: #ffe5e5; }
 .adminEmpty { padding: 35px; text-align: center; color: #777; }
 .adminFootnote { margin: 18px 0 0; color: #7e8791; font-size: 12px; text-align: center; }
+@media (max-width: 1050px) {
+  .adminStats { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 760px) {
   .adminPage { padding: 28px 12px; }
   .adminHeader { align-items: flex-start; flex-direction: column; }
@@ -1823,6 +1863,7 @@ body.mobileNavOpen{overflow:hidden}
   .adminStats { grid-template-columns: repeat(2, 1fr); }
   .adminStats article { padding: 16px; }
   .adminStats strong { font-size: 20px; }
+  .adminToolbar select { width: 100%; }
 }
 
 /* v9.3 mobile hero: keep the video visible and gather the copy at the bottom */
@@ -1840,6 +1881,13 @@ body.mobileNavOpen{overflow:hidden}
     height: 92px;
     backdrop-filter: blur(7px);
     -webkit-backdrop-filter: blur(7px);
+  }
+
+  .heroV50Play {
+    top: 37%;
+    min-height: 44px;
+    padding-inline: 15px;
+    font-size: 12px;
   }
 
   .heroV50Shade {

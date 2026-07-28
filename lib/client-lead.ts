@@ -2,10 +2,11 @@ export type LeadApiResponse = {
   ok: boolean;
   leadId?: string;
   smsStatus?: string;
+  requestId?: string;
   message: string;
 };
 
-const LEAD_REQUEST_TIMEOUT_MS = 12000;
+const LEAD_REQUEST_TIMEOUT_MS = 15000;
 
 export function formatPhoneInput(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -15,6 +16,10 @@ export function formatPhoneInput(value: string) {
 }
 
 export async function submitLead(payload: Record<string, unknown>): Promise<LeadApiResponse> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    throw new Error("인터넷 연결이 끊겨 있습니다. 연결 상태를 확인한 뒤 다시 시도해 주세요.");
+  }
+
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), LEAD_REQUEST_TIMEOUT_MS);
 
@@ -23,6 +28,8 @@ export async function submitLead(payload: Record<string, unknown>): Promise<Lead
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      cache: "no-store",
+      credentials: "same-origin",
       signal: controller.signal,
     });
 
@@ -45,11 +52,15 @@ export async function submitLead(payload: Record<string, unknown>): Promise<Lead
       ok: true,
       leadId: data.leadId || "",
       smsStatus: data.smsStatus || "",
+      requestId: data.requestId || response.headers.get("x-request-id") || "",
       message: data.message || "관심고객 등록이 완료되었습니다.",
     };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("접수 요청 시간이 초과되었습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.");
+    }
+    if (error instanceof TypeError) {
+      throw new Error("서버에 연결할 수 없습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.");
     }
     throw error;
   } finally {

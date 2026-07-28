@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 import MobileNavigation from "@/components/MobileNavigation";
 
@@ -20,53 +20,86 @@ const facts = [
 
 export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const openForm = (source: string) => openLeadModal(source);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
+
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const saveData = (
       navigator as Navigator & { connection?: { saveData?: boolean } }
     ).connection?.saveData;
 
-    if (reducedMotion || saveData) return;
+    if (reducedMotion || saveData) {
+      const timer = window.setTimeout(() => setPlaybackBlocked(true), 0);
+      return () => window.clearTimeout(timer);
+    }
 
     const syncPlayback = () => {
       if (document.hidden) {
         video.pause();
       } else {
-        void video.play().catch(() => {
-          // Autoplay may be disabled by the browser; the poster remains visible.
-        });
+        void video.play()
+          .then(() => setPlaybackBlocked(false))
+          .catch(() => setPlaybackBlocked(true));
       }
     };
 
     syncPlayback();
+    video.addEventListener("loadeddata", syncPlayback, { once: true });
     document.addEventListener("visibilitychange", syncPlayback);
     return () => {
       document.removeEventListener("visibilitychange", syncPlayback);
+      video.removeEventListener("loadeddata", syncPlayback);
       video.pause();
     };
   }, []);
+
+  async function playVideo() {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      video.muted = true;
+      await video.play();
+      setPlaybackBlocked(false);
+      trackEvent("hero_video_play", { source: "manual-mobile-play" });
+    } catch {
+      setPlaybackBlocked(true);
+    }
+  }
 
   return (
     <section className="heroV50" id="top">
       <video
         ref={videoRef}
         className="heroV50Video"
+        autoPlay
         muted
         loop
         playsInline
-        preload="none"
+        preload="metadata"
         poster="/images/video/hero-poster.jpg"
         aria-label="영종 디에트르 라 메르 주변 드론 영상"
+        onPlay={() => setPlaybackBlocked(false)}
+        onError={() => setPlaybackBlocked(true)}
       >
         <source src="/videos/hero-drone.mp4" type="video/mp4" />
       </video>
       <div className="heroV50StampMask" aria-hidden="true" />
       <div className="heroV50Shade" aria-hidden="true" />
+      {playbackBlocked ? (
+        <button className="heroV50Play" type="button" onClick={() => void playVideo()}>
+          <span aria-hidden="true">▶</span>
+          배경 영상 재생
+        </button>
+      ) : null}
 
       <header className="heroV50Header shell">
         <a className="heroV50Brand" href="#top" aria-label="영종 디에트르 라 메르 홈">

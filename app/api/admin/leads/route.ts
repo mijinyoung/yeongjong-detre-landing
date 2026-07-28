@@ -1,10 +1,10 @@
-import { timingSafeEqual } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { randomUUID, timingSafeEqual } from "node:crypto";
+import { NextRequest } from "next/server";
+import { apiJson } from "@/lib/api-response";
 
 export const runtime = "nodejs";
 
 const FETCH_TIMEOUT_MS = 8000;
-const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
 const AUTH_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_LIMIT = 10;
 const authFailures = new Map<string, number[]>();
@@ -36,22 +36,23 @@ function recordAuthFailure(ip: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = randomUUID();
+
   try {
     const ip = getClientIp(request);
     if (isAuthBlocked(ip)) {
-      return NextResponse.json(
+      return apiJson(
         { ok: false, message: "로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요." },
-        {
-          status: 429,
-          headers: { ...NO_STORE_HEADERS, "Retry-After": "900" },
-        },
+        requestId,
+        { status: 429, headers: { "Retry-After": "900" } },
       );
     }
 
     if (!request.headers.get("content-type")?.includes("application/json")) {
-      return NextResponse.json(
+      return apiJson(
         { ok: false, message: "잘못된 요청 형식입니다." },
-        { status: 415, headers: NO_STORE_HEADERS },
+        requestId,
+        { status: 415 },
       );
     }
 
@@ -59,9 +60,10 @@ export async function POST(request: NextRequest) {
     try {
       body = (await request.json()) as { token?: unknown };
     } catch {
-      return NextResponse.json(
+      return apiJson(
         { ok: false, message: "요청 내용을 확인해 주세요." },
-        { status: 400, headers: NO_STORE_HEADERS },
+        requestId,
+        { status: 400 },
       );
     }
 
@@ -70,18 +72,20 @@ export async function POST(request: NextRequest) {
 
     if (!expectedToken || !token || !safeEqual(token, expectedToken)) {
       recordAuthFailure(ip);
-      return NextResponse.json(
+      return apiJson(
         { ok: false, message: "관리자 비밀번호를 확인해 주세요." },
-        { status: 401, headers: NO_STORE_HEADERS },
+        requestId,
+        { status: 401 },
       );
     }
     authFailures.delete(ip);
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
     if (!sheetWebhook) {
-      return NextResponse.json(
+      return apiJson(
         { ok: false, message: "Google Sheets 연동이 설정되지 않았습니다." },
-        { status: 503, headers: NO_STORE_HEADERS },
+        requestId,
+        { status: 503 },
       );
     }
 
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
       const text = await response.text();
 
       if (!response.ok) {
-        throw new Error(`Google Sheets 응답 오류: ${response.status}`);
+        throw new Error(`Google Sheets response error: ${response.status}`);
       }
 
       const result = JSON.parse(text) as {
@@ -116,23 +120,24 @@ export async function POST(request: NextRequest) {
         throw new Error(result.message || "접수 목록을 불러오지 못했습니다.");
       }
 
-      return NextResponse.json(
+      return apiJson(
         {
           ok: true,
           leads: Array.isArray(result.leads) ? result.leads : [],
           total: Number(result.total || 0),
           updatedAt: result.updatedAt || new Date().toISOString(),
         },
-        { headers: NO_STORE_HEADERS },
+        requestId,
       );
     } finally {
       clearTimeout(timer);
     }
   } catch (error) {
-    console.error("Admin dashboard error", error);
-    return NextResponse.json(
+    console.error("Admin dashboard error", { requestId, error });
+    return apiJson(
       { ok: false, message: "접수 현황을 불러오는 중 오류가 발생했습니다." },
-      { status: 500, headers: NO_STORE_HEADERS },
+      requestId,
+      { status: 500 },
     );
   }
 }

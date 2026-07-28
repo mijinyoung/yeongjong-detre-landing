@@ -18,6 +18,7 @@ type Lead = {
 type DashboardResponse = {
   ok?: boolean;
   message?: string;
+  requestId?: string;
   leads?: Lead[];
   total?: number;
   updatedAt?: string;
@@ -47,19 +48,27 @@ export default function AdminDashboardClient() {
   const [total, setTotal] = useState(0);
   const [updatedAt, setUpdatedAt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
-    if (!keyword) return leads;
-    return leads.filter((lead) =>
-      [lead.leadId, lead.name, lead.phone, lead.source, lead.campaign, lead.status]
+    return leads.filter((lead) => {
+      const matchesKeyword =
+        !keyword ||
+        [lead.leadId, lead.name, lead.phone, lead.source, lead.campaign, lead.placement, lead.status, lead.smsStatus]
         .join(" ")
         .toLowerCase()
-        .includes(keyword),
-    );
-  }, [leads, query]);
+        .includes(keyword);
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "new" && (!lead.status || lead.status === "신규")) ||
+        (statusFilter === "sms-failed" && lead.smsStatus === "실패");
+      return matchesKeyword && matchesStatus;
+    });
+  }, [leads, query, statusFilter]);
 
   const todayCount = useMemo(() => {
     const today = new Date().toLocaleDateString("ko-KR");
@@ -73,6 +82,10 @@ export default function AdminDashboardClient() {
     () => leads.filter((lead) => !lead.status || lead.status === "신규").length,
     [leads],
   );
+  const failedSmsCount = useMemo(
+    () => leads.filter((lead) => lead.smsStatus === "실패").length,
+    [leads],
+  );
 
   async function loadLeads() {
     if (!token.trim()) {
@@ -82,6 +95,8 @@ export default function AdminDashboardClient() {
 
     setLoading(true);
     setMessage("");
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 10000);
 
     try {
       const response = await fetch("/api/admin/leads", {
@@ -89,6 +104,7 @@ export default function AdminDashboardClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: token.trim() }),
         cache: "no-store",
+        signal: controller.signal,
       });
       const raw = await response.text();
       let result: DashboardResponse = {};
@@ -102,9 +118,17 @@ export default function AdminDashboardClient() {
       setLeads(result.leads || []);
       setTotal(result.total || 0);
       setUpdatedAt(result.updatedAt || "");
+      setLoaded(true);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "불러오기에 실패했습니다.");
+      const fallback =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "접수 현황 요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
+          : error instanceof Error
+            ? error.message
+            : "불러오기에 실패했습니다.";
+      setMessage(fallback);
     } finally {
+      window.clearTimeout(timer);
       setLoading(false);
     }
   }
@@ -143,24 +167,31 @@ export default function AdminDashboardClient() {
           </label>
           <small id="admin-token-help">Vercel에 설정한 관리자 비밀번호를 입력하세요.</small>
           <button type="button" onClick={() => void loadLeads()} disabled={loading}>
-            {loading ? "불러오는 중..." : leads.length ? "새로고침" : "접수 현황 열기"}
+            {loading ? "불러오는 중..." : loaded ? "새로고침" : "접수 현황 열기"}
           </button>
         </section>
 
         {message ? <p className="adminMessage" role="alert">{message}</p> : null}
 
-        {leads.length ? (
+        {loaded ? (
           <>
             <section className="adminStats">
               <article><span>전체 누적</span><strong>{total.toLocaleString("ko-KR")}</strong></article>
               <article><span>오늘 접수</span><strong>{todayCount.toLocaleString("ko-KR")}</strong></article>
               <article><span>신규 상담</span><strong>{pendingCount.toLocaleString("ko-KR")}</strong></article>
+              <article className={failedSmsCount ? "attention" : ""}><span>문자 확인 필요</span><strong>{failedSmsCount.toLocaleString("ko-KR")}</strong></article>
               <article><span>최근 갱신</span><strong>{formatDate(updatedAt)}</strong></article>
             </section>
 
             <section className="adminToolbar">
               <input aria-label="접수 목록 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 유입경로 검색" />
-              <button type="button" onClick={downloadCsv}>CSV 내려받기</button>
+              <select aria-label="접수 상태 필터" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                <option value="all">전체 상태</option>
+                <option value="new">신규 상담</option>
+                <option value="sms-failed">문자 실패</option>
+              </select>
+              <span aria-live="polite">표시 {filtered.length.toLocaleString("ko-KR")}건</span>
+              <button type="button" onClick={downloadCsv} disabled={!filtered.length}>CSV 내려받기</button>
             </section>
 
             <section className="adminTableWrap">
@@ -181,7 +212,11 @@ export default function AdminDashboardClient() {
                   ))}
                 </tbody>
               </table>
-              {!filtered.length ? <p className="adminEmpty">검색 결과가 없습니다.</p> : null}
+              {!filtered.length ? (
+                <p className="adminEmpty">
+                  {leads.length ? "검색 조건에 맞는 접수가 없습니다." : "아직 접수된 관심고객이 없습니다."}
+                </p>
+              ) : null}
             </section>
           </>
         ) : null}

@@ -1624,3 +1624,85 @@ body.mobileNavOpen{overflow:hidden}
       url("/images/video/hero-poster.jpg") center / cover no-repeat;
   }
 }
+
+/* v8.2 conversion UX */
+.primaryButton,
+.finalCta button,
+.videoShowcaseCta,
+.floorCta,
+.visitProcess button {
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.primaryButton:hover,
+.finalCta button:hover,
+.videoShowcaseCta:hover,
+.floorCta:hover,
+.visitProcess button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(160, 112, 38, .25);
+  filter: brightness(1.04);
+}
+.primaryButton:active,
+.finalCta button:active,
+.videoShowcaseCta:active,
+.floorCta:active,
+.visitProcess button:active { transform: translateY(0) scale(.985); }
+.primaryButton:disabled { cursor: wait; opacity: .72; transform: none; box-shadow: none; }
+
+.leadModalTrust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 18px 0 22px;
+}
+.leadModalTrust span {
+  padding: 7px 10px;
+  color: #536070;
+  background: #f4f6f8;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.floatingActions {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(18px);
+  transition: opacity .25s ease, transform .25s ease, visibility .25s ease;
+}
+.floatingActions.isVisible { opacity: 1; visibility: visible; transform: translateY(0); }
+.floatingActions a,
+.floatingActions button { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.floatingActions span { display: grid; line-height: 1.12; }
+.floatingActions small { margin-bottom: 4px; opacity: .62; font-size: 10px; font-weight: 700; }
+.floatingIcon { display: inline-block !important; font-size: 18px; }
+
+.thankYouNext {
+  margin: 28px 0 20px;
+  padding: 20px;
+  text-align: left;
+  background: #f6f3ed;
+  border-radius: 14px;
+}
+.thankYouNext strong { display: block; margin-bottom: 12px; color: #8b642d; }
+.thankYouNext ol { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: next-step; }
+.thankYouNext li { counter-increment: next-step; color: #596270; font-size: 13px; line-height: 1.5; }
+.thankYouNext li::before { content: counter(next-step); display: grid; width: 25px; height: 25px; place-items: center; margin-bottom: 7px; color: #fff; background: #b98740; border-radius: 50%; font-size: 11px; font-weight: 900; }
+
+@media (max-width: 900px) {
+  .floatingActions { padding-bottom: env(safe-area-inset-bottom); background: #fff; }
+  .floatingActions a, .floatingActions button { min-height: 64px; }
+}
+@media (max-width: 560px) {
+  .floatingActions a, .floatingActions button { gap: 7px; padding: 10px 7px; font-size: 14px; }
+  .floatingActions small { font-size: 9px; }
+  .floatingIcon { font-size: 16px; }
+  .thankYouNext ol { grid-template-columns: 1fr; gap: 12px; }
+  .thankYouNext li { display: grid; grid-template-columns: 25px 1fr; align-items: center; gap: 10px; }
+  .thankYouNext li::before { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .floatingActions, .primaryButton, .finalCta button, .videoShowcaseCta, .floorCta, .visitProcess button { transition: none; }
+}

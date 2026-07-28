@@ -116,6 +116,9 @@ export default function LeadModal() {
             <p className="leadModalEyebrow">30초 간편 등록</p>
             <h2 id="lead-modal-title">분양가·잔여세대<br />우선 안내</h2>
             <p className="leadModalIntro">연락처를 남겨주시면 담당자가 빠르게 안내드립니다.</p>
+            <div className="leadModalTrust" aria-label="상담 신청 안내">
+              <span>✓ 무료 상담</span><span>✓ 상담 외 사용 없음</span><span>✓ 언제든 취소 가능</span>
+            </div>
             <form className="leadModalForm" onSubmit={submit} noValidate>
               <label>이름<input ref={nameRef} name="name" placeholder="성함을 입력하세요" autoComplete="name" /></label>
               <label>휴대폰 번호<input name="phone" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" /></label>

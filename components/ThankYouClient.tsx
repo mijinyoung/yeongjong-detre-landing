@@ -32,10 +32,14 @@ export default function ThankYouClient() {
         )}
 
         <div className="thankYouActions">
-          <a href="tel:18338384" data-placement="thank-you">전화상담 1833-8384</a>
+          <a href="tel:18338384" data-placement="thank-you" onClick={() => trackEvent("phone_click", { placement: "thank-you" })}>전화상담 1833-8384</a>
           <a href="/" className="secondary">홈페이지로 돌아가기</a>
         </div>
 
+        <div className="thankYouNext">
+          <strong>상담 진행 순서</strong>
+          <ol><li>접수 내용 확인</li><li>담당자 전화 안내</li><li>방문 및 상세 상담</li></ol>
+        </div>
         <small>접수번호를 보관하시면 상담 확인에 도움이 됩니다.</small>
       </section>
     </main>

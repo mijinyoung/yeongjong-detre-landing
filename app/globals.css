@@ -1831,6 +1831,7 @@ body.mobileNavOpen{overflow:hidden}
 .adminLogin button, .adminToolbar button { min-height: 46px; padding: 0 18px; color: #fff; background: #9c7035; border: 0; border-radius: 9px; font-weight: 900; cursor: pointer; }
 .adminLogin button:disabled { opacity: .6; cursor: wait; }
 .adminMessage { margin: 14px 0 0; padding: 13px 15px; color: #9f2e2e; background: #fff0f0; border-radius: 10px; }
+.adminSaveNotice { min-height: 22px; margin: 12px 0 0; color: #276447; font-size: 13px; font-weight: 800; }
 .adminStats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 18px 0; }
 .adminStats article { padding: 20px; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
 .adminStats article.attention { background: #fff1ee; box-shadow: inset 0 0 0 1px #f1c8bf; }
@@ -1843,11 +1844,17 @@ body.mobileNavOpen{overflow:hidden}
 .adminToolbar > span { color: #69717c; font-size: 12px; font-weight: 800; white-space: nowrap; }
 .adminToolbar button:disabled { cursor: not-allowed; opacity: .5; }
 .adminTableWrap { overflow-x: auto; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
-.adminTableWrap table { width: 100%; min-width: 920px; border-collapse: collapse; }
+.adminTableWrap table { width: 100%; min-width: 1240px; border-collapse: collapse; }
 .adminTableWrap th, .adminTableWrap td { padding: 14px 13px; border-bottom: 1px solid #edf0f2; text-align: left; white-space: nowrap; font-size: 13px; }
 .adminTableWrap th { color: #626b76; background: #f8f9fa; font-size: 11px; }
+.adminTableWrap tr.saved td { background: #f2fbf6; }
 .adminTableWrap td small { display: block; margin-bottom: 4px; color: #9aa1a9; font-size: 9px; }
 .adminTableWrap td a { color: #835b26; font-weight: 900; }
+.adminStatusSelect { min-width: 104px; height: 38px; padding: 0 28px 0 10px; background: #fff; border: 1px solid #d7dce1; border-radius: 8px; font: inherit; }
+.adminMemo { display: block; width: 230px; min-height: 64px; resize: vertical; padding: 9px 10px; border: 1px solid #d7dce1; border-radius: 8px; font: inherit; line-height: 1.45; white-space: normal; }
+.adminStatusSelect:focus-visible, .adminMemo:focus-visible { outline: 3px solid rgba(156, 112, 53, .2); border-color: #9c7035; }
+.adminSaveButton { min-width: 66px; min-height: 38px; padding: 0 12px; color: #fff; background: #835b26; border: 0; border-radius: 8px; font-weight: 900; cursor: pointer; }
+.adminSaveButton:disabled { color: #8b929a; background: #e8ebee; cursor: default; }
 .adminBadge { display: inline-flex; padding: 5px 8px; background: #eef1f3; border-radius: 999px; font-size: 10px; font-weight: 900; }
 .adminBadge.new { color: #7a541f; background: #fff1d9; }
 .adminBadge.failed { color: #a82d2d; background: #ffe5e5; }
@@ -1892,8 +1899,8 @@ body.mobileNavOpen{overflow:hidden}
 
   .heroV50Shade {
     background:
-      linear-gradient(180deg, rgba(4, 11, 22, .42) 0%, rgba(4, 11, 22, .08) 17%, transparent 34%),
-      linear-gradient(0deg, rgba(4, 11, 22, .97) 0%, rgba(4, 11, 22, .82) 31%, rgba(4, 11, 22, .18) 58%, transparent 76%);
+      linear-gradient(180deg, rgba(4, 11, 22, .25) 0%, rgba(4, 11, 22, .03) 17%, transparent 34%),
+      linear-gradient(0deg, rgba(4, 11, 22, .89) 0%, rgba(4, 11, 22, .67) 31%, rgba(4, 11, 22, .1) 58%, transparent 76%);
   }
 
   .heroV50Content {

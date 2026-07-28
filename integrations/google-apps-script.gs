@@ -1,5 +1,5 @@
 /**
- * 영종 디에트르 Google Sheets 저장·관리자 조회용 Apps Script — v8.3
+ * 영종 디에트르 Google Sheets 저장·관리자 운영용 Apps Script — v9.6
  *
  * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
@@ -26,7 +26,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: 'yeongjong-detre-google-sheets',
-    version: '8.3.0',
+    version: '9.6.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -52,6 +52,10 @@ function doPost(e) {
 
     if (data.action === 'updateDelivery') {
       return updateDeliveryStatus(sheet, headerMap, data);
+    }
+
+    if (data.action === 'updateLead') {
+      return updateLeadStatus(sheet, headerMap, data);
     }
 
     return appendLead(sheet, headerMap, data);
@@ -146,6 +150,32 @@ function updateDeliveryStatus(sheet, map, data) {
   return jsonResponse({ ok: true, updated: true, leadId: leadId, row: row });
 }
 
+function updateLeadStatus(sheet, map, data) {
+  const leadId = String(data.leadId || '').trim();
+  const status = String(data.status || '').trim();
+  const memo = String(data.memo || '').trim().slice(0, 1000);
+  const allowedStatuses = ['신규', '연락완료', '상담중', '방문예약', '계약', '보류'];
+  const row = findLeadRow(sheet, map, leadId);
+
+  if (!leadId) return jsonResponse({ ok: false, message: 'leadId is required' });
+  if (!row) return jsonResponse({ ok: false, message: 'Lead row not found', leadId: leadId });
+  if (allowedStatuses.indexOf(status) === -1) {
+    return jsonResponse({ ok: false, message: 'Invalid status' });
+  }
+
+  setByHeader(sheet, row, map, '처리상태', status);
+  setByHeader(sheet, row, map, '상담메모', memo);
+
+  return jsonResponse({
+    ok: true,
+    updated: true,
+    leadId: leadId,
+    status: status,
+    memo: memo,
+    row: row
+  });
+}
+
 
 function listLeads(params) {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -179,7 +209,8 @@ function listLeads(params) {
       campaign: read(row, map, '캠페인'),
       placement: read(row, map, '신청위치'),
       status: read(row, map, '처리상태') || '신규',
-      smsStatus: read(row, map, '문자상태')
+      smsStatus: read(row, map, '문자상태'),
+      memo: read(row, map, '상담메모')
     };
   });
 

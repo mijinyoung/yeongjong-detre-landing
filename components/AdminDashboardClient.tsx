@@ -13,6 +13,7 @@ type Lead = {
   placement: string;
   status: string;
   smsStatus: string;
+  memo: string;
 };
 
 type DashboardResponse = {
@@ -23,6 +24,8 @@ type DashboardResponse = {
   total?: number;
   updatedAt?: string;
 };
+
+const STATUS_OPTIONS = ["신규", "연락완료", "상담중", "방문예약", "계약", "보류"];
 
 function formatDate(value: string) {
   if (!value) return "-";
@@ -50,22 +53,27 @@ export default function AdminDashboardClient() {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [drafts, setDrafts] = useState<Record<string, { status: string; memo: string }>>({});
+  const [savingId, setSavingId] = useState("");
+  const [savedId, setSavedId] = useState("");
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     return leads.filter((lead) => {
       const matchesKeyword =
         !keyword ||
-        [lead.leadId, lead.name, lead.phone, lead.source, lead.campaign, lead.placement, lead.status, lead.smsStatus]
+        [lead.leadId, lead.name, lead.phone, lead.source, lead.campaign, lead.placement, lead.status, lead.smsStatus, lead.memo]
         .join(" ")
         .toLowerCase()
         .includes(keyword);
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "new" && (!lead.status || lead.status === "신규")) ||
-        (statusFilter === "sms-failed" && lead.smsStatus === "실패");
+        (statusFilter === "sms-failed" && lead.smsStatus === "실패") ||
+        (statusFilter.startsWith("status:") && lead.status === statusFilter.slice(7));
       return matchesKeyword && matchesStatus;
     });
   }, [leads, query, statusFilter]);
@@ -115,7 +123,16 @@ export default function AdminDashboardClient() {
       }
       if (!response.ok || !result.ok) throw new Error(result.message || "불러오기에 실패했습니다.");
 
-      setLeads(result.leads || []);
+      const nextLeads = result.leads || [];
+      setLeads(nextLeads);
+      setDrafts(
+        Object.fromEntries(
+          nextLeads.map((lead) => [
+            lead.leadId,
+            { status: lead.status || "신규", memo: lead.memo || "" },
+          ]),
+        ),
+      );
       setTotal(result.total || 0);
       setUpdatedAt(result.updatedAt || "");
       setLoaded(true);
@@ -133,11 +150,69 @@ export default function AdminDashboardClient() {
     }
   }
 
+  function updateDraft(leadId: string, patch: Partial<{ status: string; memo: string }>) {
+    setDrafts((current) => ({
+      ...current,
+      [leadId]: {
+        status: current[leadId]?.status || "신규",
+        memo: current[leadId]?.memo || "",
+        ...patch,
+      },
+    }));
+    setSavedId("");
+    setSaveMessage("");
+  }
+
+  async function saveLead(lead: Lead) {
+    const draft = drafts[lead.leadId] || {
+      status: lead.status || "신규",
+      memo: lead.memo || "",
+    };
+
+    setSavingId(lead.leadId);
+    setSavedId("");
+    setSaveMessage("");
+
+    try {
+      const response = await fetch("/api/admin/leads/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: token.trim(),
+          leadId: lead.leadId,
+          status: draft.status,
+          memo: draft.memo,
+        }),
+        cache: "no-store",
+      });
+      const result = (await response.json()) as DashboardResponse;
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message || "상담 정보를 저장하지 못했습니다.");
+      }
+
+      setLeads((current) =>
+        current.map((item) =>
+          item.leadId === lead.leadId
+            ? { ...item, status: draft.status, memo: draft.memo.trim() }
+            : item,
+        ),
+      );
+      setSavedId(lead.leadId);
+      setSaveMessage(`${lead.name || "고객"}님의 상담 정보를 저장했습니다.`);
+    } catch (error) {
+      setSaveMessage(
+        error instanceof Error ? error.message : "상담 정보를 저장하지 못했습니다.",
+      );
+    } finally {
+      setSavingId("");
+    }
+  }
+
   function downloadCsv() {
-    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "캠페인", "신청위치", "처리상태", "문자상태"];
+    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "캠페인", "신청위치", "처리상태", "상담메모", "문자상태"];
     const rows = filtered.map((lead) => [
       lead.leadId, lead.submittedAt, lead.name, lead.phone, lead.source,
-      lead.campaign, lead.placement, lead.status, lead.smsStatus,
+      lead.campaign, lead.placement, lead.status, lead.memo, lead.smsStatus,
     ]);
     const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -172,6 +247,7 @@ export default function AdminDashboardClient() {
         </section>
 
         {message ? <p className="adminMessage" role="alert">{message}</p> : null}
+        <p className="adminSaveNotice" aria-live="polite">{saveMessage}</p>
 
         {loaded ? (
           <>
@@ -188,6 +264,11 @@ export default function AdminDashboardClient() {
               <select aria-label="접수 상태 필터" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="all">전체 상태</option>
                 <option value="new">신규 상담</option>
+                <option value="status:연락완료">연락완료</option>
+                <option value="status:상담중">상담중</option>
+                <option value="status:방문예약">방문예약</option>
+                <option value="status:계약">계약</option>
+                <option value="status:보류">보류</option>
                 <option value="sms-failed">문자 실패</option>
               </select>
               <span aria-live="polite">표시 {filtered.length.toLocaleString("ko-KR")}건</span>
@@ -197,19 +278,58 @@ export default function AdminDashboardClient() {
             <section className="adminTableWrap">
               <table>
                 <caption className="srOnly">최근 관심고객 접수 목록</caption>
-                <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>문자</th></tr></thead>
+                <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>상담 메모</th><th>문자</th><th>저장</th></tr></thead>
                 <tbody>
-                  {filtered.map((lead) => (
-                    <tr key={lead.leadId}>
+                  {filtered.map((lead) => {
+                    const draft = drafts[lead.leadId] || {
+                      status: lead.status || "신규",
+                      memo: lead.memo || "",
+                    };
+                    const changed =
+                      draft.status !== (lead.status || "신규") ||
+                      draft.memo.trim() !== (lead.memo || "").trim();
+
+                    return (
+                    <tr key={lead.leadId} className={savedId === lead.leadId ? "saved" : ""}>
                       <td><small>{lead.leadId}</small>{formatDate(lead.submittedAt)}</td>
                       <td><strong>{lead.name || "-"}</strong></td>
                       <td><a href={`tel:${lead.phone.replaceAll("-", "")}`}>{lead.phone || "-"}</a></td>
                       <td>{lead.source || lead.campaign || "직접 방문"}</td>
                       <td>{lead.placement || "-"}</td>
-                      <td><span className={`adminBadge ${lead.status === "신규" ? "new" : ""}`}>{lead.status || "신규"}</span></td>
+                      <td>
+                        <select
+                          className="adminStatusSelect"
+                          aria-label={`${lead.name || "고객"} 처리 상태`}
+                          value={draft.status}
+                          onChange={(event) => updateDraft(lead.leadId, { status: event.target.value })}
+                        >
+                          {STATUS_OPTIONS.map((status) => <option key={status}>{status}</option>)}
+                        </select>
+                      </td>
+                      <td>
+                        <textarea
+                          className="adminMemo"
+                          aria-label={`${lead.name || "고객"} 상담 메모`}
+                          value={draft.memo}
+                          maxLength={1000}
+                          placeholder="상담 내용 입력"
+                          onChange={(event) => updateDraft(lead.leadId, { memo: event.target.value })}
+                        />
+                      </td>
                       <td><span className={`adminBadge ${lead.smsStatus === "실패" ? "failed" : ""}`}>{lead.smsStatus || "-"}</span></td>
+                      <td>
+                        <button
+                          className="adminSaveButton"
+                          type="button"
+                          disabled={!changed || savingId === lead.leadId}
+                          onClick={() => void saveLead(lead)}
+                        >
+                          {savingId === lead.leadId ? "저장 중" : savedId === lead.leadId ? "완료" : "저장"}
+                        </button>
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
               {!filtered.length ? (

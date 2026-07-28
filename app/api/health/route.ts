@@ -23,7 +23,7 @@ export function GET(request: NextRequest) {
     return apiJson(
       {
         ok: true,
-        version: "9.5.0",
+        version: "9.6.0",
         authenticated: false,
         checkedAt: new Date().toISOString(),
       },
@@ -64,7 +64,7 @@ export function GET(request: NextRequest) {
   return apiJson(
     {
       ok: true,
-      version: "9.5.0",
+      version: "9.6.0",
       authenticated: true,
       productionReady: integrations.googleSheets && integrations.sms,
       integrations,

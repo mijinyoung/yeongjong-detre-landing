@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 import MobileNavigation from "@/components/MobileNavigation";
 
@@ -23,14 +22,18 @@ export default function Hero() {
 
   return (
     <section className="heroV50" id="top">
-      <Image
-        src="/images/hero-v2.png"
-        alt="영종 디에트르 라 메르 투시도"
-        fill
-        priority
-        sizes="100vw"
-        className="heroV50Image"
-      />
+      <video
+        className="heroV50Video"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        poster="/images/video/hero-poster.jpg"
+        aria-label="영종 디에트르 라 메르 주변 드론 영상"
+      >
+        <source src="/videos/hero-drone.mp4" type="video/mp4" />
+      </video>
       <div className="heroV50Shade" aria-hidden="true" />
 
       <header className="heroV50Header shell">
@@ -40,6 +43,7 @@ export default function Hero() {
         </a>
 
         <nav className="heroV50Nav" aria-label="주요 메뉴">
+          <a href="#brand-film">홍보영상</a>
           <a href="#why-now">핵심가치</a>
           <a href="#business-overview">사업개요</a>
           <a href="#location-v3">입지환경</a>

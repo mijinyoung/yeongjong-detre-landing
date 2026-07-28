@@ -65,6 +65,7 @@ export default function Hero() {
       >
         <source src="/videos/hero-drone.mp4" type="video/mp4" />
       </video>
+      <div className="heroV50StampMask" aria-hidden="true" />
       <div className="heroV50Shade" aria-hidden="true" />
 
       <header className="heroV50Header shell">

@@ -905,6 +905,48 @@ body.mobileNavOpen{overflow:hidden}
   line-height: 1.8;
 }
 
+.systemAuthSection {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, 1fr) auto;
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 24px;
+  padding: 26px 28px;
+  background: #fff;
+  border: 1px solid rgba(16, 32, 59, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 16px 50px rgba(16, 32, 59, 0.06);
+}
+
+.systemAuthSection h2 {
+  margin: 0;
+  color: #10203b;
+  font-size: 22px;
+}
+
+.systemAuthSection p:not(.systemCheckEyebrow) {
+  margin: 8px 0 0;
+  color: #687487;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.systemAuthSection > button {
+  min-height: 52px;
+  padding: 0 20px;
+  color: #fff;
+  background: #0b1730;
+  border: 0;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.systemAuthSection > button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
 .systemCheckSummary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -937,7 +979,7 @@ body.mobileNavOpen{overflow:hidden}
 
 .systemCheckGrid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -1023,6 +1065,11 @@ body.mobileNavOpen{overflow:hidden}
 }
 
 @media (max-width: 900px) {
+  .systemAuthSection {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
   .systemCheckGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1054,6 +1101,10 @@ body.mobileNavOpen{overflow:hidden}
   .systemCheckActions {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .systemAuthSection {
+    padding: 22px 20px;
   }
 }
 
@@ -1460,6 +1511,26 @@ body.mobileNavOpen{overflow:hidden}
   z-index: 0;
 }
 
+.heroV50StampMask {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: clamp(300px, 38vw, 560px);
+  height: 150px;
+  background: linear-gradient(
+    125deg,
+    rgba(4, 13, 27, .96) 0%,
+    rgba(5, 16, 32, .84) 48%,
+    rgba(5, 16, 32, .32) 76%,
+    transparent 100%
+  );
+  backdrop-filter: blur(9px);
+  -webkit-mask-image: linear-gradient(110deg, #000 0 58%, transparent 100%);
+  mask-image: linear-gradient(110deg, #000 0 58%, transparent 100%);
+  pointer-events: none;
+}
+
 .videoShowcase {
   padding-block: clamp(88px, 10vw, 150px);
   background:
@@ -1752,4 +1823,94 @@ body.mobileNavOpen{overflow:hidden}
   .adminStats { grid-template-columns: repeat(2, 1fr); }
   .adminStats article { padding: 16px; }
   .adminStats strong { font-size: 20px; }
+}
+
+/* v9.3 mobile hero: keep the video visible and gather the copy at the bottom */
+@media (max-width: 760px) {
+  .heroV50 {
+    min-height: max(100svh, 720px);
+  }
+
+  .heroV50Video {
+    object-position: 58% center;
+  }
+
+  .heroV50StampMask {
+    width: 210px;
+    height: 92px;
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .heroV50Shade {
+    background:
+      linear-gradient(180deg, rgba(4, 11, 22, .42) 0%, rgba(4, 11, 22, .08) 17%, transparent 34%),
+      linear-gradient(0deg, rgba(4, 11, 22, .97) 0%, rgba(4, 11, 22, .82) 31%, rgba(4, 11, 22, .18) 58%, transparent 76%);
+  }
+
+  .heroV50Content {
+    min-height: max(100svh, 720px);
+    align-items: flex-end;
+    padding: 46svh 18px 92px;
+  }
+
+  .heroV50Copy {
+    width: 100%;
+  }
+
+  .heroV50Eyebrow {
+    margin-bottom: 8px;
+    font-size: 8px;
+    letter-spacing: .18em;
+  }
+
+  .heroV50Copy h1 {
+    font-size: clamp(32px, 9.5vw, 44px);
+    line-height: 1.04;
+  }
+
+  .heroV50Project {
+    margin-top: 7px;
+    font-size: clamp(20px, 5.7vw, 25px);
+  }
+
+  .heroV50Description,
+  .heroV50Proof {
+    display: none;
+  }
+
+  .heroV50Actions {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .heroV50Actions a,
+  .heroV50Actions button {
+    min-height: 46px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .heroV50Facts {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+    bottom: 12px;
+  }
+
+  .heroV50Facts li {
+    min-height: 56px;
+    padding: 9px 4px;
+  }
+
+  .heroV50Facts strong {
+    font-size: 13px;
+  }
+
+  .heroV50Facts span {
+    font-size: 8px;
+  }
+
+  .heroV50Scroll {
+    display: none;
+  }
 }

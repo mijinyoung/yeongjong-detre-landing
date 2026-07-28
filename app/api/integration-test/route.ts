@@ -1,5 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { apiJson } from "@/lib/api-response";
 import { isSolapiConfigured, sendSolapiLeadNotification } from "@/lib/solapi";
 
 export const runtime = "nodejs";
@@ -79,11 +80,17 @@ function createTestLead() {
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = randomUUID();
+  const respond = (
+    body: Record<string, unknown>,
+    init: ResponseInit = {},
+  ) => apiJson(body, requestId, init);
+
   try {
     const configuredToken = process.env.SYSTEM_CHECK_TOKEN;
 
     if (!configuredToken) {
-      return NextResponse.json(
+      return respond(
         {
           ok: false,
           message:
@@ -102,14 +109,14 @@ export async function POST(request: NextRequest) {
       !input.token ||
       !safeEqual(input.token.trim(), configuredToken.trim())
     ) {
-      return NextResponse.json(
+      return respond(
         { ok: false, message: "점검용 비밀번호가 올바르지 않습니다." },
         { status: 401 },
       );
     }
 
     if (input.target !== "googleSheets" && input.target !== "sms") {
-      return NextResponse.json(
+      return respond(
         { ok: false, message: "점검 대상을 선택해 주세요." },
         { status: 400 },
       );
@@ -121,7 +128,7 @@ export async function POST(request: NextRequest) {
     if (input.target === "googleSheets") {
       const url = process.env.GOOGLE_SHEET_WEBHOOK_URL;
       if (!url) {
-        return NextResponse.json(
+        return respond(
           { ok: false, message: "GOOGLE_SHEET_WEBHOOK_URL이 설정되지 않았습니다." },
           { status: 503 },
         );
@@ -137,13 +144,13 @@ export async function POST(request: NextRequest) {
       const result = await sendSolapiLeadNotification(lead);
       responsePreview = result.sent ? `SOLAPI group: ${result.groupId || "registered"}` : "";
     } else {
-      return NextResponse.json(
+      return respond(
         { ok: false, message: "SOLAPI 문자 환경변수가 설정되지 않았습니다." },
         { status: 503 },
       );
     }
 
-    return NextResponse.json({
+    return respond({
       ok: true,
       target: input.target,
       leadId: lead.leadId,
@@ -154,15 +161,12 @@ export async function POST(request: NextRequest) {
       responsePreview,
     });
   } catch (error) {
-    console.error("Integration test failed", error);
+    console.error("Integration test failed", { requestId, error });
 
-    return NextResponse.json(
+    return respond(
       {
         ok: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "연동 테스트 중 오류가 발생했습니다.",
+        message: "연동 테스트 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
       },
       { status: 502 },
     );

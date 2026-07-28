@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 type HealthData = {
@@ -16,6 +16,7 @@ type HealthData = {
     metaConversionsApi: boolean;
   };
   checkedAt: string;
+  requestId?: string;
 };
 
 type TestTarget = "googleSheets" | "sms";
@@ -60,6 +61,7 @@ export default function SystemCheckClient() {
   const [data, setData] = useState<HealthData | null>(null);
   const [error, setError] = useState("");
   const [token, setToken] = useState("");
+  const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState<TestTarget | null>(null);
   const [testResult, setTestResult] = useState<{
     ok: boolean;
@@ -68,19 +70,39 @@ export default function SystemCheckClient() {
   } | null>(null);
 
   async function load() {
-    await Promise.resolve();
+    if (!token.trim()) {
+      setError("SYSTEM_CHECK_TOKEN을 입력해 주세요.");
+      setData(null);
+      return;
+    }
+
+    setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/health", { cache: "no-store" });
-      if (!response.ok) throw new Error("상태 정보를 불러오지 못했습니다.");
-      setData((await response.json()) as HealthData);
+      const response = await fetch("/api/health", {
+        cache: "no-store",
+        headers: { "x-system-check-token": token.trim() },
+      });
+      const result = (await response.json()) as HealthData & { message?: string };
+      if (!response.ok || !result.ok) {
+        const detail = result.requestId
+          ? ` (요청 ID: ${result.requestId})`
+          : "";
+        throw new Error(
+          `${result.message || "상태 정보를 불러오지 못했습니다."}${detail}`,
+        );
+      }
+      setData(result);
     } catch (loadError) {
+      setData(null);
       setError(
         loadError instanceof Error
           ? loadError.message
           : "상태 정보를 불러오지 못했습니다.",
       );
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -107,12 +129,19 @@ export default function SystemCheckClient() {
         ok?: boolean;
         message?: string;
         leadId?: string;
+        requestId?: string;
       };
 
       setTestResult({
         ok: Boolean(response.ok && result.ok),
         message:
-          result.message ||
+          (result.message
+            ? `${result.message}${
+                !response.ok && result.requestId
+                  ? ` (요청 ID: ${result.requestId})`
+                  : ""
+              }`
+            : "") ||
           (response.ok
             ? "테스트 전송이 완료되었습니다."
             : "테스트 전송에 실패했습니다."),
@@ -135,11 +164,6 @@ export default function SystemCheckClient() {
     }
   }
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => void load(), 0);
-    return () => window.clearTimeout(timer);
-  }, []);
-
   return (
     <main className="systemCheckPage" id="main-content">
       <div className="systemCheckShell">
@@ -150,12 +174,36 @@ export default function SystemCheckClient() {
           Google Sheets와 문자 알림에 테스트 데이터를 직접 전송할 수 있습니다.
         </p>
 
-        {error ? <p className="systemCheckError">{error}</p> : null}
+        {error ? <p className="systemCheckError" role="alert">{error}</p> : null}
+
+        <section className="systemAuthSection" aria-labelledby="system-auth-title">
+          <div>
+            <p className="systemCheckEyebrow">SECURE ACCESS</p>
+            <h2 id="system-auth-title">운영 상태 인증</h2>
+            <p>연동 설정 정보는 운영 점검 비밀번호 확인 후에만 표시됩니다.</p>
+          </div>
+          <label className="systemTokenField">
+            <span>운영 점검 비밀번호</span>
+            <input
+              type="password"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") void load();
+              }}
+              placeholder="SYSTEM_CHECK_TOKEN"
+              autoComplete="current-password"
+            />
+          </label>
+          <button type="button" onClick={() => void load()} disabled={loading}>
+            {loading ? "확인 중..." : data ? "상태 새로고침" : "운영 상태 확인"}
+          </button>
+        </section>
 
         <div className="systemCheckSummary">
           <div>
             <span>현재 버전</span>
-            <strong>{data?.version || "확인 중"}</strong>
+            <strong>{data?.version || "인증 필요"}</strong>
           </div>
           <div>
             <span>운영 준비</span>
@@ -164,7 +212,7 @@ export default function SystemCheckClient() {
                 ? data.productionReady
                   ? "핵심 연동 완료"
                   : "추가 설정 필요"
-                : "확인 중"}
+                : "인증 필요"}
             </strong>
           </div>
         </div>
@@ -180,7 +228,7 @@ export default function SystemCheckClient() {
                     configured ? "configured" : ""
                   }`}
                 >
-                  {configured ? "연결됨" : "미설정"}
+                  {data ? (configured ? "연결됨" : "미설정") : "인증 필요"}
                 </span>
                 <h2>{title}</h2>
                 <p>{description}</p>
@@ -223,17 +271,6 @@ export default function SystemCheckClient() {
             </p>
           </div>
 
-          <label className="systemTokenField">
-            <span>점검용 비밀번호</span>
-            <input
-              type="password"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-              placeholder="SYSTEM_CHECK_TOKEN"
-              autoComplete="off"
-            />
-          </label>
-
           <div className="systemTestButtons">
             <button
               type="button"
@@ -270,8 +307,8 @@ export default function SystemCheckClient() {
         </section>
 
         <div className="systemCheckActions">
-          <button type="button" onClick={() => void load()}>
-            상태 새로고침
+          <button type="button" onClick={() => void load()} disabled={loading}>
+            {loading ? "확인 중..." : "상태 새로고침"}
           </button>
           <Link href="/">홈페이지로 돌아가기</Link>
         </div>

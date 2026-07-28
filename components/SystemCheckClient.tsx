@@ -141,7 +141,7 @@ export default function SystemCheckClient() {
   }, []);
 
   return (
-    <main className="systemCheckPage">
+    <main className="systemCheckPage" id="main-content">
       <div className="systemCheckShell">
         <p className="systemCheckEyebrow">OPERATION CHECK</p>
         <h1>홈페이지 운영 연결 상태</h1>

@@ -36,7 +36,9 @@ function formatDate(value: string) {
 }
 
 function escapeCsv(value: unknown) {
-  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const text = String(value ?? "");
+  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+  return `"${safe.replaceAll('"', '""')}"`;
 }
 
 export default function AdminDashboardClient() {
@@ -123,7 +125,7 @@ export default function AdminDashboardClient() {
   }
 
   return (
-    <main className="adminPage">
+    <main className="adminPage" id="main-content">
       <div className="adminShell">
         <header className="adminHeader">
           <div>

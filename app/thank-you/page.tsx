@@ -17,7 +17,7 @@ export default function ThankYouPage() {
       <MetaPixel />
       <GoogleAnalytics />
       <ConversionTracker />
-      <Suspense fallback={<main className="thankYouPage" />}>
+      <Suspense fallback={<main className="thankYouPage" id="main-content" />}>
         <ThankYouClient />
       </Suspense>
     </>

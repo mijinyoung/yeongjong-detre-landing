@@ -332,7 +332,8 @@
   gap: 12px;
   margin-top: 28px;
 }
-.thankYouActions a {
+.thankYouActions a,
+.thankYouActions button {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -342,8 +343,12 @@
   color: #07172e;
   font-weight: 900;
   text-decoration: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
 }
-.thankYouActions a.secondary {
+.thankYouActions a.secondary,
+.thankYouActions button.secondary {
   border: 1px solid rgba(255,255,255,.28);
   background: transparent;
   color: #fff;

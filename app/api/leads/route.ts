@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { after, NextRequest, NextResponse } from "next/server";
-import { validateLead, type LeadPayload } from "@/lib/lead";
+import { validateLead } from "@/lib/lead";
 import { sendMetaLeadEvent } from "@/lib/meta-capi";
 import { sendSolapiLeadNotification } from "@/lib/solapi";
 
@@ -10,6 +10,7 @@ const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 5;
 const DUPLICATE_WINDOW_MS = 60 * 1000;
 const WEBHOOK_TIMEOUT_MS = 7000;
+const MAX_BODY_BYTES = 16 * 1024;
 
 const rateStore = new Map<string, number[]>();
 type DuplicateRecord = {
@@ -94,6 +95,21 @@ async function postWebhook(url: string, payload: unknown, secret?: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!request.headers.get("content-type")?.includes("application/json")) {
+      return NextResponse.json(
+        { ok: false, message: "JSON 형식의 요청만 지원합니다." },
+        { status: 415 },
+      );
+    }
+
+    const declaredLength = Number(request.headers.get("content-length") || 0);
+    if (declaredLength > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        { ok: false, message: "요청 데이터가 너무 큽니다." },
+        { status: 413 },
+      );
+    }
+
     const ip = getClientIp(request);
     if (isRateLimited(ip)) {
       return NextResponse.json(
@@ -102,7 +118,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const input = (await request.json()) as LeadPayload;
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        { ok: false, message: "요청 데이터가 너무 큽니다." },
+        { status: 413 },
+      );
+    }
+
+    let input: unknown;
+    try {
+      input = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { ok: false, message: "요청 내용을 확인해 주세요." },
+        { status: 400 },
+      );
+    }
     const result = validateLead(input);
 
     if (!result.ok) {

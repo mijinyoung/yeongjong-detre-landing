@@ -5,6 +5,9 @@ export const runtime = "nodejs";
 
 const FETCH_TIMEOUT_MS = 8000;
 const NO_STORE_HEADERS = { "Cache-Control": "no-store" };
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_LIMIT = 10;
+const authFailures = new Map<string, number[]>();
 
 function safeEqual(input: string, expected: string) {
   const a = Buffer.from(input);
@@ -12,17 +15,67 @@ function safeEqual(input: string, expected: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+function getClientIp(request: NextRequest) {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
+
+function isAuthBlocked(ip: string) {
+  const now = Date.now();
+  const recent = (authFailures.get(ip) || []).filter(
+    (time) => now - time < AUTH_WINDOW_MS,
+  );
+  if (recent.length) authFailures.set(ip, recent);
+  else authFailures.delete(ip);
+  return recent.length >= AUTH_LIMIT;
+}
+
+function recordAuthFailure(ip: string) {
+  const recent = authFailures.get(ip) || [];
+  recent.push(Date.now());
+  authFailures.set(ip, recent.slice(-AUTH_LIMIT));
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { token } = (await request.json()) as { token?: string };
+    const ip = getClientIp(request);
+    if (isAuthBlocked(ip)) {
+      return NextResponse.json(
+        { ok: false, message: "로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요." },
+        {
+          status: 429,
+          headers: { ...NO_STORE_HEADERS, "Retry-After": "900" },
+        },
+      );
+    }
+
+    if (!request.headers.get("content-type")?.includes("application/json")) {
+      return NextResponse.json(
+        { ok: false, message: "잘못된 요청 형식입니다." },
+        { status: 415, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    let body: { token?: unknown };
+    try {
+      body = (await request.json()) as { token?: unknown };
+    } catch {
+      return NextResponse.json(
+        { ok: false, message: "요청 내용을 확인해 주세요." },
+        { status: 400, headers: NO_STORE_HEADERS },
+      );
+    }
+
+    const token = typeof body.token === "string" ? body.token.slice(0, 200) : "";
     const expectedToken = process.env.ADMIN_DASHBOARD_TOKEN || "";
 
     if (!expectedToken || !token || !safeEqual(token, expectedToken)) {
+      recordAuthFailure(ip);
       return NextResponse.json(
         { ok: false, message: "관리자 비밀번호를 확인해 주세요." },
         { status: 401, headers: NO_STORE_HEADERS },
       );
     }
+    authFailures.delete(ip);
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
     if (!sheetWebhook) {

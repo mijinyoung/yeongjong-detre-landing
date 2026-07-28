@@ -15,7 +15,7 @@ export default function ThankYouClient() {
   }, [placement, receipt]);
 
   return (
-    <main className="thankYouPage">
+    <main className="thankYouPage" id="main-content">
       <section className="thankYouCard" aria-labelledby="thank-you-title">
         <div className="thankYouMark" aria-hidden="true">✓</div>
         <p className="thankYouEyebrow">REGISTRATION COMPLETE</p>

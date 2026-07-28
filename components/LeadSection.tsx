@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { trackEvent, trackLeadComplete } from "@/lib/analytics";
+import { trackLeadComplete } from "@/lib/analytics";
 import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
@@ -9,6 +9,7 @@ type Status = "idle" | "sending" | "done" | "error";
 
 export default function LeadSection() {
   const submittingRef = useRef(false);
+  const eventIdRef = useRef("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
@@ -33,7 +34,8 @@ export default function LeadSection() {
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
-    const eventId = createLeadEventId();
+    const eventId = eventIdRef.current || createLeadEventId();
+    eventIdRef.current = eventId;
     const metaContext = getMetaLeadContext(eventId);
 
     try {
@@ -54,6 +56,7 @@ export default function LeadSection() {
       setMessage(data.message);
       trackLeadComplete(eventId, { placement: "lead-section", source: attribution.source });
       submittingRef.current = false;
+      eventIdRef.current = "";
       goToThankYou(String(data.leadId || ""), "lead-section");
     } catch (error) {
       submittingRef.current = false;
@@ -74,19 +77,19 @@ export default function LeadSection() {
         {status === "done" ? (
           <div className="successBox">
             <span>✓</span><h3>등록이 완료되었습니다.</h3><p>{message}</p>{leadId && <small className="leadReceipt">접수번호 {leadId}</small>}
-            <button className="textButton" type="button" onClick={() => { setStatus("idle"); setName(""); setPhone(""); setAgree(false); setLeadId(""); }}>다른 고객 등록하기</button>
+            <button className="textButton" type="button" onClick={() => { eventIdRef.current = ""; setStatus("idle"); setName(""); setPhone(""); setAgree(false); setLeadId(""); }}>다른 고객 등록하기</button>
           </div>
         ) : (
           <form className="leadForm" onSubmit={submit} noValidate>
-            <label>이름<input value={name} onChange={(event) => setName(event.target.value)} placeholder="성함을 입력하세요" autoComplete="name" /></label>
-            <label>휴대폰 번호<input value={phone} onChange={(event) => setPhone(formatPhoneInput(event.target.value))} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" /></label>
+            <label>이름<input required maxLength={30} value={name} onChange={(event) => setName(event.target.value)} placeholder="성함을 입력하세요" autoComplete="name" /></label>
+            <label>휴대폰 번호<input required value={phone} onChange={(event) => setPhone(formatPhoneInput(event.target.value))} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" /></label>
             <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <div className="consentRow agree">
-              <label><input type="checkbox" checked={agree} onChange={(event) => setAgree(event.target.checked)} /> 개인정보 수집 및 상담 연락에 동의합니다.</label>
+              <label><input required type="checkbox" checked={agree} onChange={(event) => setAgree(event.target.checked)} /> 개인정보 수집 및 상담 연락에 동의합니다.</label>
               <PrivacyPolicyButton />
             </div>
             {status === "error" && <p className="formError" role="alert">{message}</p>}
-            <button className="primaryButton wide" type="submit" disabled={status === "sending"}>{status === "sending" ? "등록 중..." : "관심고객 등록하기"}</button>
+            <button className="primaryButton wide" type="submit" aria-busy={status === "sending"} disabled={status === "sending"}>{status === "sending" ? "등록 중..." : "관심고객 등록하기"}</button>
             <small>입력하신 정보는 분양 상담 안내 목적으로만 사용됩니다.</small>
           </form>
         )}

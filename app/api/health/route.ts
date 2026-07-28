@@ -19,11 +19,14 @@ export function GET() {
     ),
   };
 
-  return NextResponse.json({
-    ok: true,
-    version: "8.3.0",
-    productionReady: integrations.googleSheets && integrations.sms,
-    integrations,
-    checkedAt: new Date().toISOString(),
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      version: "9.0.0",
+      productionReady: integrations.googleSheets && integrations.sms,
+      integrations,
+      checkedAt: new Date().toISOString(),
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { validateLead, type LeadPayload } from "@/lib/lead";
 import { sendMetaLeadEvent } from "@/lib/meta-capi";
 import { sendSolapiLeadNotification } from "@/lib/solapi";
@@ -12,7 +12,13 @@ const DUPLICATE_WINDOW_MS = 60 * 1000;
 const WEBHOOK_TIMEOUT_MS = 7000;
 
 const rateStore = new Map<string, number[]>();
-const duplicateStore = new Map<string, number>();
+type DuplicateRecord = {
+  at: number;
+  eventId: string;
+  leadId: string;
+};
+
+const duplicateStore = new Map<string, DuplicateRecord>();
 
 function getClientIp(request: NextRequest) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -30,11 +36,11 @@ function isRateLimited(ip: string) {
 function isDuplicate(phone: string) {
   const now = Date.now();
   const last = duplicateStore.get(phone);
-  return typeof last === "number" && now - last < DUPLICATE_WINDOW_MS;
+  return last && now - last.at < DUPLICATE_WINDOW_MS ? last : null;
 }
 
-function markDuplicate(phone: string) {
-  duplicateStore.set(phone, Date.now());
+function markDuplicate(phone: string, eventId: string, leadId: string) {
+  duplicateStore.set(phone, { at: Date.now(), eventId, leadId });
 }
 
 function createLeadId() {
@@ -103,7 +109,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
     }
 
-    if (isDuplicate(result.data.phone)) {
+    const duplicate = isDuplicate(result.data.phone);
+    if (
+      duplicate &&
+      duplicate.eventId &&
+      result.data.eventId === duplicate.eventId
+    ) {
+      return NextResponse.json({
+        ok: true,
+        leadId: duplicate.leadId,
+        smsStatus: "대기",
+        message: "이미 정상적으로 접수되었습니다.",
+      });
+    }
+
+    if (duplicate) {
       return NextResponse.json(
         { ok: false, message: "이미 접수된 번호입니다. 잠시 후 다시 시도해 주세요." },
         { status: 409 },
@@ -146,75 +166,78 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    markDuplicate(result.data.phone);
+    markDuplicate(result.data.phone, result.data.eventId || "", leadId);
 
-    let smsStatus = smsConfigured ? "대기" : "미설정";
-    let smsDetail = "";
-    let smsProcessedAt = "";
+    const smsStatus = smsConfigured ? "대기" : "미설정";
 
-    if (smsConfigured) {
-      try {
-        if (process.env.SMS_WEBHOOK_URL) {
-          await postWebhook(process.env.SMS_WEBHOOK_URL, lead, secret);
-          smsStatus = "성공";
-          smsDetail = "SMS webhook delivered";
-        } else {
-          const smsResult = await sendSolapiLeadNotification(lead);
-          smsStatus = smsResult.sent ? "성공" : "미설정";
-          smsDetail = smsResult.groupId
-            ? `SOLAPI group ${smsResult.groupId}`
-            : "SOLAPI accepted";
-        }
-      } catch (error) {
-        smsStatus = "실패";
-        smsDetail =
-          error instanceof Error
-            ? error.message.slice(0, 240)
-            : "문자 발송 중 알 수 없는 오류";
-        console.error("Lead SMS error", error);
-      }
+    // The durable Google Sheets write is the success boundary. Notifications and
+    // ad measurement continue after the response so a slow provider cannot make
+    // the customer retry an already-saved registration.
+    after(async () => {
+      if (smsConfigured) {
+        let finalSmsStatus = "성공";
+        let smsDetail = "";
 
-      smsProcessedAt = new Date().toISOString();
-
-      if (sheetWebhook) {
         try {
-          await postWebhook(
-            sheetWebhook,
-            {
-              action: "updateDelivery",
-              leadId,
-              smsStatus,
-              smsProcessedAt,
-              smsDetail,
-            },
-            secret,
-          );
+          if (process.env.SMS_WEBHOOK_URL) {
+            await postWebhook(process.env.SMS_WEBHOOK_URL, lead, secret);
+            smsDetail = "SMS webhook delivered";
+          } else {
+            const smsResult = await sendSolapiLeadNotification(lead);
+            finalSmsStatus = smsResult.sent ? "성공" : "미설정";
+            smsDetail = smsResult.groupId
+              ? `SOLAPI group ${smsResult.groupId}`
+              : "SOLAPI accepted";
+          }
         } catch (error) {
-          console.error("Google Sheets SMS status update error", error);
+          finalSmsStatus = "실패";
+          smsDetail =
+            error instanceof Error
+              ? error.message.slice(0, 240)
+              : "문자 발송 중 알 수 없는 오류";
+          console.error("Lead SMS error", error);
+        }
+
+        if (sheetWebhook) {
+          try {
+            await postWebhook(
+              sheetWebhook,
+              {
+                action: "updateDelivery",
+                leadId,
+                smsStatus: finalSmsStatus,
+                smsProcessedAt: new Date().toISOString(),
+                smsDetail,
+              },
+              secret,
+            );
+          } catch (error) {
+            console.error("Google Sheets SMS status update error", error);
+          }
         }
       }
-    }
 
-    if (result.data.analyticsConsent && result.data.eventId) {
-      try {
-        await sendMetaLeadEvent({
-          eventId: result.data.eventId,
-          eventSourceUrl: result.data.pageUrl,
-          name: result.data.name,
-          phone: result.data.phone,
-          ip,
-          userAgent: request.headers.get("user-agent") || "",
-          fbp: result.data.fbp,
-          fbc: result.data.fbc,
-          leadId,
-          placement: result.data.placement,
-          source: result.data.source,
-          campaign: result.data.campaign,
-        });
-      } catch (error) {
-        console.error("Meta conversion error", error);
+      if (result.data.analyticsConsent && result.data.eventId) {
+        try {
+          await sendMetaLeadEvent({
+            eventId: result.data.eventId,
+            eventSourceUrl: result.data.pageUrl,
+            name: result.data.name,
+            phone: result.data.phone,
+            ip,
+            userAgent: request.headers.get("user-agent") || "",
+            fbp: result.data.fbp,
+            fbc: result.data.fbc,
+            leadId,
+            placement: result.data.placement,
+            source: result.data.source,
+            campaign: result.data.campaign,
+          });
+        } catch (error) {
+          console.error("Meta conversion error", error);
+        }
       }
-    }
+    });
 
     if (!sheetWebhook && !smsConfigured) {
       console.info("[LEAD:TEST_MODE]", {
@@ -229,10 +252,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       leadId,
       smsStatus,
-      message:
-        smsStatus === "실패"
-          ? "관심고객 등록은 완료되었지만 담당자 문자 알림은 확인이 필요합니다."
-          : "관심고객 등록이 완료되었습니다.",
+      message: "관심고객 등록이 완료되었습니다.",
     });
   } catch (error) {
     console.error(error);

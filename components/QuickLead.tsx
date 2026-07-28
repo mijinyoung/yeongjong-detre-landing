@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { trackEvent, trackLeadComplete } from "@/lib/analytics";
+import { trackLeadComplete } from "@/lib/analytics";
 import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
@@ -9,6 +9,7 @@ type State = "idle" | "sending" | "done" | "error";
 
 export default function QuickLead() {
   const submittingRef = useRef(false);
+  const eventIdRef = useRef("");
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
@@ -33,7 +34,8 @@ export default function QuickLead() {
     setState("sending");
     setMessage("");
     const attribution = getLeadAttribution();
-    const eventId = createLeadEventId();
+    const eventId = eventIdRef.current || createLeadEventId();
+    eventIdRef.current = eventId;
     const metaContext = getMetaLeadContext(eventId);
 
     try {
@@ -56,6 +58,7 @@ export default function QuickLead() {
       setPhone("");
       trackLeadComplete(eventId, { placement: "quick-lead", source: attribution.source });
       submittingRef.current = false;
+      eventIdRef.current = "";
       goToThankYou(String(data.leadId || ""), "quick-lead");
     } catch (error) {
       submittingRef.current = false;
@@ -77,7 +80,7 @@ export default function QuickLead() {
           <div className="quickSuccess" role="status"><strong>✓ {message}</strong>{leadId && <small className="leadReceipt">접수번호 {leadId}</small>}</div>
         ) : (
           <form className="quickLeadForm" onSubmit={submit} noValidate>
-            <input name="name" placeholder="이름" aria-label="이름" autoComplete="name" />
+            <input required maxLength={30} name="name" placeholder="이름" aria-label="이름" autoComplete="name" />
             <input
               name="phone"
               value={phone}
@@ -86,13 +89,14 @@ export default function QuickLead() {
               aria-label="휴대폰 번호"
               inputMode="tel"
               autoComplete="tel"
+              required
             />
             <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <div className="consentRow quickAgree">
-              <label><input type="checkbox" name="consent" /> 개인정보 수집 및 이용에 동의합니다.</label>
+              <label><input required type="checkbox" name="consent" /> 개인정보 수집 및 이용에 동의합니다.</label>
               <PrivacyPolicyButton />
             </div>
-            <button className="primaryButton" type="submit" disabled={state === "sending"}>
+            <button className="primaryButton" type="submit" aria-busy={state === "sending"} disabled={state === "sending"}>
               {state === "sending" ? "등록 중..." : "관심고객 등록"}
             </button>
             {state === "error" && <p className="quickError" role="alert">{message}</p>}

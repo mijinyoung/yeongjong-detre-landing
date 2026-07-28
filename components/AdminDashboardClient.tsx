@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 type Lead = {
   leadId: string;
@@ -87,7 +88,13 @@ export default function AdminDashboardClient() {
         body: JSON.stringify({ token: token.trim() }),
         cache: "no-store",
       });
-      const result = (await response.json()) as DashboardResponse;
+      const raw = await response.text();
+      let result: DashboardResponse = {};
+      try {
+        result = raw ? (JSON.parse(raw) as DashboardResponse) : {};
+      } catch {
+        throw new Error("관리자 서버 응답을 확인할 수 없습니다.");
+      }
       if (!response.ok || !result.ok) throw new Error(result.message || "불러오기에 실패했습니다.");
 
       setLeads(result.leads || []);
@@ -124,14 +131,15 @@ export default function AdminDashboardClient() {
             <h1>관심고객 접수 현황</h1>
             <span>최근 200건을 Google Sheets에서 안전하게 불러옵니다.</span>
           </div>
-          <a href="/">홈페이지 보기</a>
+          <Link href="/">홈페이지 보기</Link>
         </header>
 
         <section className="adminLogin">
           <label>
             <span>관리자 비밀번호</span>
-            <input type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void loadLeads(); }} autoComplete="current-password" placeholder="ADMIN_DASHBOARD_TOKEN" />
+            <input aria-describedby="admin-token-help" type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void loadLeads(); }} autoComplete="current-password" placeholder="ADMIN_DASHBOARD_TOKEN" />
           </label>
+          <small id="admin-token-help">Vercel에 설정한 관리자 비밀번호를 입력하세요.</small>
           <button type="button" onClick={() => void loadLeads()} disabled={loading}>
             {loading ? "불러오는 중..." : leads.length ? "새로고침" : "접수 현황 열기"}
           </button>
@@ -149,12 +157,13 @@ export default function AdminDashboardClient() {
             </section>
 
             <section className="adminToolbar">
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 유입경로 검색" />
+              <input aria-label="접수 목록 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 유입경로 검색" />
               <button type="button" onClick={downloadCsv}>CSV 내려받기</button>
             </section>
 
             <section className="adminTableWrap">
               <table>
+                <caption className="srOnly">최근 관심고객 접수 목록</caption>
                 <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>문자</th></tr></thead>
                 <tbody>
                   {filtered.map((lead) => (

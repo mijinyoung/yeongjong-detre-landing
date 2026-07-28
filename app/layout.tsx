@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yeongjong-detre-landing.vercel.app";
+const siteUrl = getSiteUrl();
 
 
 export const viewport: Viewport = {

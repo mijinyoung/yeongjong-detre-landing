@@ -1,25 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ANALYTICS_CONSENT_EVENT,
   getAnalyticsConsent,
   setAnalyticsConsent,
-  type AnalyticsConsent,
 } from "@/lib/analytics";
 
 export default function AnalyticsConsentManager() {
-  const [consent, setConsent] = useState<AnalyticsConsent>(null);
+  const consent = useSyncExternalStore(
+    (onStoreChange) => {
+      window.addEventListener(ANALYTICS_CONSENT_EVENT, onStoreChange);
+      return () => window.removeEventListener(ANALYTICS_CONSENT_EVENT, onStoreChange);
+    },
+    getAnalyticsConsent,
+    () => null,
+  );
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
-    setConsent(getAnalyticsConsent());
-
-    const onChanged = (event: Event) => {
-      const customEvent = event as CustomEvent<{ value?: AnalyticsConsent }>;
-      setConsent(customEvent.detail?.value ?? getAnalyticsConsent());
-      setSettingsOpen(false);
-    };
+    const onChanged = () => setSettingsOpen(false);
 
     const onOpenSettings = () => setSettingsOpen(true);
 
@@ -37,7 +37,6 @@ export default function AnalyticsConsentManager() {
 
   const choose = (value: "accepted" | "rejected") => {
     setAnalyticsConsent(value);
-    setConsent(value);
     setSettingsOpen(false);
   };
 

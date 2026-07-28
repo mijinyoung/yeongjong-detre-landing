@@ -2,7 +2,6 @@ import Hero from "@/components/Hero";
 import QuickLead from "@/components/QuickLead";
 import VideoShowcase from "@/components/VideoShowcase";
 import WhyNow from "@/components/WhyNow";
-import Stats from "@/components/Stats";
 import BusinessOverview from "@/components/BusinessOverview";
 import OfficialMaterials from "@/components/OfficialMaterials";
 import InteractiveLocation from "@/components/InteractiveLocation";

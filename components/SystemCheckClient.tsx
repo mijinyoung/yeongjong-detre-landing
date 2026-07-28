@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type HealthData = {
   ok: boolean;
@@ -67,6 +68,7 @@ export default function SystemCheckClient() {
   } | null>(null);
 
   async function load() {
+    await Promise.resolve();
     setError("");
 
     try {
@@ -134,7 +136,8 @@ export default function SystemCheckClient() {
   }
 
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (
@@ -270,7 +273,7 @@ export default function SystemCheckClient() {
           <button type="button" onClick={() => void load()}>
             상태 새로고침
           </button>
-          <a href="/">홈페이지로 돌아가기</a>
+          <Link href="/">홈페이지로 돌아가기</Link>
         </div>
 
         <p className="systemCheckFootnote">

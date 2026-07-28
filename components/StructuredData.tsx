@@ -1,8 +1,7 @@
 import { faqItems } from "@/data/site-content";
+import { getSiteUrl } from "@/lib/site-url";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  "https://yeongjong-detre-landing.vercel.app";
+const siteUrl = getSiteUrl();
 
 const jsonLd = (value: object) =>
   JSON.stringify(value).replace(/</g, "\\u003c");

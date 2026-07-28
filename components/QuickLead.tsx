@@ -1,13 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { trackEvent, trackLeadComplete } from "@/lib/analytics";
-import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou } from "@/lib/client-lead";
+import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type State = "idle" | "sending" | "done" | "error";
 
 export default function QuickLead() {
+  const submittingRef = useRef(false);
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
@@ -15,7 +16,7 @@ export default function QuickLead() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (state === "sending") return;
+    if (submittingRef.current || state === "sending") return;
 
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
@@ -28,6 +29,7 @@ export default function QuickLead() {
       return;
     }
 
+    submittingRef.current = true;
     setState("sending");
     setMessage("");
     const attribution = getLeadAttribution();
@@ -35,10 +37,7 @@ export default function QuickLead() {
     const metaContext = getMetaLeadContext(eventId);
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await submitLead({
           name,
           phone,
           consent,
@@ -48,20 +47,18 @@ export default function QuickLead() {
           pageUrl: window.location.href,
           placement: "quick-lead",
           ...metaContext,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
+        });
 
       setState("done");
       setLeadId(String(data.leadId || ""));
-      setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
+      setMessage(data.message);
       formElement.reset();
       setPhone("");
       trackLeadComplete(eventId, { placement: "quick-lead", source: attribution.source });
+      submittingRef.current = false;
       goToThankYou(String(data.leadId || ""), "quick-lead");
     } catch (error) {
+      submittingRef.current = false;
       setState("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");
     }

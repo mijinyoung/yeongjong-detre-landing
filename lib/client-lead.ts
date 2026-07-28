@@ -1,8 +1,60 @@
+export type LeadApiResponse = {
+  ok: boolean;
+  leadId?: string;
+  smsStatus?: string;
+  message: string;
+};
+
+const LEAD_REQUEST_TIMEOUT_MS = 12000;
+
 export function formatPhoneInput(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length <= 3) return digits;
   if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
+export async function submitLead(payload: Record<string, unknown>): Promise<LeadApiResponse> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), LEAD_REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    const raw = await response.text();
+    let data: Partial<LeadApiResponse> = {};
+
+    if (raw) {
+      try {
+        data = JSON.parse(raw) as Partial<LeadApiResponse>;
+      } catch {
+        throw new Error("서버 응답을 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+      }
+    }
+
+    if (!response.ok || data.ok !== true) {
+      throw new Error(data.message || "등록에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+
+    return {
+      ok: true,
+      leadId: data.leadId || "",
+      smsStatus: data.smsStatus || "",
+      message: data.message || "관심고객 등록이 완료되었습니다.",
+    };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("접수 요청 시간이 초과되었습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 export function getLeadAttribution() {
@@ -21,11 +73,7 @@ export function getLeadAttribution() {
   }
 
   const params = new URLSearchParams(window.location.search);
-
-  const read = (key: string) =>
-    params.get(key) ||
-    window.sessionStorage.getItem(key) ||
-    "";
+  const read = (key: string) => params.get(key) || window.sessionStorage.getItem(key) || "";
 
   return {
     source: read("utm_source") || "direct",
@@ -35,10 +83,8 @@ export function getLeadAttribution() {
     term: read("utm_term"),
     gclid: read("gclid"),
     fbclid: read("fbclid"),
-    landingPage:
-      window.sessionStorage.getItem("landing_page") || "",
-    landingReferrer:
-      window.sessionStorage.getItem("landing_referrer") || "",
+    landingPage: window.sessionStorage.getItem("landing_page") || "",
+    landingReferrer: window.sessionStorage.getItem("landing_referrer") || "",
   };
 }
 
@@ -54,7 +100,6 @@ export function goToThankYou(leadId: string, placement: string) {
   if (placement) params.set("placement", placement);
   window.location.assign(`/thank-you?${params.toString()}`);
 }
-
 
 function readCookie(name: string) {
   if (typeof document === "undefined") return "";
@@ -72,18 +117,12 @@ export function createLeadEventId() {
 
 export function getMetaLeadContext(eventId: string) {
   if (typeof window === "undefined") {
-    return {
-      eventId,
-      analyticsConsent: false,
-      fbp: "",
-      fbc: "",
-    };
+    return { eventId, analyticsConsent: false, fbp: "", fbc: "" };
   }
 
   return {
     eventId,
-    analyticsConsent:
-      window.localStorage.getItem("yd_analytics_consent") === "accepted",
+    analyticsConsent: window.localStorage.getItem("yd_analytics_consent") === "accepted",
     fbp: readCookie("_fbp"),
     fbc: readCookie("_fbc"),
   };

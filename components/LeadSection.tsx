@@ -1,13 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { trackEvent, trackLeadComplete } from "@/lib/analytics";
-import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou } from "@/lib/client-lead";
+import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type Status = "idle" | "sending" | "done" | "error";
 
 export default function LeadSection() {
+  const submittingRef = useRef(false);
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const [name, setName] = useState("");
@@ -17,7 +18,7 @@ export default function LeadSection() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (status === "sending") return;
+    if (submittingRef.current || status === "sending") return;
 
     const form = new FormData(event.currentTarget);
     const website = String(form.get("website") || "");
@@ -28,6 +29,7 @@ export default function LeadSection() {
       return;
     }
 
+    submittingRef.current = true;
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
@@ -35,30 +37,26 @@ export default function LeadSection() {
     const metaContext = getMetaLeadContext(eventId);
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phone,
-          consent: agree,
-          website,
-          ...attribution,
-          referrer: document.referrer,
-          pageUrl: window.location.href,
-          placement: "lead-section",
-          ...metaContext,
-        }),
+      const data = await submitLead({
+        name,
+        phone,
+        consent: agree,
+        website,
+        ...attribution,
+        referrer: document.referrer,
+        pageUrl: window.location.href,
+        placement: "lead-section",
+        ...metaContext,
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
 
       setStatus("done");
       setLeadId(String(data.leadId || ""));
       setMessage(data.message);
       trackLeadComplete(eventId, { placement: "lead-section", source: attribution.source });
+      submittingRef.current = false;
       goToThankYou(String(data.leadId || ""), "lead-section");
     } catch (error) {
+      submittingRef.current = false;
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");
     }

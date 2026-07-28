@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { trackEvent, trackLeadComplete } from "@/lib/analytics";
-import { createLeadEventId, getLeadAttribution, getMetaLeadContext, goToThankYou } from "@/lib/client-lead";
+import { createLeadEventId, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 
 type Status = "idle" | "sending" | "done" | "error";
@@ -15,6 +15,7 @@ function formatPhone(value: string) {
 }
 
 export default function LeadModal() {
+  const submittingRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState("modal");
   const [status, setStatus] = useState<Status>("idle");
@@ -26,6 +27,7 @@ export default function LeadModal() {
   useEffect(() => {
     const handler = (event: Event) => {
       const custom = event as CustomEvent<{ placement?: string }>;
+      submittingRef.current = false;
       setPlacement(custom.detail?.placement || "modal");
       setStatus("idle");
       setMessage("");
@@ -52,6 +54,7 @@ export default function LeadModal() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submittingRef.current || status === "sending") return;
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") || "").trim();
     const consent = form.get("consent") === "on";
@@ -62,6 +65,7 @@ export default function LeadModal() {
       return;
     }
 
+    submittingRef.current = true;
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
@@ -69,10 +73,7 @@ export default function LeadModal() {
     const metaContext = getMetaLeadContext(eventId);
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await submitLead({
           name,
           phone,
           consent,
@@ -82,17 +83,15 @@ export default function LeadModal() {
           pageUrl: window.location.href,
           placement,
           ...metaContext,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.message || "등록에 실패했습니다.");
+        });
       setStatus("done");
       setLeadId(String(data.leadId || ""));
-      setMessage("등록이 완료되었습니다. 담당자가 순차적으로 연락드리겠습니다.");
+      setMessage(data.message);
       trackLeadComplete(eventId, { placement, source: attribution.source });
+      submittingRef.current = false;
       goToThankYou(String(data.leadId || ""), placement);
     } catch (error) {
+      submittingRef.current = false;
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "등록에 실패했습니다.");
     }

@@ -30,8 +30,11 @@ function isRateLimited(ip: string) {
 function isDuplicate(phone: string) {
   const now = Date.now();
   const last = duplicateStore.get(phone);
-  duplicateStore.set(phone, now);
   return typeof last === "number" && now - last < DUPLICATE_WINDOW_MS;
+}
+
+function markDuplicate(phone: string) {
+  duplicateStore.set(phone, Date.now());
 }
 
 function createLeadId() {
@@ -142,6 +145,8 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+
+    markDuplicate(result.data.phone);
 
     let smsStatus = smsConfigured ? "대기" : "미설정";
     let smsDetail = "";

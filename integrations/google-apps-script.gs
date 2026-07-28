@@ -1,5 +1,5 @@
 /**
- * 영종 디에트르 Google Sheets 저장용 Apps Script — v7.3 Stable
+ * 영종 디에트르 Google Sheets 저장·관리자 조회용 Apps Script — v8.3
  *
  * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
@@ -13,11 +13,20 @@ const REQUIRED_HEADERS = [
   'IP','브라우저','처리상태','상담메모','문자상태','문자처리시각','문자상세'
 ];
 
-function doGet() {
+function doGet(e) {
+  const params = e && e.parameter ? e.parameter : {};
+
+  if (params.action === 'list') {
+    if (!isAuthorized({ _webhookSecret: params._webhookSecret || '' })) {
+      return jsonResponse({ ok: false, message: 'Unauthorized' });
+    }
+    return listLeads(params);
+  }
+
   return jsonResponse({
     ok: true,
     service: 'yeongjong-detre-google-sheets',
-    version: '7.3.0',
+    version: '8.3.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -135,6 +144,56 @@ function updateDeliveryStatus(sheet, map, data) {
   setByHeader(sheet, row, map, '문자상세', data.smsDetail || '');
 
   return jsonResponse({ ok: true, updated: true, leadId: leadId, row: row });
+}
+
+
+function listLeads(params) {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName(SHEET_NAME);
+
+  if (!sheet || sheet.getLastRow() < 2) {
+    return jsonResponse({
+      ok: true,
+      leads: [],
+      total: 0,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  const map = ensureRequiredHeaders(sheet);
+  const total = sheet.getLastRow() - 1;
+  const requestedLimit = Number(params.limit || 200);
+  const limit = Math.max(1, Math.min(200, requestedLimit));
+  const startRow = Math.max(2, sheet.getLastRow() - limit + 1);
+  const rowCount = sheet.getLastRow() - startRow + 1;
+  const values = sheet.getRange(startRow, 1, rowCount, sheet.getLastColumn())
+    .getDisplayValues();
+
+  const leads = values.reverse().map(function(row) {
+    return {
+      leadId: read(row, map, '접수번호'),
+      submittedAt: read(row, map, '등록일시'),
+      name: read(row, map, '이름'),
+      phone: read(row, map, '휴대폰'),
+      source: read(row, map, '유입경로'),
+      campaign: read(row, map, '캠페인'),
+      placement: read(row, map, '신청위치'),
+      status: read(row, map, '처리상태') || '신규',
+      smsStatus: read(row, map, '문자상태')
+    };
+  });
+
+  return jsonResponse({
+    ok: true,
+    leads: leads,
+    total: total,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+function read(row, map, header) {
+  const column = map[header];
+  return column ? String(row[column - 1] || '') : '';
 }
 
 function findLeadRow(sheet, map, leadId) {

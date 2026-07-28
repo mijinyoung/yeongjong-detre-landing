@@ -1706,3 +1706,44 @@ body.mobileNavOpen{overflow:hidden}
 @media (prefers-reduced-motion: reduce) {
   .floatingActions, .primaryButton, .finalCta button, .videoShowcaseCta, .floorCta, .visitProcess button { transition: none; }
 }
+
+/* v8.3 Admin dashboard */
+.adminPage { min-height: 100vh; padding: 48px 20px; color: #20252c; background: #f3f5f7; }
+.adminShell { width: min(1180px, 100%); margin: 0 auto; }
+.adminHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.adminHeader p { margin: 0 0 8px; color: #a47738; font-size: 12px; font-weight: 900; letter-spacing: .12em; }
+.adminHeader h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 42px); }
+.adminHeader span { color: #69717c; }
+.adminHeader a { padding: 11px 16px; color: #222; background: #fff; border: 1px solid #dfe3e7; border-radius: 10px; font-weight: 800; text-decoration: none; }
+.adminLogin { display: flex; align-items: flex-end; gap: 12px; padding: 20px; background: #fff; border-radius: 16px; box-shadow: 0 12px 35px rgba(35, 42, 52, .07); }
+.adminLogin label { display: grid; flex: 1; gap: 7px; }
+.adminLogin label span { font-size: 12px; font-weight: 800; }
+.adminLogin input, .adminToolbar input { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid #d7dce1; border-radius: 9px; font: inherit; }
+.adminLogin button, .adminToolbar button { min-height: 46px; padding: 0 18px; color: #fff; background: #9c7035; border: 0; border-radius: 9px; font-weight: 900; cursor: pointer; }
+.adminLogin button:disabled { opacity: .6; cursor: wait; }
+.adminMessage { margin: 14px 0 0; padding: 13px 15px; color: #9f2e2e; background: #fff0f0; border-radius: 10px; }
+.adminStats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0; }
+.adminStats article { padding: 20px; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
+.adminStats span { display: block; margin-bottom: 8px; color: #737b85; font-size: 12px; font-weight: 800; }
+.adminStats strong { font-size: 24px; }
+.adminToolbar { display: flex; gap: 10px; margin-bottom: 12px; }
+.adminToolbar input { background: #fff; }
+.adminTableWrap { overflow-x: auto; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
+.adminTableWrap table { width: 100%; min-width: 920px; border-collapse: collapse; }
+.adminTableWrap th, .adminTableWrap td { padding: 14px 13px; border-bottom: 1px solid #edf0f2; text-align: left; white-space: nowrap; font-size: 13px; }
+.adminTableWrap th { color: #626b76; background: #f8f9fa; font-size: 11px; }
+.adminTableWrap td small { display: block; margin-bottom: 4px; color: #9aa1a9; font-size: 9px; }
+.adminTableWrap td a { color: #835b26; font-weight: 900; }
+.adminBadge { display: inline-flex; padding: 5px 8px; background: #eef1f3; border-radius: 999px; font-size: 10px; font-weight: 900; }
+.adminBadge.new { color: #7a541f; background: #fff1d9; }
+.adminBadge.failed { color: #a82d2d; background: #ffe5e5; }
+.adminEmpty { padding: 35px; text-align: center; color: #777; }
+.adminFootnote { margin: 18px 0 0; color: #7e8791; font-size: 12px; text-align: center; }
+@media (max-width: 760px) {
+  .adminPage { padding: 28px 12px; }
+  .adminHeader { align-items: flex-start; flex-direction: column; }
+  .adminLogin, .adminToolbar { align-items: stretch; flex-direction: column; }
+  .adminStats { grid-template-columns: repeat(2, 1fr); }
+  .adminStats article { padding: 16px; }
+  .adminStats strong { font-size: 20px; }
+}

@@ -85,12 +85,12 @@ export default function Hero() {
         loop
         playsInline
         preload="metadata"
-        poster="/images/video/hero-poster.jpg"
+        poster="/images/video/hero-poster-v95.webp"
         aria-label="영종 디에트르 라 메르 주변 드론 영상"
         onPlay={() => setPlaybackBlocked(false)}
         onError={() => setPlaybackBlocked(true)}
       >
-        <source src="/videos/hero-drone.mp4" type="video/mp4" />
+        <source src="/videos/hero-drone.mp4?v=95" type="video/mp4" />
       </video>
       <div className="heroV50StampMask" aria-hidden="true" />
       <div className="heroV50Shade" aria-hidden="true" />

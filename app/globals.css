@@ -271,7 +271,7 @@
   padding: 32px 20px;
   background:
     linear-gradient(135deg, rgba(5, 20, 46, .94), rgba(14, 43, 75, .88)),
-    url('/images/video/hero-poster.jpg') center/cover no-repeat;
+    url('/images/video/hero-poster-v95.webp') center/cover no-repeat;
   color: #fff;
 }
 .thankYouCard {
@@ -1730,7 +1730,7 @@ body.mobileNavOpen{overflow:hidden}
   .heroV50 {
     background:
       linear-gradient(rgba(5, 16, 35, .35), rgba(5, 16, 35, .7)),
-      url("/images/video/hero-poster.jpg") center / cover no-repeat;
+      url("/images/video/hero-poster-v95.webp") center / cover no-repeat;
   }
 }
 

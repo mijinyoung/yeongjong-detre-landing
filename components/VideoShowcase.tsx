@@ -10,8 +10,8 @@ const films = [
     title: ["스카이라인으로 만나는", "디에트르 라 메르"],
     description:
       "최고 49층의 상징적인 외관과 바다를 품은 주거 가치를 영상으로 확인해 보세요.",
-    src: "/videos/brand-film.mp4",
-    poster: "/images/video/brand-poster.jpg",
+    src: "/videos/brand-film.mp4?v=95",
+    poster: "/images/video/brand-poster-v95.webp",
     label: "브랜드 영상",
   },
   {
@@ -20,8 +20,8 @@ const films = [
     title: ["단지의 계획과 공간을", "한 편의 영상으로"],
     description:
       "단지 구성과 커뮤니티, 조경과 세대 계획을 담은 공식 단지 홍보영상입니다.",
-    src: "/videos/complex-film.mp4",
-    poster: "/images/video/complex-poster-optimized.jpg",
+    src: "/videos/complex-film.mp4?v=95",
+    poster: "/images/video/complex-poster-v95.webp",
     label: "단지 홍보영상",
   },
 ];

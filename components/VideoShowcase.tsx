@@ -60,7 +60,7 @@ export default function VideoShowcase() {
               className="videoPlayer"
               controls
               playsInline
-              preload="metadata"
+              preload="none"
               poster={active.poster}
               onPlay={() =>
                 trackEvent("video_play", { video_id: active.id })

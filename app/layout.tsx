@@ -20,6 +20,11 @@ export const metadata: Metadata = {
   keywords: ["영종 디에트르", "영종 디에트르 라 메르", "청라하늘대교", "영종 분양", "관심고객 등록"],
   alternates: { canonical: "/" },
   category: "real estate",
+  applicationName: "영종 디에트르 라 메르",
+  creator: "영종 디에트르 라 메르",
+  publisher: "영종 디에트르 라 메르",
+  formatDetection: { email: false, address: false, telephone: false },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     locale: "ko_KR",
@@ -30,7 +35,17 @@ export const metadata: Metadata = {
     images: [{ url: "/images/hero-v2.png", width: 1536, height: 1024, alt: "영종 디에트르 라 메르 투시도" }],
   },
   twitter: { card: "summary_large_image", title: "영종 디에트르 라 메르", description: "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내", images: ["/images/hero-v2.png"] },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

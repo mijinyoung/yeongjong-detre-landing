@@ -33,9 +33,9 @@ export const metadata: Metadata = {
     title: "영종 디에트르 라 메르",
     description: "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내",
     siteName: "영종 디에트르 라 메르",
-    images: [{ url: "/images/hero-v2.png", width: 1536, height: 1024, alt: "영종 디에트르 라 메르 투시도" }],
+    images: [{ url: "/images/hero-og.jpg", width: 1200, height: 630, alt: "영종 디에트르 라 메르 투시도" }],
   },
-  twitter: { card: "summary_large_image", title: "영종 디에트르 라 메르", description: "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내", images: ["/images/hero-v2.png"] },
+  twitter: { card: "summary_large_image", title: "영종 디에트르 라 메르", description: "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내", images: ["/images/hero-og.jpg"] },
   robots: {
     index: true,
     follow: true,

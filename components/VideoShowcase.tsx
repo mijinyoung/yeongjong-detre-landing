@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 
 const films = [
@@ -21,14 +21,33 @@ const films = [
     description:
       "단지 구성과 커뮤니티, 조경과 세대 계획을 담은 공식 단지 홍보영상입니다.",
     src: "/videos/complex-film.mp4",
-    poster: "/images/video/complex-poster.jpg",
+    poster: "/images/video/complex-poster-optimized.jpg",
     label: "단지 홍보영상",
   },
 ];
 
 export default function VideoShowcase() {
+  const sectionRef = useRef<HTMLElement>(null);
   const [activeId, setActiveId] = useState(films[0].id);
+  const [isNearViewport, setIsNearViewport] = useState(false);
   const active = films.find((film) => film.id === activeId) || films[0];
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setIsNearViewport(true);
+        observer.disconnect();
+      },
+      { rootMargin: "100px 0px" },
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   const selectFilm = (id: string) => {
     setActiveId(id);
@@ -36,7 +55,7 @@ export default function VideoShowcase() {
   };
 
   return (
-    <section className="section videoShowcase" id="brand-film">
+    <section ref={sectionRef} className="section videoShowcase" id="brand-film">
       <div className="shell">
         <div className="videoShowcaseHeading">
           <div>
@@ -61,7 +80,7 @@ export default function VideoShowcase() {
               controls
               playsInline
               preload="none"
-              poster={active.poster}
+              poster={isNearViewport ? active.poster : undefined}
               onPlay={() =>
                 trackEvent("video_play", { video_id: active.id })
               }
@@ -69,7 +88,7 @@ export default function VideoShowcase() {
                 trackEvent("video_complete", { video_id: active.id })
               }
             >
-              <source src={active.src} type="video/mp4" />
+              {isNearViewport ? <source src={active.src} type="video/mp4" /> : null}
               브라우저에서 영상을 재생할 수 없습니다.
             </video>
           </div>

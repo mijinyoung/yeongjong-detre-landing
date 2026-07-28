@@ -22,7 +22,7 @@ export default function StructuredData() {
     "@type": "ApartmentComplex",
     name: "영종 디에트르 라 메르",
     url: siteUrl,
-    image: `${siteUrl}/images/hero-v2.png`,
+    image: `${siteUrl}/images/hero-og.jpg`,
     description:
       "청라하늘대교 생활권, 최고 49층, 총 1,009세대 규모의 영종 디에트르 라 메르",
     telephone: "1833-8384",
@@ -51,7 +51,7 @@ export default function StructuredData() {
       name: "영종 디에트르 라 메르 단지 홍보영상",
       description:
         "단지 구성, 커뮤니티, 조경과 세대 계획을 소개하는 공식 단지 홍보영상",
-      thumbnailUrl: [`${siteUrl}/images/video/complex-poster.jpg`],
+      thumbnailUrl: [`${siteUrl}/images/video/complex-poster-optimized.jpg`],
       contentUrl: `${siteUrl}/videos/complex-film.mp4`,
       inLanguage: "ko-KR",
     },

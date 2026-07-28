@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 import MobileNavigation from "@/components/MobileNavigation";
 
@@ -18,17 +19,47 @@ const facts = [
 ];
 
 export default function Hero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const openForm = (source: string) => openLeadModal(source);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const saveData = (
+      navigator as Navigator & { connection?: { saveData?: boolean } }
+    ).connection?.saveData;
+
+    if (reducedMotion || saveData) return;
+
+    const syncPlayback = () => {
+      if (document.hidden) {
+        video.pause();
+      } else {
+        void video.play().catch(() => {
+          // Autoplay may be disabled by the browser; the poster remains visible.
+        });
+      }
+    };
+
+    syncPlayback();
+    document.addEventListener("visibilitychange", syncPlayback);
+    return () => {
+      document.removeEventListener("visibilitychange", syncPlayback);
+      video.pause();
+    };
+  }, []);
 
   return (
     <section className="heroV50" id="top">
       <video
+        ref={videoRef}
         className="heroV50Video"
-        autoPlay
         muted
         loop
         playsInline
-        preload="metadata"
+        preload="none"
         poster="/images/video/hero-poster.jpg"
         aria-label="영종 디에트르 라 메르 주변 드론 영상"
       >

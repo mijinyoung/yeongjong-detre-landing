@@ -2161,6 +2161,10 @@ textarea[aria-invalid="true"] {
   filter: brightness(1.06) saturate(1.03);
 }
 
+.heroV50Play {
+  display: none !important;
+}
+
 .visualHighlights {
   background: #f2eee7;
 }
@@ -2204,11 +2208,21 @@ textarea[aria-invalid="true"] {
 }
 
 .visualHighlightCard.featured .visualHighlightImage {
-  object-position: 58% center;
+  object-position: 70% center;
 }
 
 .visualHighlightCard:last-child .visualHighlightImage {
   object-position: 52% center;
+}
+
+.visualHighlightCard--site-plan .visualHighlightImage {
+  object-fit: contain;
+  object-position: center top;
+  background: #0b1730;
+}
+
+.visualHighlightCard--site-plan .visualHighlightShade {
+  background: linear-gradient(180deg, transparent 28%, rgba(5, 13, 26, .98) 72%);
 }
 
 .visualHighlightCard:hover .visualHighlightImage {
@@ -2377,6 +2391,38 @@ textarea[aria-invalid="true"] {
 }
 
 @media (max-width: 760px) {
+  .sectionTitle {
+    font-size: clamp(32px, 9vw, 36px);
+    line-height: 1.15;
+    letter-spacing: -.04em;
+    word-break: keep-all;
+    overflow-wrap: normal;
+    text-wrap: balance;
+  }
+
+  .bodyCopy,
+  .heroV50Copy h1,
+  .heroV50Project,
+  .videoShowcase h2,
+  .visualHighlightCopy,
+  .whyV50Card,
+  .overviewV40Item,
+  .communityV120Card,
+  .officialV60Copy,
+  .floorInfo,
+  .faqSection,
+  .finalCta,
+  .leadWrap {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+  }
+
+  .bodyCopy {
+    font-size: 15px;
+    line-height: 1.85;
+  }
+
   .heroV50Video {
     display: block;
     object-position: 58% center;
@@ -2409,7 +2455,7 @@ textarea[aria-invalid="true"] {
   }
 
   .visualHighlightCard.featured {
-    min-height: 410px;
+    min-height: 390px;
   }
 
   .visualHighlightCopy {
@@ -2432,7 +2478,20 @@ textarea[aria-invalid="true"] {
   }
 
   .communityV120Visual {
-    min-height: 390px;
+    min-height: 0;
+    aspect-ratio: 390 / 184;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .communityV120Image {
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .communityV120Visual::after,
+  .communityV120Visual figcaption {
+    display: none;
   }
 
   .communityV120Card {
@@ -2442,5 +2501,44 @@ textarea[aria-invalid="true"] {
 
   .communityV120Card > p {
     margin-top: 24px;
+  }
+
+  .officialV60Tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .officialV60Tabs button {
+    min-width: 0;
+    padding: 11px 5px;
+    white-space: normal;
+    font-size: 12px;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+
+  .overviewV40Item strong,
+  .communityV120Card h3,
+  .visualHighlightCopy strong,
+  .officialV60Copy h3,
+  .floorInfo h3 {
+    word-break: keep-all;
+  }
+}
+
+@media (max-width: 380px) {
+  .sectionTitle {
+    font-size: 32px;
+  }
+
+  .visualHighlightCopy {
+    padding: 22px 19px;
+  }
+
+  .visualHighlightCopy strong {
+    font-size: 23px;
   }
 }

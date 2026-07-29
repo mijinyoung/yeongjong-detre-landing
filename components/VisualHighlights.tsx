@@ -22,7 +22,7 @@ export default function VisualHighlights() {
         <div className="visualHighlightsGrid">
           {section.items.map((item, index) => (
             <a
-              className={`visualHighlightCard${index === 0 ? " featured" : ""}`}
+              className={`visualHighlightCard visualHighlightCard--${item.id}${index === 0 ? " featured" : ""}`}
               href={item.href}
               key={item.id}
             >

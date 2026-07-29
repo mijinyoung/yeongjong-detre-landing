@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 import MobileNavigation from "@/components/MobileNavigation";
 import { contactHref, projectConfig } from "@/data/project-config";
@@ -9,75 +9,61 @@ const { hero, identity, contact, assets } = projectConfig;
 
 export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const openForm = (source: string) => openLeadModal(source);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     video.muted = true;
     video.defaultMuted = true;
     video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("x5-playsinline", "");
+    video.setAttribute("autoplay", "");
+    video.controls = false;
 
-    if (reducedMotion) {
-      video.pause();
-      const reducedMotionTimer = window.setTimeout(
-        () => setPlaybackBlocked(true),
-        0,
-      );
-      return () => window.clearTimeout(reducedMotionTimer);
-    }
-
-    let fallbackTimer = 0;
     const tryAutoplay = () => {
       if (document.hidden) {
         video.pause();
         return;
       }
 
-      void video.play()
-        .then(() => {
-          window.clearTimeout(fallbackTimer);
-          setPlaybackBlocked(false);
-        })
-        .catch(() => {
-          window.clearTimeout(fallbackTimer);
-          fallbackTimer = window.setTimeout(() => {
-            if (video.paused) setPlaybackBlocked(true);
-          }, 1200);
-        });
+      video.muted = true;
+      void video.play().catch(() => undefined);
     };
 
     tryAutoplay();
+    const retryTimer = window.setInterval(tryAutoplay, 750);
+    const stopRetryTimer = window.setTimeout(
+      () => window.clearInterval(retryTimer),
+      8000,
+    );
+
+    video.addEventListener("loadedmetadata", tryAutoplay);
     video.addEventListener("canplay", tryAutoplay);
+    video.addEventListener("canplaythrough", tryAutoplay);
     window.addEventListener("pageshow", tryAutoplay);
     document.addEventListener("visibilitychange", tryAutoplay);
+    document.addEventListener("touchstart", tryAutoplay, { passive: true });
+    document.addEventListener("pointerdown", tryAutoplay, { passive: true });
+    document.addEventListener("scroll", tryAutoplay, { passive: true });
 
     return () => {
-      window.clearTimeout(fallbackTimer);
+      window.clearInterval(retryTimer);
+      window.clearTimeout(stopRetryTimer);
+      video.removeEventListener("loadedmetadata", tryAutoplay);
       video.removeEventListener("canplay", tryAutoplay);
+      video.removeEventListener("canplaythrough", tryAutoplay);
       window.removeEventListener("pageshow", tryAutoplay);
       document.removeEventListener("visibilitychange", tryAutoplay);
+      document.removeEventListener("touchstart", tryAutoplay);
+      document.removeEventListener("pointerdown", tryAutoplay);
+      document.removeEventListener("scroll", tryAutoplay);
       video.pause();
     };
   }, []);
-
-  async function playVideo() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    try {
-      video.muted = true;
-      await video.play();
-      setPlaybackBlocked(false);
-      trackEvent("hero_video_play", { source: "manual-mobile-play" });
-    } catch {
-      setPlaybackBlocked(true);
-    }
-  }
 
   return (
     <section className="heroV50" id="top">
@@ -93,19 +79,11 @@ export default function Hero() {
         aria-hidden="true"
         disablePictureInPicture
         disableRemotePlayback
-        onPlay={() => setPlaybackBlocked(false)}
-        onError={() => setPlaybackBlocked(true)}
       >
         <source src={assets.heroVideo} type="video/mp4" />
       </video>
       <div className="heroV50StampMask" aria-hidden="true" />
       <div className="heroV50Shade" aria-hidden="true" />
-      {playbackBlocked ? (
-        <button className="heroV50Play" type="button" onClick={() => void playVideo()}>
-          <span aria-hidden="true">▶</span>
-          배경 영상 재생
-        </button>
-      ) : null}
 
       <header className="heroV50Header shell">
         <a className="heroV50Brand" href="#top" aria-label={`${identity.name} 홈`}>

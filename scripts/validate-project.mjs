@@ -58,7 +58,7 @@ if (config.display?.floorPlans && (!Array.isArray(config.sections?.floorPlans?.i
 }
 
 for (const key of [
-  "quickLead", "videos", "whyNow", "location", "businessOverview",
+  "quickLead", "videos", "visualHighlights", "whyNow", "location", "businessOverview",
   "officialMaterials", "premium", "timeline", "community", "salesGuide",
   "floorPlans", "landmark", "visitProcess", "faq", "finalCta", "leadSection"
 ]) {

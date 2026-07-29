@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Hero from "@/components/Hero";
 import QuickLead from "@/components/QuickLead";
 import VideoShowcase from "@/components/VideoShowcase";
+import VisualHighlights from "@/components/VisualHighlights";
 import WhyNow from "@/components/WhyNow";
 import BusinessOverview from "@/components/BusinessOverview";
 import OfficialMaterials from "@/components/OfficialMaterials";
@@ -73,6 +74,7 @@ export default function Home() {
       <Hero />
       {projectConfig.display.quickLead ? <QuickLead /> : null}
       {projectConfig.display.videos ? <VideoShowcase /> : null}
+      {projectConfig.display.visualHighlights ? <VisualHighlights /> : null}
       {projectConfig.display.whyNow ? <WhyNow /> : null}
       {projectConfig.display.location ? <InteractiveLocation /> : null}
       {projectConfig.display.businessOverview ? <BusinessOverview /> : null}

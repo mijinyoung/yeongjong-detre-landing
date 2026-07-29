@@ -92,7 +92,12 @@ export default function QuickLead() {
         {state === "done" ? (
           <div className="quickSuccess" role="status"><strong>✓ {message}</strong>{leadId && <small className="leadReceipt">접수번호 {leadId}</small>}</div>
         ) : (
-          <form className="quickLeadForm" onSubmit={submit} noValidate>
+          <form
+            className="quickLeadForm"
+            data-lead-form="quick-lead"
+            onSubmit={submit}
+            noValidate
+          >
             <div className="quickField">
               <input
                 required

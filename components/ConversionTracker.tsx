@@ -5,6 +5,7 @@ import { trackEvent } from "@/lib/analytics";
 
 const DEPTHS = [25, 50, 75, 90] as const;
 const SECTION_IDS = [
+  "visual-highlights",
   "why-now",
   "location-v3",
   "business-overview",
@@ -18,6 +19,7 @@ export default function ConversionTracker() {
   useEffect(() => {
     const reachedDepths = new Set<number>();
     const reachedSections = new Set<string>();
+    const startedForms = new WeakSet<HTMLFormElement>();
     const startedAt = Date.now();
 
     const onScroll = () => {
@@ -60,6 +62,30 @@ export default function ConversionTracker() {
           target_section: href.slice(1),
         });
       }
+    };
+
+    const findLeadForm = (target: EventTarget | null) =>
+      target instanceof Element
+        ? target.closest<HTMLFormElement>("[data-lead-form]")
+        : null;
+
+    const onFormFocus = (event: FocusEvent) => {
+      const form = findLeadForm(event.target);
+      if (!form || startedForms.has(form)) return;
+
+      startedForms.add(form);
+      trackEvent("lead_form_start", {
+        placement: form.dataset.leadForm || "unknown",
+      });
+    };
+
+    const onFormSubmit = (event: SubmitEvent) => {
+      const form = findLeadForm(event.target);
+      if (!form) return;
+
+      trackEvent("lead_submit_attempt", {
+        placement: form.dataset.leadForm || "unknown",
+      });
     };
 
     const observer = new IntersectionObserver(
@@ -106,6 +132,8 @@ export default function ConversionTracker() {
       passive: true,
     });
     document.addEventListener("click", onClick);
+    document.addEventListener("focusin", onFormFocus);
+    document.addEventListener("submit", onFormSubmit);
     document.addEventListener(
       "visibilitychange",
       onVisibilityChange,
@@ -117,6 +145,8 @@ export default function ConversionTracker() {
       observer.disconnect();
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("click", onClick);
+      document.removeEventListener("focusin", onFormFocus);
+      document.removeEventListener("submit", onFormSubmit);
       document.removeEventListener(
         "visibilitychange",
         onVisibilityChange,

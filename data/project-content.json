@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "projectCode": "yeongjong-detre",
-  "version": "11.0.0",
+  "version": "12.0.0",
   "identity": {
     "name": "영종 디에트르 라 메르",
     "shortName": "영종 디에트르",
@@ -29,17 +29,18 @@
   "display": {
     "quickLead": true,
     "videos": true,
+    "visualHighlights": true,
     "whyNow": true,
     "location": true,
     "businessOverview": true,
     "officialMaterials": true,
-    "premium": true,
-    "timeline": true,
+    "premium": false,
+    "timeline": false,
     "community": true,
-    "salesGuide": true,
+    "salesGuide": false,
     "floorPlans": true,
     "landmark": true,
-    "visitProcess": true,
+    "visitProcess": false,
     "faq": true,
     "finalCta": true,
     "leadSection": true
@@ -164,13 +165,50 @@
     "verticalCopy": "THE VALUABLE LIFESTYLE"
   },
   "sections": {
-    "whyNow": {
-      "eyebrow": "WHY YEONGJONG, WHY NOW",
+    "visualHighlights": {
+      "eyebrow": "PROJECT AT A GLANCE",
       "titleLines": [
-        "지금 영종을",
-        "주목해야 하는 이유"
+        "긴 설명보다 먼저 보는",
+        "영종 디에트르의 핵심"
       ],
-      "intro": "과장된 표현보다 확인 가능한 사업 정보와 생활 가치에 집중했습니다. 핵심 내용을 먼저 살펴보고 상세 안내가 필요할 때 상담을 신청해 주세요.",
+      "intro": "공식 영상과 상담자료에서 확인할 수 있는 단지의 핵심 장면을 먼저 살펴보세요.",
+      "items": [
+        {
+          "id": "landmark",
+          "label": "LANDMARK",
+          "title": "최고 49층 스카이라인",
+          "description": "바다와 도시를 잇는 영종의 새로운 랜드마크",
+          "image": "/images/video/brand-poster-v95.webp",
+          "alt": "영종 디에트르 라 메르 랜드마크 투시도",
+          "href": "#brand-film"
+        },
+        {
+          "id": "complex",
+          "label": "1,009 HOUSEHOLDS",
+          "title": "대단지로 완성되는 생활",
+          "description": "조경·커뮤니티·주거 공간을 함께 계획한 단지",
+          "image": "/images/video/complex-poster-v95.webp",
+          "alt": "영종 디에트르 라 메르 단지 조감도",
+          "href": "#business-overview"
+        },
+        {
+          "id": "site-plan",
+          "label": "SITE PLAN",
+          "title": "공원과 중앙광장을 품은 배치",
+          "description": "방죽공원과 단지 안팎의 생활 동선을 연결한 계획",
+          "image": "/images/brochure/site-plan.webp",
+          "alt": "영종 디에트르 라 메르 단지배치도",
+          "href": "#official-materials"
+        }
+      ]
+    },
+    "whyNow": {
+      "eyebrow": "THREE CORE VALUES",
+      "titleLines": [
+        "반복 없이 정리한",
+        "세 가지 핵심 가치"
+      ],
+      "intro": "광고 문구보다 실제 사업자료에서 확인할 수 있는 입지·규모·상품 가치에 집중했습니다.",
       "items": [
         {
           "number": "01",
@@ -189,18 +227,6 @@
           "keyword": "SCALE",
           "title": "총 1,009세대 대단지",
           "description": "6개 주거 타입과 대단지 규모를 바탕으로 다양한 주거 선택지를 제공합니다."
-        },
-        {
-          "number": "04",
-          "keyword": "LIFESTYLE",
-          "title": "프리미엄 커뮤니티",
-          "description": "수영장, 사우나, 피트니스, 골프 등 일상의 품격을 높이는 시설이 계획되어 있습니다."
-        },
-        {
-          "number": "05",
-          "keyword": "ACCESS",
-          "title": "공항 직주근접 생활",
-          "description": "인천국제공항 및 관련 산업 종사자에게 편리한 생활권을 제공합니다."
         }
       ]
     },
@@ -309,7 +335,9 @@
         "집을 넘어,",
         "일상의 품격을 높이는 공간"
       ],
-      "intro": "홍보물에 안내된 주요 커뮤니티 계획을 바탕으로 구성했습니다. 실제 시설과 운영 방식은 사업 진행 과정에서 변경될 수 있습니다.",
+      "intro": "홍보물에 안내된 주요 커뮤니티와 생활 시스템을 한 화면에서 간결하게 확인하세요.",
+      "image": "/images/brochure/system-premium.webp",
+      "imageAlt": "영종 디에트르 라 메르 생활 편의 시스템 안내",
       "items": [
         {
           "label": "AQUA",

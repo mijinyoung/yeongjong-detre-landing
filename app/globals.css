@@ -1898,6 +1898,11 @@ body.mobileNavOpen{overflow:hidden}
 .adminSources li > i { display: block; height: 7px; overflow: hidden; background: #edf0f2; border-radius: 999px; }
 .adminSources li > i b { display: block; height: 100%; background: #a47738; border-radius: inherit; }
 .adminSources > p { color: #737b85; font-size: 13px; }
+.adminCampaignSummary { margin-top: 22px; padding-top: 18px; border-top: 1px solid #edf0f2; }
+.adminCampaignSummary h3 { margin: 0 0 12px; color: #28313d; font-size: 13px; }
+.adminCampaignSummary ol { gap: 9px; }
+.adminCampaignSummary li > div strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adminCampaignSummary p { margin: 0; color: #737b85; font-size: 12px; line-height: 1.6; }
 .adminToolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .adminToolbar input { flex: 1; background: #fff; }
 .adminToolbar select { min-height: 46px; padding: 0 34px 0 13px; background: #fff; border: 1px solid #d7dce1; border-radius: 9px; font: inherit; }
@@ -2148,4 +2153,294 @@ textarea[aria-invalid="true"] {
 .adminTableWrap:focus-visible {
   outline: 3px solid rgba(156, 112, 53, .28);
   outline-offset: 4px;
+}
+
+/* ===== v12 광고 랜딩: 자동재생 안정화·시각 중심 본문 ===== */
+.heroV50Video {
+  pointer-events: none;
+  filter: brightness(1.06) saturate(1.03);
+}
+
+.visualHighlights {
+  background: #f2eee7;
+}
+
+.visualHighlightsHeading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+  align-items: end;
+  gap: clamp(32px, 7vw, 90px);
+  margin-bottom: 52px;
+}
+
+.visualHighlightsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  grid-template-rows: repeat(2, minmax(250px, 1fr));
+  gap: 14px;
+  min-height: 680px;
+}
+
+.visualHighlightCard {
+  position: relative;
+  display: block;
+  min-height: 250px;
+  overflow: hidden;
+  border-radius: 22px;
+  color: #fff;
+  background: #0b1730;
+  box-shadow: 0 18px 45px rgba(20, 31, 45, .13);
+  isolation: isolate;
+}
+
+.visualHighlightCard.featured {
+  grid-row: 1 / 3;
+}
+
+.visualHighlightImage {
+  object-fit: cover;
+  object-position: center;
+  transition: transform .65s cubic-bezier(.2, .7, .2, 1);
+}
+
+.visualHighlightCard.featured .visualHighlightImage {
+  object-position: 58% center;
+}
+
+.visualHighlightCard:last-child .visualHighlightImage {
+  object-position: 52% center;
+}
+
+.visualHighlightCard:hover .visualHighlightImage {
+  transform: scale(1.035);
+}
+
+.visualHighlightShade {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(5, 13, 26, .03) 22%, rgba(5, 13, 26, .88) 100%),
+    linear-gradient(90deg, rgba(5, 13, 26, .26), transparent 58%);
+}
+
+.visualHighlightCopy {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(24px, 4vw, 44px);
+}
+
+.visualHighlightCopy small {
+  color: #e5ba73;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .2em;
+}
+
+.visualHighlightCopy strong {
+  margin-top: 10px;
+  font-size: clamp(23px, 2.4vw, 36px);
+  line-height: 1.2;
+  letter-spacing: -.035em;
+}
+
+.visualHighlightCopy > span {
+  max-width: 470px;
+  margin-top: 9px;
+  color: rgba(255, 255, 255, .76);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.visualHighlightCopy i {
+  margin-top: 20px;
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.whyV50Grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.whyV50Card {
+  min-height: 310px;
+}
+
+.communityV120Layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, .95fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.communityV120Visual {
+  position: relative;
+  min-height: 610px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 22px;
+  background: #071321;
+}
+
+.communityV120Image {
+  object-fit: cover;
+  object-position: 54% center;
+}
+
+.communityV120Visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 65%, rgba(4, 12, 24, .8));
+  pointer-events: none;
+}
+
+.communityV120Visual figcaption {
+  position: absolute;
+  z-index: 2;
+  bottom: 22px;
+  left: 24px;
+  color: rgba(255, 255, 255, .74);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .17em;
+}
+
+.communityV120Grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  border-left: 1px solid rgba(255, 255, 255, .16);
+}
+
+.communityV120Card {
+  min-height: 296px;
+  padding: 30px 25px;
+  border-right: 1px solid rgba(255, 255, 255, .16);
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
+}
+
+.communityV120Card > span {
+  color: rgba(255, 255, 255, .28);
+  font-family: Georgia, serif;
+  font-size: 27px;
+}
+
+.communityV120Card > p {
+  margin: 42px 0 10px;
+  color: #d7a64f;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .18em;
+}
+
+.communityV120Card h3 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.3;
+}
+
+.communityV120Card small {
+  display: block;
+  margin-top: 17px;
+  color: rgba(255, 255, 255, .6);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+@media (max-width: 980px) {
+  .visualHighlightsHeading,
+  .communityV120Layout {
+    grid-template-columns: 1fr;
+  }
+
+  .visualHighlightsGrid {
+    min-height: 620px;
+  }
+
+  .communityV120Visual {
+    min-height: 520px;
+  }
+
+  .whyV50Grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .heroV50Video {
+    display: block;
+    object-position: 58% center;
+    filter: brightness(1.14) saturate(1.04);
+  }
+
+  .heroV50Play {
+    top: 31%;
+  }
+
+  .visualHighlights {
+    padding-block: 78px;
+  }
+
+  .visualHighlightsHeading {
+    gap: 22px;
+    margin-bottom: 34px;
+  }
+
+  .visualHighlightsGrid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    min-height: 0;
+  }
+
+  .visualHighlightCard,
+  .visualHighlightCard.featured {
+    grid-row: auto;
+    min-height: 285px;
+  }
+
+  .visualHighlightCard.featured {
+    min-height: 410px;
+  }
+
+  .visualHighlightCopy {
+    padding: 25px 22px;
+  }
+
+  .visualHighlightCopy strong {
+    font-size: 25px;
+  }
+
+  .whyV50Grid,
+  .communityV120Grid {
+    grid-template-columns: 1fr;
+  }
+
+  .whyV50Card,
+  .whyV50Card:last-child {
+    grid-column: auto;
+    min-height: 245px;
+  }
+
+  .communityV120Visual {
+    min-height: 390px;
+  }
+
+  .communityV120Card {
+    min-height: 215px;
+    padding: 25px 22px;
+  }
+
+  .communityV120Card > p {
+    margin-top: 24px;
+  }
 }

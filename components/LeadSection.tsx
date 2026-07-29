@@ -94,7 +94,12 @@ export default function LeadSection() {
             <button className="textButton" type="button" onClick={() => { eventIdRef.current = ""; setStatus("idle"); setName(""); setPhone(""); setAgree(false); setLeadId(""); setFieldErrors({}); }}>다른 고객 등록하기</button>
           </div>
         ) : (
-          <form className="leadForm" onSubmit={submit} noValidate>
+          <form
+            className="leadForm"
+            data-lead-form="bottom-form"
+            onSubmit={submit}
+            noValidate
+          >
             <label>
               이름
               <input

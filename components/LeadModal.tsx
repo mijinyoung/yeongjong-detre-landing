@@ -140,7 +140,12 @@ export default function LeadModal() {
             <div className="leadModalTrust" aria-label="상담 신청 안내">
               <span>✓ 무료 상담</span><span>✓ 상담 외 사용 없음</span><span>✓ 언제든 취소 가능</span>
             </div>
-            <form className="leadModalForm" onSubmit={submit} noValidate>
+            <form
+              className="leadModalForm"
+              data-lead-form={placement}
+              onSubmit={submit}
+              noValidate
+            >
               <label>
                 이름
                 <input

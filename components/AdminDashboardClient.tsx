@@ -18,7 +18,9 @@ type Lead = {
   name: string;
   phone: string;
   source: string;
+  medium: string;
   campaign: string;
+  content: string;
   placement: string;
   status: string;
   smsStatus: string;
@@ -211,7 +213,7 @@ export default function AdminDashboardClient() {
     return leads.filter((lead) => {
       const matchesKeyword =
         !keyword ||
-        [lead.leadId, lead.name, lead.phone, lead.source, lead.campaign, lead.placement, lead.status, lead.smsStatus, lead.memo]
+        [lead.leadId, lead.name, lead.phone, lead.source, lead.medium, lead.campaign, lead.content, lead.placement, lead.status, lead.smsStatus, lead.memo]
         .join(" ")
         .toLowerCase()
         .includes(keyword);
@@ -270,7 +272,10 @@ export default function AdminDashboardClient() {
   const sourceStats = useMemo(() => {
     const counts = new Map<string, number>();
     for (const lead of leads) {
-      const source = (lead.source || lead.campaign || "직접 방문").trim();
+      const source = [
+        (lead.source || "직접 방문").trim(),
+        lead.medium?.trim(),
+      ].filter(Boolean).join(" / ");
       counts.set(source, (counts.get(source) || 0) + 1);
     }
     return [...counts.entries()]
@@ -281,6 +286,20 @@ export default function AdminDashboardClient() {
         count,
         rate: leads.length ? Math.round((count / leads.length) * 100) : 0,
       }));
+  }, [leads]);
+  const campaignStats = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const lead of leads) {
+      const campaign = lead.campaign?.trim();
+      const content = lead.content?.trim();
+      if (!campaign && !content) continue;
+      const label = [campaign || "캠페인 미지정", content].filter(Boolean).join(" / ");
+      counts.set(label, (counts.get(label) || 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([label, count]) => ({ label, count }));
   }, [leads]);
 
   const loadLeads = useCallback(async (csrf = csrfTokenRef.current) => {
@@ -591,10 +610,10 @@ export default function AdminDashboardClient() {
   }
 
   function downloadCsv() {
-    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "캠페인", "신청위치", "처리상태", "상담메모", "문자상태"];
+    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "매체유형", "캠페인", "광고소재", "신청위치", "처리상태", "상담메모", "문자상태"];
     const rows = filtered.map((lead) => [
       lead.leadId, lead.submittedAt, lead.name, lead.phone, lead.source,
-      lead.campaign, lead.placement, lead.status, lead.memo, lead.smsStatus,
+      lead.medium, lead.campaign, lead.content, lead.placement, lead.status, lead.memo, lead.smsStatus,
     ]);
     const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -720,6 +739,18 @@ export default function AdminDashboardClient() {
                     ))}
                   </ol>
                 ) : <p>아직 분석할 접수 데이터가 없습니다.</p>}
+                <div className="adminCampaignSummary">
+                  <h3>상위 캠페인·광고소재</h3>
+                  {campaignStats.length ? (
+                    <ol>
+                      {campaignStats.map((item) => (
+                        <li key={item.label}>
+                          <div><strong>{item.label}</strong><span>{item.count}건</span></div>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : <p>UTM 캠페인 데이터가 들어오면 여기에 표시됩니다.</p>}
+                </div>
               </article>
             </section>
 
@@ -775,7 +806,12 @@ export default function AdminDashboardClient() {
                           ) : null}
                         </div>
                       </td>
-                      <td data-label="유입경로">{lead.source || lead.campaign || "직접 방문"}</td>
+                      <td data-label="유입경로">
+                        <strong>{[lead.source || "직접 방문", lead.medium].filter(Boolean).join(" / ")}</strong>
+                        {lead.campaign || lead.content ? (
+                          <small>{[lead.campaign, lead.content].filter(Boolean).join(" / ")}</small>
+                        ) : null}
+                      </td>
                       <td data-label="신청위치">{lead.placement || "-"}</td>
                       <td data-label="상태">
                         <select

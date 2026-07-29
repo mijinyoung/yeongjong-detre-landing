@@ -9,96 +9,63 @@ const { hero, identity, contact, assets } = projectConfig;
 
 export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoEnabled, setVideoEnabled] = useState(false);
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const openForm = (source: string) => openLeadModal(source);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const saveData = (
-      navigator as Navigator & { connection?: { saveData?: boolean } }
-    ).connection?.saveData;
-
-    if (reducedMotion || saveData) {
-      const timer = window.setTimeout(() => setPlaybackBlocked(true), 0);
-      return () => window.clearTimeout(timer);
-    }
-
-    let idleId: number | null = null;
-    let fallbackTimer = 0;
-    let scheduled = false;
-    const idleApi = window as unknown as {
-      requestIdleCallback?: (
-        callback: IdleRequestCallback,
-        options?: IdleRequestOptions,
-      ) => number;
-      cancelIdleCallback?: (handle: number) => void;
-    };
-
-    const enableVideo = () => {
-      scheduled = false;
-      if (!document.hidden) setVideoEnabled(true);
-    };
-    const scheduleVideo = () => {
-      if (scheduled || document.hidden) return;
-      scheduled = true;
-      if (typeof idleApi.requestIdleCallback === "function") {
-        idleId = idleApi.requestIdleCallback(enableVideo, { timeout: 2000 });
-      } else {
-        fallbackTimer = window.setTimeout(enableVideo, 500);
-      }
-    };
-    const handleVisibility = () => {
-      if (!document.hidden) scheduleVideo();
-    };
-
-    if (document.readyState === "complete") scheduleVideo();
-    else window.addEventListener("load", scheduleVideo, { once: true });
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    return () => {
-      window.removeEventListener("load", scheduleVideo);
-      document.removeEventListener("visibilitychange", handleVisibility);
-      if (idleId !== null) idleApi.cancelIdleCallback?.(idleId);
-      window.clearTimeout(fallbackTimer);
-    };
-  }, []);
-
-  useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoEnabled) return;
+    if (!video) return;
 
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     video.muted = true;
     video.defaultMuted = true;
     video.setAttribute("muted", "");
-    video.load();
+    video.setAttribute("playsinline", "");
 
-    const syncPlayback = () => {
-      if (document.hidden) {
-        video.pause();
-      } else {
-        void video.play()
-          .then(() => setPlaybackBlocked(false))
-          .catch(() => setPlaybackBlocked(true));
-      }
-    };
-
-    syncPlayback();
-    video.addEventListener("loadeddata", syncPlayback, { once: true });
-    document.addEventListener("visibilitychange", syncPlayback);
-    return () => {
-      document.removeEventListener("visibilitychange", syncPlayback);
-      video.removeEventListener("loadeddata", syncPlayback);
+    if (reducedMotion) {
       video.pause();
-    };
-  }, [videoEnabled]);
-
-  async function playVideo() {
-    if (!videoEnabled) {
-      setVideoEnabled(true);
-      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+      const reducedMotionTimer = window.setTimeout(
+        () => setPlaybackBlocked(true),
+        0,
+      );
+      return () => window.clearTimeout(reducedMotionTimer);
     }
 
+    let fallbackTimer = 0;
+    const tryAutoplay = () => {
+      if (document.hidden) {
+        video.pause();
+        return;
+      }
+
+      void video.play()
+        .then(() => {
+          window.clearTimeout(fallbackTimer);
+          setPlaybackBlocked(false);
+        })
+        .catch(() => {
+          window.clearTimeout(fallbackTimer);
+          fallbackTimer = window.setTimeout(() => {
+            if (video.paused) setPlaybackBlocked(true);
+          }, 1200);
+        });
+    };
+
+    tryAutoplay();
+    video.addEventListener("canplay", tryAutoplay);
+    window.addEventListener("pageshow", tryAutoplay);
+    document.addEventListener("visibilitychange", tryAutoplay);
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      video.removeEventListener("canplay", tryAutoplay);
+      window.removeEventListener("pageshow", tryAutoplay);
+      document.removeEventListener("visibilitychange", tryAutoplay);
+      video.pause();
+    };
+  }, []);
+
+  async function playVideo() {
     const video = videoRef.current;
     if (!video) return;
 
@@ -117,17 +84,19 @@ export default function Hero() {
       <video
         ref={videoRef}
         className="heroV50Video"
-        autoPlay={videoEnabled}
+        autoPlay
         muted
         loop
         playsInline
-        preload={videoEnabled ? "metadata" : "none"}
+        preload="auto"
         poster={assets.heroPoster}
-        aria-label={hero.videoAriaLabel}
+        aria-hidden="true"
+        disablePictureInPicture
+        disableRemotePlayback
         onPlay={() => setPlaybackBlocked(false)}
         onError={() => setPlaybackBlocked(true)}
       >
-        {videoEnabled ? <source src={assets.heroVideo} type="video/mp4" /> : null}
+        <source src={assets.heroVideo} type="video/mp4" />
       </video>
       <div className="heroV50StampMask" aria-hidden="true" />
       <div className="heroV50Shade" aria-hidden="true" />

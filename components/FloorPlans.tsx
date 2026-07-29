@@ -1,36 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { type KeyboardEvent, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 import { openLeadModal } from "@/lib/analytics";
 import { useOverlayFocus } from "@/lib/use-overlay-focus";
-
-type Plan = {
-  id: string;
-  exclusive: string;
-  supply: string;
-  contract: string;
-  households: string;
-  feature: string;
-  image: string;
-};
-
-const plans: Plan[] = [
-  { id: "84A", exclusive: "84.9873㎡", supply: "112.7904㎡", contract: "182.9234㎡", households: "168세대", feature: "풍부한 수납과 가변형 공간을 갖춘 실용 중심 타입", image: "/images/brochure/floor-84a.webp" },
-  { id: "84B", exclusive: "84.9388㎡", supply: "114.0779㎡", contract: "184.1708㎡", households: "170세대", feature: "거실과 주방의 개방감을 강화한 생활 중심 타입", image: "/images/brochure/floor-84b.webp" },
-  { id: "104A", exclusive: "104.9940㎡", supply: "139.2509㎡", contract: "225.8937㎡", households: "247세대", feature: "대형 팬트리와 다목적 공간을 더한 패밀리 타입", image: "/images/brochure/floor-104a.webp" },
-  { id: "104B", exclusive: "104.9695㎡", supply: "139.1270㎡", contract: "225.7496㎡", households: "248세대", feature: "침실과 공용공간의 균형을 높인 프리미엄 타입", image: "/images/brochure/floor-104b.webp" },
-  { id: "113A", exclusive: "113.9691㎡", supply: "150.2654㎡", contract: "244.3146㎡", households: "88세대", feature: "여유로운 면적과 다양한 수납을 갖춘 대형 타입", image: "/images/brochure/floor-113a.webp" },
-  { id: "113B", exclusive: "113.9456㎡", supply: "150.4896㎡", contract: "244.5195㎡", households: "88세대", feature: "독립적인 침실 구성과 넉넉한 공용공간의 대형 타입", image: "/images/brochure/floor-113b.webp" },
-];
+import { projectConfig } from "@/data/project-config";
 
 export default function FloorPlans() {
+  const section = projectConfig.sections.floorPlans;
+  const plans = section.items;
   const [selected, setSelected] = useState("84A");
   const [zoomOpen, setZoomOpen] = useState(false);
   const zoomRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const plan = useMemo(() => plans.find((item) => item.id === selected) || plans[0], [selected]);
+  const plan = plans.find((item) => item.id === selected) || plans[0];
 
   useOverlayFocus({
     open: zoomOpen,
@@ -57,17 +41,14 @@ export default function FloorPlans() {
       <div className="shell">
         <div className="floorHeading">
           <div>
-            <p className="sectionEyebrow">OFFICIAL UNIT PLAN</p>
+            <p className="sectionEyebrow">{section.eyebrow}</p>
             <h2 className="sectionTitle">
-              상담북의 실제 평면으로 보는
+              {section.titleLines[0]}
               <br />
-              6가지 주거 타입
+              {section.titleLines[1]}
             </h2>
           </div>
-          <p className="bodyCopy">
-            84㎡, 104㎡, 113㎡ A·B 타입의 공식 홍보 평면을 반영했습니다.
-            면적과 구성은 인쇄물 기준이며 계약 전 입주자모집공고와 견본주택을 반드시 확인해 주세요.
-          </p>
+          <p className="bodyCopy">{section.intro}</p>
         </div>
 
         <div className="planTabs" role="tablist" aria-label="주거 타입 선택">

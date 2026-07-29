@@ -1,5 +1,5 @@
 /**
- * 영종 디에트르 Google Sheets 저장·관리자 운영용 Apps Script — v10.0
+ * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v11.0
  *
  * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
@@ -7,11 +7,12 @@
  * 권장 설정: Apps Script의 프로젝트 설정 > 스크립트 속성에
  * WEBHOOK_SECRET을 추가하고 Vercel의 GOOGLE_SHEET_WEBHOOK_SECRET과 같은 값을 입력합니다.
  */
+const PROJECT_CODE = 'yeongjong-detre';
 const SHEET_NAME = '관심고객';
 const WEBHOOK_SECRET_FALLBACK = '여기에-Vercel과-동일한-비밀값-입력';
 
 const REQUIRED_HEADERS = [
-  '접수번호','등록일시','이름','휴대폰','유입경로','캠페인','광고소재',
+  '접수번호','현장코드','현장명','등록일시','이름','휴대폰','유입경로','캠페인','광고소재',
   '신청위치','페이지','이전페이지','개인정보동의시각','방문분석동의',
   'IP','브라우저','처리상태','상담메모','문자상태','문자처리시각','문자상세',
   '이벤트ID'
@@ -26,8 +27,8 @@ function doGet(e) {
 
   return jsonResponse({
     ok: true,
-    service: 'yeongjong-detre-google-sheets',
-    version: '10.0.0',
+    service: PROJECT_CODE + '-google-sheets',
+    version: '11.0.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -178,6 +179,8 @@ function appendLead(sheet, map, data) {
 
   const row = new Array(sheet.getLastColumn()).fill('');
   put(row, map, '접수번호', leadId);
+  put(row, map, '현장코드', data.projectCode || PROJECT_CODE);
+  put(row, map, '현장명', data.projectName || '');
   put(row, map, '등록일시', data.submittedAt || new Date().toISOString());
   put(row, map, '이름', data.name || '');
   put(row, map, '휴대폰', data.phone || '');
@@ -223,6 +226,7 @@ function updateDeliveryStatus(sheet, map, data) {
 
 function updateLeadStatus(sheet, map, data) {
   const leadId = String(data.leadId || '').trim();
+  const projectCode = String(data.projectCode || '').trim();
   const status = String(data.status || '').trim();
   const memo = String(data.memo || '').trim().slice(0, 1000);
   const allowedStatuses = ['신규', '연락완료', '상담중', '방문예약', '계약', '보류'];
@@ -230,6 +234,9 @@ function updateLeadStatus(sheet, map, data) {
 
   if (!leadId) return jsonResponse({ ok: false, message: 'leadId is required' });
   if (!row) return jsonResponse({ ok: false, message: 'Lead row not found', leadId: leadId });
+  if (projectCode && readSheetCell(sheet, row, map, '현장코드') !== projectCode) {
+    return jsonResponse({ ok: false, message: 'Lead does not belong to this project' });
+  }
   if (allowedStatuses.indexOf(status) === -1) {
     return jsonResponse({ ok: false, message: 'Invalid status' });
   }
@@ -270,9 +277,12 @@ function listLeads(params) {
   const values = sheet.getRange(startRow, 1, rowCount, sheet.getLastColumn())
     .getDisplayValues();
 
+  const projectCode = String(params.projectCode || '').trim();
   const leads = values.reverse().map(function(row) {
     return {
       leadId: read(row, map, '접수번호'),
+      projectCode: read(row, map, '현장코드'),
+      projectName: read(row, map, '현장명'),
       submittedAt: read(row, map, '등록일시'),
       name: read(row, map, '이름'),
       phone: read(row, map, '휴대폰'),
@@ -283,18 +293,21 @@ function listLeads(params) {
       smsStatus: read(row, map, '문자상태'),
       memo: read(row, map, '상담메모')
     };
+  }).filter(function(lead) {
+    return !projectCode || lead.projectCode === projectCode;
   });
 
   return jsonResponse({
     ok: true,
     leads: leads,
-    total: total,
+    total: projectCode ? leads.length : total,
     updatedAt: new Date().toISOString()
   });
 }
 
 function getLeadDetail(data) {
   const leadId = String(data.leadId || '').trim();
+  const projectCode = String(data.projectCode || '').trim();
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = spreadsheet.getSheetByName(SHEET_NAME);
 
@@ -306,6 +319,9 @@ function getLeadDetail(data) {
   const map = readHeaderMap(sheet);
   const row = findLeadRow(sheet, map, leadId);
   if (!row) return jsonResponse({ ok: false, message: 'Lead row not found' });
+  if (projectCode && readSheetCell(sheet, row, map, '현장코드') !== projectCode) {
+    return jsonResponse({ ok: false, message: 'Lead does not belong to this project' });
+  }
 
   const phoneColumn = map['휴대폰'];
   const phone = phoneColumn

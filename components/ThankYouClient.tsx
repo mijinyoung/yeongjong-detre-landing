@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
+import { contactHref, projectConfig } from "@/data/project-config";
 
 export default function ThankYouClient() {
   const searchParams = useSearchParams();
@@ -33,7 +34,7 @@ export default function ThankYouClient() {
         )}
 
         <div className="thankYouActions">
-          <a href="tel:18338384" data-placement="thank-you" onClick={() => trackEvent("phone_click", { placement: "thank-you" })}>전화상담 1833-8384</a>
+          <a href={contactHref} data-placement="thank-you" onClick={() => trackEvent("phone_click", { placement: "thank-you" })}>전화상담 {projectConfig.contact.displayPhone}</a>
           <Link href="/" className="secondary">홈페이지로 돌아가기</Link>
         </div>
 

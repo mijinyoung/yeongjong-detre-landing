@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { projectConfig } from "@/data/project-config";
 
 const META_TIMEOUT_MS = 8000;
 
@@ -60,6 +61,8 @@ export async function sendMetaLeadEvent(event: MetaLeadEvent) {
         event_source_url: event.eventSourceUrl,
         user_data: userData,
         custom_data: {
+          project_code: projectConfig.projectCode,
+          project_name: projectConfig.identity.name,
           lead_id: event.leadId,
           placement: event.placement || "",
           source: event.source || "",

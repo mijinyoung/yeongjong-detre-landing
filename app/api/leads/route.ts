@@ -4,6 +4,7 @@ import { validateLead } from "@/lib/lead";
 import { sendMetaLeadEvent } from "@/lib/meta-capi";
 import { sendSolapiLeadNotification } from "@/lib/solapi";
 import { getSheetWebhookSecret, getSmsWebhookSecret } from "@/lib/webhook-secrets";
+import { projectConfig } from "@/data/project-config";
 
 export const runtime = "nodejs";
 
@@ -40,7 +41,7 @@ function createLeadId() {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replaceAll("-", "");
   const random = randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
-  return `YD-${date}-${random}`;
+  return `${projectConfig.conversion.leadIdPrefix}-${date}-${random}`;
 }
 
 type WebhookResult = {
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
     if (!sheetWebhook && !testMode) {
       console.error("Lead storage is not configured.");
       return NextResponse.json(
-        { ok: false, message: "현재 온라인 접수를 저장할 수 없습니다. 1833-8384로 연락해 주세요." },
+        { ok: false, message: `현재 온라인 접수를 저장할 수 없습니다. ${projectConfig.contact.displayPhone}로 연락해 주세요.` },
         { status: 503 },
       );
     }
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
     if (sheetWebhook && !sheetSecret) {
       console.error("Google Sheets webhook secret is not configured.");
       return NextResponse.json(
-        { ok: false, message: "접수 저장 설정을 확인 중입니다. 1833-8384로 연락해 주세요." },
+        { ok: false, message: `접수 저장 설정을 확인 중입니다. ${projectConfig.contact.displayPhone}로 연락해 주세요.` },
         { status: 503 },
       );
     }
@@ -193,6 +194,8 @@ export async function POST(request: NextRequest) {
     const candidateLead = {
       ...result.data,
       leadId: candidateLeadId,
+      projectCode: projectConfig.projectCode,
+      projectName: projectConfig.identity.name,
       consentAt: new Date().toISOString(),
       ip,
       userAgent: request.headers.get("user-agent") || "",
@@ -248,7 +251,7 @@ export async function POST(request: NextRequest) {
           }
         }
         return NextResponse.json(
-          { ok: false, message: "접수 저장 중 오류가 발생했습니다. 1833-8384로 연락해 주세요." },
+          { ok: false, message: `접수 저장 중 오류가 발생했습니다. ${projectConfig.contact.displayPhone}로 연락해 주세요.` },
           { status: 502 },
         );
       }
@@ -340,7 +343,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       leadId,
       smsStatus,
-      message: "관심고객 등록이 완료되었습니다.",
+      message: projectConfig.conversion.successMessage,
     });
   } catch (error) {
     console.error(error);

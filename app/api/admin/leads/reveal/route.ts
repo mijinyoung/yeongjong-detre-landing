@@ -6,6 +6,7 @@ import {
 } from "@/lib/admin-session";
 import { apiJson } from "@/lib/api-response";
 import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
+import { projectConfig } from "@/data/project-config";
 
 export const runtime = "nodejs";
 
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           action: "getLead",
           leadId,
+          projectCode: projectConfig.projectCode,
           _webhookSecret: sheetSecret,
         }),
         cache: "no-store",

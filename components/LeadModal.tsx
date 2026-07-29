@@ -6,6 +6,7 @@ import { createLeadEventId, getLeadAttribution, getMetaLeadContext, goToThankYou
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 import { LeadFieldErrors, validateLeadFields } from "@/lib/lead-form-validation";
 import { useOverlayFocus } from "@/lib/use-overlay-focus";
+import { contactHref, projectConfig } from "@/data/project-config";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -129,7 +130,7 @@ export default function LeadModal() {
             <h2>관심고객 등록 완료</h2>
             <p>{message}</p>
             {leadId && <small className="leadReceipt">접수번호 {leadId}</small>}
-            <a href="tel:18338384">지금 전화하기 1833-8384</a>
+            <a href={contactHref}>지금 전화하기 {projectConfig.contact.displayPhone}</a>
           </div>
         ) : (
           <>

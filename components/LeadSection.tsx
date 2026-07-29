@@ -5,6 +5,7 @@ import { trackLeadComplete } from "@/lib/analytics";
 import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
 import { LeadFieldErrors, validateLeadFields } from "@/lib/lead-form-validation";
+import { contactHref, projectConfig } from "@/data/project-config";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -85,7 +86,7 @@ export default function LeadSection() {
           <p className="sectionEyebrow gold">PRIORITY INFORMATION</p>
           <h2 className="sectionTitle white">관심고객으로 등록하고<br />분양 정보를 우선 안내받으세요.</h2>
           <p className="bodyCopy muted">분양가, 잔여세대, 방문상담 일정 등을 담당자가 순차적으로 안내드립니다.</p>
-          <a className="phoneBig" href="tel:18338384" data-placement="lead-section">1833-8384</a>
+          <a className="phoneBig" href={contactHref} data-placement="lead-section">{projectConfig.contact.displayPhone}</a>
         </div>
         {status === "done" ? (
           <div className="successBox">

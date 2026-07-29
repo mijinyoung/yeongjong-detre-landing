@@ -4,6 +4,7 @@ import { apiJson } from "@/lib/api-response";
 import { isAdminSessionConfigured } from "@/lib/admin-session";
 import { isSolapiConfigured } from "@/lib/solapi";
 import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
+import { projectConfig } from "@/data/project-config";
 
 export const runtime = "nodejs";
 
@@ -25,7 +26,7 @@ export function GET(request: NextRequest) {
     return apiJson(
       {
         ok: true,
-        version: "10.0.0",
+        version: projectConfig.version,
         authenticated: false,
         checkedAt: new Date().toISOString(),
       },
@@ -73,7 +74,7 @@ export function GET(request: NextRequest) {
   return apiJson(
     {
       ok: true,
-      version: "10.0.0",
+      version: projectConfig.version,
       authenticated: true,
       productionReady: integrations.googleSheets && integrations.sms,
       integrations,

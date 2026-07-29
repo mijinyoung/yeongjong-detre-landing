@@ -1,12 +1,14 @@
 {
-  "name": "yeongjong-detre-landing",
-  "version": "10.0.0",
+  "name": "property-campaign-landing",
+  "version": "11.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "project:check": "node scripts/validate-project.mjs",
+    "verify": "npm run project:check && tsc --noEmit && npm run lint && npm run build"
   },
   "dependencies": {
     "next": "^16.2.12",

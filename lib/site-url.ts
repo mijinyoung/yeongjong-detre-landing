@@ -1,4 +1,6 @@
-const FALLBACK_SITE_URL = "https://yeongjong-detre-landing.vercel.app";
+import { projectConfig } from "@/data/project-config";
+
+const FALLBACK_SITE_URL = projectConfig.seo.fallbackSiteUrl;
 
 export function getSiteUrl() {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();

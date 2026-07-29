@@ -1,4 +1,5 @@
 import { faqItems } from "@/data/site-content";
+import { projectConfig } from "@/data/project-config";
 import { getSiteUrl } from "@/lib/site-url";
 
 const siteUrl = getSiteUrl();
@@ -10,27 +11,25 @@ export default function StructuredData() {
   const website = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "영종 디에트르 라 메르",
+    name: projectConfig.identity.name,
     url: siteUrl,
-    inLanguage: "ko-KR",
-    description:
-      "영종 디에트르 라 메르 분양 안내와 관심고객 등록 페이지",
+    inLanguage: projectConfig.seo.language,
+    description: projectConfig.seo.description,
   };
 
   const residence = {
     "@context": "https://schema.org",
     "@type": "ApartmentComplex",
-    name: "영종 디에트르 라 메르",
+    name: projectConfig.identity.name,
     url: siteUrl,
-    image: `${siteUrl}/images/hero-og.jpg`,
-    description:
-      "청라하늘대교 생활권, 최고 49층, 총 1,009세대 규모의 영종 디에트르 라 메르",
-    telephone: "1833-8384",
+    image: `${siteUrl}${projectConfig.seo.ogImage}`,
+    description: projectConfig.seo.description,
+    telephone: projectConfig.contact.displayPhone,
     address: {
       "@type": "PostalAddress",
-      addressLocality: "인천광역시 중구",
-      addressRegion: "인천광역시",
-      addressCountry: "KR",
+      addressLocality: projectConfig.seo.addressLocality,
+      addressRegion: projectConfig.seo.addressRegion,
+      addressCountry: projectConfig.seo.addressCountry,
     },
   };
 
@@ -46,10 +45,13 @@ export default function StructuredData() {
       },
     })),
   };
+  const structuredItems = projectConfig.display.faq
+    ? [website, residence, faq]
+    : [website, residence];
 
   return (
     <>
-      {[website, residence, faq].map((item, index) => (
+      {structuredItems.map((item, index) => (
         <script
           key={index}
           type="application/ld+json"

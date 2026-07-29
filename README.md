@@ -1,5 +1,13 @@
-# 영종 디에트르 라 메르 랜딩페이지 v2.2
+# 현장 복제형 부동산 광고 랜딩페이지
 
-Hero v2, 관심고객 팝업, UTM/Meta Pixel 준비, API 리드 전송과 함께 6개 주거 타입 인터랙티브 섹션이 포함된 버전입니다.
+현재 운영 현장: **영종 디에트르 라 메르**  
+현재 버전: **11.0.0**
 
-자세한 적용 방법은 `SETUP-v22.md`를 확인하세요.
+새 현장은 `data/project-content.json`과 `public/images`, `public/videos`의 자료를 교체해 제작합니다.
+
+- 이번 버전 상세: `README-v110.md`
+- 새 현장 자료 목록: `PROJECT-MATERIALS-TEMPLATE.md`
+- 설정 검사: `npm run project:check`
+- 전체 검증: `npm run verify`
+
+비밀번호, API 키, 웹훅 인증값은 소스나 자료 파일에 넣지 않고 Vercel 환경변수로만 관리합니다.

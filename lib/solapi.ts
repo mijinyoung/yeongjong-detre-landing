@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
+import { projectConfig } from "@/data/project-config";
 
 const SOLAPI_TIMEOUT_MS = 8000;
 
@@ -58,7 +59,8 @@ function formatKoreanDate(value?: string) {
 
 function buildLeadText(lead: SolapiLeadNotification) {
   return [
-    "[영종 디에트르 신규문의]",
+    `[${projectConfig.conversion.smsTitle}]`,
+    `현장: ${projectConfig.identity.name}`,
     `고객명: ${lead.name}`,
     `연락처: ${lead.phone}`,
     `접수시간: ${formatKoreanDate(lead.submittedAt)}`,

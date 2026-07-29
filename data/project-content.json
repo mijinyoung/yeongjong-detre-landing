@@ -1,0 +1,607 @@
+{
+  "schemaVersion": 1,
+  "projectCode": "yeongjong-detre",
+  "version": "11.0.0",
+  "identity": {
+    "name": "영종 디에트르 라 메르",
+    "shortName": "영종 디에트르",
+    "adminName": "YEONGJONG DETRE",
+    "brandPrimary": "DÉTRE",
+    "brandSecondary": "LA MER",
+    "englishName": "YEONGJONG DÉTRE LA MER",
+    "regionName": "영종",
+    "category": "분양 안내"
+  },
+  "contact": {
+    "label": "분양문의",
+    "displayPhone": "1833-8384",
+    "phoneDigits": "18338384",
+    "privacyContactLabel": "분양 문의"
+  },
+  "theme": {
+    "primary": "#0b1424",
+    "primaryAlt": "#14243c",
+    "accent": "#d6a65b",
+    "surface": "#f3eee5",
+    "text": "#172033",
+    "browserTheme": "#07162b"
+  },
+  "display": {
+    "quickLead": true,
+    "videos": true,
+    "whyNow": true,
+    "location": true,
+    "businessOverview": true,
+    "officialMaterials": true,
+    "premium": true,
+    "timeline": true,
+    "community": true,
+    "salesGuide": true,
+    "floorPlans": true,
+    "landmark": true,
+    "visitProcess": true,
+    "faq": true,
+    "finalCta": true,
+    "leadSection": true
+  },
+  "navigation": [
+    {
+      "label": "홍보영상",
+      "href": "#brand-film",
+      "enabled": true
+    },
+    {
+      "label": "핵심가치",
+      "href": "#why-now",
+      "enabled": true
+    },
+    {
+      "label": "사업개요",
+      "href": "#business-overview",
+      "enabled": true
+    },
+    {
+      "label": "입지환경",
+      "href": "#location-v3",
+      "enabled": true
+    },
+    {
+      "label": "공식자료",
+      "href": "#official-materials",
+      "enabled": true
+    },
+    {
+      "label": "커뮤니티",
+      "href": "#community",
+      "enabled": true
+    },
+    {
+      "label": "평면안내",
+      "href": "#floor-plans",
+      "enabled": true
+    },
+    {
+      "label": "FAQ",
+      "href": "#faq",
+      "enabled": true
+    }
+  ],
+  "seo": {
+    "fallbackSiteUrl": "https://yeongjong-detre-landing.vercel.app",
+    "title": "영종 디에트르 라 메르 | 관심고객 등록",
+    "titleTemplate": "%s | 영종 디에트르 라 메르",
+    "description": "청라하늘대교 생활권, 최고 49층 영종 디에트르 라 메르 분양 안내 및 관심고객 등록",
+    "shareDescription": "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내",
+    "keywords": [
+      "영종 디에트르",
+      "영종 디에트르 라 메르",
+      "청라하늘대교",
+      "영종 분양",
+      "관심고객 등록"
+    ],
+    "ogImage": "/images/hero-og.jpg",
+    "ogImageAlt": "영종 디에트르 라 메르 투시도",
+    "locale": "ko_KR",
+    "language": "ko-KR",
+    "addressLocality": "인천광역시 중구",
+    "addressRegion": "인천광역시",
+    "addressCountry": "KR"
+  },
+  "assets": {
+    "heroVideo": "/videos/hero-drone.mp4?v=95",
+    "heroPoster": "/images/video/hero-poster-v95.webp",
+    "heroImage": "/images/hero.jpg",
+    "sitemapImages": [
+      "/images/hero-og.jpg",
+      "/images/hero.jpg",
+      "/images/video/hero-poster-v95.webp",
+      "/images/brochure/floor-84a.webp",
+      "/images/brochure/floor-84b.webp",
+      "/images/brochure/floor-104a.webp",
+      "/images/brochure/floor-104b.webp",
+      "/images/brochure/floor-113a.webp",
+      "/images/brochure/floor-113b.webp",
+      "/images/brochure/site-plan.webp",
+      "/images/brochure/landmark-design.webp",
+      "/images/brochure/system-premium.webp"
+    ]
+  },
+  "hero": {
+    "eyebrow": "YEONGJONG INTERNATIONAL CITY",
+    "headlineLines": [
+      "청라하늘대교로",
+      "더욱 가까워진 영종"
+    ],
+    "descriptionLines": [
+      "최고 49층의 새로운 스카이라인과 바다를 품은 주거 가치.",
+      "관심고객 등록으로 분양 안내를 먼저 받아보세요."
+    ],
+    "proofPoints": [
+      "청라하늘대교 생활권",
+      "최고 49층 스카이라인",
+      "총 1,009세대",
+      "84·104·113㎡"
+    ],
+    "facts": [
+      {
+        "value": "약 5분",
+        "label": "청라하늘대교 통과"
+      },
+      {
+        "value": "약 15분",
+        "label": "인천국제공항"
+      },
+      {
+        "value": "2029.10",
+        "label": "입주 예정"
+      },
+      {
+        "value": "1833-8384",
+        "label": "분양 문의"
+      }
+    ],
+    "videoAriaLabel": "영종 디에트르 라 메르 주변 드론 영상",
+    "verticalCopy": "THE VALUABLE LIFESTYLE"
+  },
+  "sections": {
+    "whyNow": {
+      "eyebrow": "WHY YEONGJONG, WHY NOW",
+      "titleLines": [
+        "지금 영종을",
+        "주목해야 하는 이유"
+      ],
+      "intro": "과장된 표현보다 확인 가능한 사업 정보와 생활 가치에 집중했습니다. 핵심 내용을 먼저 살펴보고 상세 안내가 필요할 때 상담을 신청해 주세요.",
+      "items": [
+        {
+          "number": "01",
+          "keyword": "CONNECTION",
+          "title": "청라하늘대교 생활권",
+          "description": "영종과 청라를 잇는 연결축을 통해 생활 반경의 확장을 기대할 수 있습니다."
+        },
+        {
+          "number": "02",
+          "keyword": "LANDMARK",
+          "title": "최고 49층 스카이라인",
+          "description": "커튼월룩 외관과 야간 특화조명이 계획된 영종의 새로운 랜드마크입니다."
+        },
+        {
+          "number": "03",
+          "keyword": "SCALE",
+          "title": "총 1,009세대 대단지",
+          "description": "6개 주거 타입과 대단지 규모를 바탕으로 다양한 주거 선택지를 제공합니다."
+        },
+        {
+          "number": "04",
+          "keyword": "LIFESTYLE",
+          "title": "프리미엄 커뮤니티",
+          "description": "수영장, 사우나, 피트니스, 골프 등 일상의 품격을 높이는 시설이 계획되어 있습니다."
+        },
+        {
+          "number": "05",
+          "keyword": "ACCESS",
+          "title": "공항 직주근접 생활",
+          "description": "인천국제공항 및 관련 산업 종사자에게 편리한 생활권을 제공합니다."
+        }
+      ]
+    },
+    "businessOverview": {
+      "eyebrow": "PROJECT OVERVIEW",
+      "titleLines": [
+        "영종의 새로운 기준을 세우는",
+        "대단지 랜드마크"
+      ],
+      "intro": "핵심 사업 정보를 한눈에 확인하세요. 세부 조건과 정확한 내용은 입주자모집공고 및 견본주택 안내를 우선합니다.",
+      "items": [
+        {
+          "label": "공급 위치",
+          "value": "인천광역시 중구 중산동 1958-8·9"
+        },
+        {
+          "label": "단지 규모",
+          "value": "지하 3층~지상 최고 49층, 아파트 6개동"
+        },
+        {
+          "label": "총 세대수",
+          "value": "아파트 총 1,009세대"
+        },
+        {
+          "label": "주거 타입",
+          "value": "84㎡·104㎡·113㎡ A·B"
+        },
+        {
+          "label": "아파트 주차",
+          "value": "총 1,916대"
+        },
+        {
+          "label": "입주 예정",
+          "value": "2029년 10월 예정"
+        }
+      ]
+    },
+    "location": {
+      "eyebrow": "CONNECTED LIFESTYLE",
+      "titleLines": [
+        "영종에서 시작되는",
+        "확장된 생활 반경"
+      ],
+      "intro": "아래 소요시간은 홍보물의 안내를 바탕으로 한 참고 정보입니다. 출발지·경로·교통상황에 따라 달라질 수 있습니다.",
+      "mapAriaLabel": "영종 교통 연결 개념도",
+      "places": [
+        {
+          "id": "bridge",
+          "shortTime": "약 5분",
+          "title": "청라하늘대교 통과",
+          "label": "청라 연결",
+          "description": "영종과 청라를 잇는 새로운 연결축으로 생활 반경의 확장을 기대할 수 있습니다."
+        },
+        {
+          "id": "cheongna",
+          "shortTime": "약 7분",
+          "title": "청라 생활권",
+          "label": "생활 인프라",
+          "description": "교통 여건 변화에 따라 청라의 쇼핑·의료·문화 인프라 접근성이 개선될 것으로 기대됩니다."
+        },
+        {
+          "id": "airport",
+          "shortTime": "약 15분",
+          "title": "인천국제공항",
+          "label": "직주근접",
+          "description": "공항 및 관련 산업 종사자에게 편리한 직주근접 생활권을 제공합니다."
+        },
+        {
+          "id": "yeouido",
+          "shortTime": "약 30분",
+          "title": "여의도 방향",
+          "label": "광역 이동",
+          "description": "도로 및 교통 상황에 따라 이동시간은 달라질 수 있으며 실제 경로를 반드시 확인해야 합니다."
+        }
+      ]
+    },
+    "premium": {
+      "eyebrow": "PREMIUM",
+      "title": "영종의 기준을 새롭게",
+      "items": [
+        {
+          "no": "01",
+          "title": "청라하늘대교 생활권",
+          "text": "영종과 청라를 잇는 새로운 연결로 확장되는 생활 반경"
+        },
+        {
+          "no": "02",
+          "title": "오션뷰 스카이라인",
+          "text": "최고 49층 설계와 커튼월룩이 만드는 상징적인 외관"
+        },
+        {
+          "no": "03",
+          "title": "여유로운 주차",
+          "text": "아파트 1,916대, 세대당 약 1.9대 수준의 주차 계획"
+        },
+        {
+          "no": "04",
+          "title": "다채로운 주거 타입",
+          "text": "84㎡·104㎡·113㎡ A·B 타입으로 구성된 1,009세대"
+        }
+      ]
+    },
+    "community": {
+      "eyebrow": "PREMIUM COMMUNITY",
+      "titleLines": [
+        "집을 넘어,",
+        "일상의 품격을 높이는 공간"
+      ],
+      "intro": "홍보물에 안내된 주요 커뮤니티 계획을 바탕으로 구성했습니다. 실제 시설과 운영 방식은 사업 진행 과정에서 변경될 수 있습니다.",
+      "items": [
+        {
+          "label": "AQUA",
+          "title": "수영장·사우나",
+          "description": "일상 속 휴식과 건강 관리를 고려한 프리미엄 커뮤니티 계획"
+        },
+        {
+          "label": "FITNESS",
+          "title": "피트니스·골프",
+          "description": "단지 안에서 운동과 취미를 편리하게 누릴 수 있는 공간"
+        },
+        {
+          "label": "FAMILY",
+          "title": "키즈·돌봄 공간",
+          "description": "어린이집, 돌봄센터와 가족 중심 생활을 고려한 커뮤니티"
+        },
+        {
+          "label": "LOUNGE",
+          "title": "D라운지·휴게 공간",
+          "description": "입주민의 교류와 여유로운 일상을 위한 라운지형 공간"
+        }
+      ]
+    },
+    "salesGuide": {
+      "eyebrow": "SALES GUIDE",
+      "titleLines": [
+        "상담 전에 확인하는",
+        "핵심 분양 안내"
+      ],
+      "intro": "상담 시 가장 많이 확인하는 내용을 먼저 정리했습니다. 금액·대출·일정은 개인 조건과 사업 진행 상황에 따라 달라질 수 있습니다.",
+      "notice": "※ 본 페이지는 상담 편의를 위한 요약 안내입니다. 정확한 계약 조건은 입주자모집공고와 견본주택 안내를 확인하시기 바랍니다.",
+      "items": [
+        {
+          "number": "01",
+          "label": "계약 계획",
+          "title": "계약금 10%",
+          "description": "계약 시 5%, 계약 후 1개월 이내 5% 납부 계획으로 안내되어 있습니다."
+        },
+        {
+          "number": "02",
+          "label": "중도금 계획",
+          "title": "중도금 60%",
+          "description": "중도금 대출은 이자후불제 조건으로 안내되며 개인별 심사 결과는 달라질 수 있습니다."
+        },
+        {
+          "number": "03",
+          "label": "주거 선택",
+          "title": "6개 타입",
+          "description": "84㎡·104㎡·113㎡에서 A·B 타입을 비교해 생활 방식에 맞게 선택할 수 있습니다."
+        },
+        {
+          "number": "04",
+          "label": "입주 계획",
+          "title": "2029년 10월 예정",
+          "description": "정확한 입주일과 계약 조건은 입주자모집공고 및 공식 안내를 우선 확인해야 합니다."
+        }
+      ]
+    },
+    "timeline": {
+      "eyebrow": "FUTURE VISION",
+      "titleLines": [
+        "연결에서 생활로,",
+        "생활에서 랜드마크로"
+      ],
+      "intro": "개발계획과 교통여건은 관계기관의 계획에 따라 변경될 수 있으며, 미래가치나 시세 상승을 보장하지 않습니다.",
+      "items": [
+        {
+          "step": "01",
+          "title": "청라하늘대교 연결",
+          "text": "영종과 청라를 연결하는 교통축을 통해 생활권의 확장이 기대됩니다."
+        },
+        {
+          "step": "02",
+          "title": "영종·청라 생활권 확대",
+          "text": "쇼핑·문화·의료 등 다양한 생활 인프라를 폭넓게 누릴 수 있는 여건이 마련됩니다."
+        },
+        {
+          "step": "03",
+          "title": "최고 49층 랜드마크",
+          "text": "최고 49층, 총 1,009세대 규모로 영종의 새로운 스카이라인을 제안합니다."
+        },
+        {
+          "step": "04",
+          "title": "2029년 10월 입주 예정",
+          "text": "입주시기는 사업 일정에 따라 변경될 수 있으며 정확한 일정은 추후 안내됩니다."
+        }
+      ]
+    },
+    "officialMaterials": {
+      "eyebrow": "OFFICIAL BROCHURE",
+      "titleLines": [
+        "상담북으로 확인하는",
+        "디에트르의 실제 계획"
+      ],
+      "intro": "임의의 예시 이미지가 아닌, 제공된 상담북과 홍보물의 내용을 웹에서 보기 편하도록 재구성했습니다. 세부 계획은 사업 진행 과정에서 변경될 수 있으며 계약 전 공식 공고를 우선 확인해 주세요.",
+      "items": [
+        {
+          "id": "site",
+          "label": "단지배치도",
+          "title": "공원과 생활 편의를 연결한 단지 계획",
+          "image": "/images/brochure/site-plan.webp",
+          "alt": "영종 디에트르 라 메르 단지배치도",
+          "description": "중앙광장, 어린이놀이터, 키즈스테이션, D라운지, 티하우스 등 상담북에 안내된 주요 공간을 한눈에 확인할 수 있습니다."
+        },
+        {
+          "id": "design",
+          "label": "랜드마크 디자인",
+          "title": "최고 49층 스카이라인과 야간 특화 경관",
+          "image": "/images/brochure/landmark-design.webp",
+          "alt": "영종 디에트르 라 메르 랜드마크 디자인 안내",
+          "description": "커튼월룩 외관과 조명을 활용해 영종의 새로운 도시 풍경을 제안하는 디자인 방향을 담았습니다."
+        },
+        {
+          "id": "system",
+          "label": "시스템 프리미엄",
+          "title": "생활의 편리와 안전을 더하는 주거 시스템",
+          "image": "/images/brochure/system-premium.webp",
+          "alt": "영종 디에트르 라 메르 시스템 프리미엄",
+          "description": "차량 위치 인식, 주차 유도, 스마트 음성 인식, 원격 제어 등 상담북에 소개된 생활 편의 시스템입니다."
+        }
+      ]
+    },
+    "floorPlans": {
+      "eyebrow": "OFFICIAL UNIT PLAN",
+      "titleLines": [
+        "상담북의 실제 평면으로 보는",
+        "6가지 주거 타입"
+      ],
+      "intro": "84㎡, 104㎡, 113㎡ A·B 타입의 공식 홍보 평면을 반영했습니다. 면적과 구성은 인쇄물 기준이며 계약 전 입주자모집공고와 견본주택을 반드시 확인해 주세요.",
+      "items": [
+        {
+          "id": "84A",
+          "exclusive": "84.9873㎡",
+          "supply": "112.7904㎡",
+          "contract": "182.9234㎡",
+          "households": "168세대",
+          "feature": "풍부한 수납과 가변형 공간을 갖춘 실용 중심 타입",
+          "image": "/images/brochure/floor-84a.webp"
+        },
+        {
+          "id": "84B",
+          "exclusive": "84.9388㎡",
+          "supply": "114.0779㎡",
+          "contract": "184.1708㎡",
+          "households": "170세대",
+          "feature": "거실과 주방의 개방감을 강화한 생활 중심 타입",
+          "image": "/images/brochure/floor-84b.webp"
+        },
+        {
+          "id": "104A",
+          "exclusive": "104.9940㎡",
+          "supply": "139.2509㎡",
+          "contract": "225.8937㎡",
+          "households": "247세대",
+          "feature": "대형 팬트리와 다목적 공간을 더한 패밀리 타입",
+          "image": "/images/brochure/floor-104a.webp"
+        },
+        {
+          "id": "104B",
+          "exclusive": "104.9695㎡",
+          "supply": "139.1270㎡",
+          "contract": "225.7496㎡",
+          "households": "248세대",
+          "feature": "침실과 공용공간의 균형을 높인 프리미엄 타입",
+          "image": "/images/brochure/floor-104b.webp"
+        },
+        {
+          "id": "113A",
+          "exclusive": "113.9691㎡",
+          "supply": "150.2654㎡",
+          "contract": "244.3146㎡",
+          "households": "88세대",
+          "feature": "여유로운 면적과 다양한 수납을 갖춘 대형 타입",
+          "image": "/images/brochure/floor-113a.webp"
+        },
+        {
+          "id": "113B",
+          "exclusive": "113.9456㎡",
+          "supply": "150.4896㎡",
+          "contract": "244.5195㎡",
+          "households": "88세대",
+          "feature": "독립적인 침실 구성과 넉넉한 공용공간의 대형 타입",
+          "image": "/images/brochure/floor-113b.webp"
+        }
+      ]
+    },
+    "landmark": {
+      "eyebrow": "LANDMARK DESIGN",
+      "titleLines": [
+        "밤에도 빛나는",
+        "영종의 새로운 장면"
+      ],
+      "description": "커튼월룩 외관과 야간 특화조명이 어우러져, 일상 속에서도 특별한 귀가 경험과 도시의 새로운 풍경을 제안합니다.",
+      "features": [
+        "최고 49층 스카이라인",
+        "야간 특화조명",
+        "커튼월룩 외관",
+        "중앙광장과 조경 특화"
+      ],
+      "image": "/images/hero.jpg",
+      "imageAlt": "영종 디에트르 라 메르 야경 투시도"
+    },
+    "visitProcess": {
+      "eyebrow": "CONSULTATION PROCESS",
+      "titleLines": [
+        "관심 등록부터",
+        "방문 상담까지"
+      ],
+      "intro": "분양 조건과 잔여세대는 상담 시점에 따라 달라질 수 있습니다. 관심고객으로 등록하고 최신 안내를 확인해 주세요.",
+      "items": [
+        {
+          "number": "01",
+          "title": "관심고객 등록",
+          "description": "이름과 연락처를 남기면 상담 접수가 완료됩니다."
+        },
+        {
+          "number": "02",
+          "title": "담당자 안내",
+          "description": "타입·분양 조건·방문 가능 일정에 대한 안내를 받습니다."
+        },
+        {
+          "number": "03",
+          "title": "방문 상담",
+          "description": "공식 자료와 현장 안내를 바탕으로 상세 내용을 확인합니다."
+        }
+      ]
+    },
+    "videos": {
+      "eyebrow": "CINEMATIC EXPERIENCE",
+      "titleLines": [
+        "영상으로 먼저 만나는",
+        "영종 디에트르 라 메르"
+      ],
+      "intro": "드론 전경과 공식 단지 홍보영상을 통해 입지와 스카이라인, 단지의 주요 계획을 더욱 생생하게 확인할 수 있습니다.",
+      "items": [
+        {
+          "id": "brand",
+          "eyebrow": "BRAND FILM",
+          "title": [
+            "스카이라인으로 만나는",
+            "디에트르 라 메르"
+          ],
+          "description": "최고 49층의 상징적인 외관과 바다를 품은 주거 가치를 영상으로 확인해 보세요.",
+          "src": "/videos/brand-film.mp4?v=95",
+          "poster": "/images/video/brand-poster-v95.webp",
+          "label": "브랜드 영상",
+          "durationSeconds": 100
+        },
+        {
+          "id": "complex",
+          "eyebrow": "COMPLEX FILM",
+          "title": [
+            "단지의 계획과 공간을",
+            "한 편의 영상으로"
+          ],
+          "description": "단지 구성과 커뮤니티, 조경과 세대 계획을 담은 공식 단지 홍보영상입니다.",
+          "src": "/videos/complex-film.mp4?v=95",
+          "poster": "/images/video/complex-poster-v95.webp",
+          "label": "단지 홍보영상",
+          "durationSeconds": 211
+        }
+      ]
+    },
+    "faq": {
+      "items": [
+        {
+          "question": "분양가와 잔여세대는 어디에서 확인하나요?",
+          "answer": "동·호수와 타입에 따라 조건이 다를 수 있어 관심고객 등록 또는 대표번호 1833-8384를 통해 최신 안내를 받아주세요."
+        },
+        {
+          "question": "어떤 타입으로 구성되어 있나요?",
+          "answer": "84㎡ A·B, 104㎡ A·B, 113㎡ A·B의 총 6개 타입으로 구성되어 있으며 총 1,009세대입니다."
+        },
+        {
+          "question": "입주 예정 시기는 언제인가요?",
+          "answer": "홍보물 기준 2029년 10월 예정입니다. 사업 일정과 현장 여건에 따라 변경될 수 있으며 정확한 일자는 추후 안내됩니다."
+        },
+        {
+          "question": "관심고객 등록 정보는 어떻게 사용되나요?",
+          "answer": "분양 상담과 관련 안내를 위해 사용되며, 실제 운영 전 개인정보 처리방침과 보유기간을 사업자 기준에 맞게 확정해야 합니다."
+        }
+      ]
+    }
+  },
+  "conversion": {
+    "leadIdPrefix": "YD",
+    "smsTitle": "영종 디에트르 신규문의",
+    "successMessage": "관심고객 등록이 완료되었습니다."
+  },
+  "legal": {
+    "footerNotice": "본 페이지의 이미지와 내용은 소비자의 이해를 돕기 위한 것으로 실제와 차이가 있을 수 있으며, 세부 내용은 입주자모집공고 및 견본주택에서 확인하시기 바랍니다.",
+    "privacyPurpose": "분양 상담, 방문 일정 및 관련 정보 안내",
+    "privacyRetention": "상담 목적 달성 또는 동의 철회 시까지. 관계 법령에 따른 보관 의무가 있는 경우 해당 기간 동안 보관할 수 있습니다."
+  }
+}

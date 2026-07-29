@@ -1,5 +1,7 @@
 "use client";
 
+import { projectConfig } from "@/data/project-config";
+
 import {
   useCallback,
   useEffect,
@@ -608,7 +610,7 @@ export default function AdminDashboardClient() {
       <div className="adminShell">
         <header className="adminHeader">
           <div>
-            <p>YEONGJONG DETRE · ADMIN</p>
+            <p>{projectConfig.identity.adminName} · ADMIN</p>
             <h1>관심고객 접수 현황</h1>
             <span>최근 200건을 Google Sheets에서 안전하게 불러옵니다.</span>
           </div>

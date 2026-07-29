@@ -4,18 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 import { useOverlayFocus } from "@/lib/use-overlay-focus";
-
-const links = [
-  ["핵심가치", "#why-now"],
-  ["사업개요", "#business-overview"],
-  ["입지환경", "#location-v3"],
-  ["공식자료", "#official-materials"],
-  ["커뮤니티", "#community"],
-  ["평면안내", "#floor-plans"],
-  ["FAQ", "#faq"],
-] as const;
+import { contactHref, projectConfig } from "@/data/project-config";
 
 export default function MobileNavigation() {
+  const links = projectConfig.navigation.filter((item) => item.enabled);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
@@ -65,17 +57,17 @@ export default function MobileNavigation() {
           >
             <div className="mobileNavHeader">
               <div>
-                <strong>DÉTRE</strong>
-                <span>LA MER</span>
+                <strong>{projectConfig.identity.brandPrimary}</strong>
+                <span>{projectConfig.identity.brandSecondary}</span>
               </div>
               <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기">×</button>
             </div>
 
             <div className="mobileNavLinks">
-              {links.map(([label, href], index) => (
-                <a key={href} href={href} onClick={() => closeAndTrack(label)}>
+              {links.map((item, index) => (
+                <a key={item.href} href={item.href} onClick={() => closeAndTrack(item.label)}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{label}</strong>
+                  <strong>{item.label}</strong>
                   <i aria-hidden="true">→</i>
                 </a>
               ))}
@@ -83,11 +75,11 @@ export default function MobileNavigation() {
 
             <div className="mobileNavActions">
               <a
-                href="tel:18338384"
+                href={contactHref}
                 data-placement="mobile-menu"
                 onClick={() => closeAndTrack("전화상담")}
               >
-                전화상담 1833-8384
+                전화상담 {projectConfig.contact.displayPhone}
               </a>
               <button
                 type="button"

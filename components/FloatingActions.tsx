@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
+import { contactHref, projectConfig } from "@/data/project-config";
 
 export default function FloatingActions() {
   const [visible, setVisible] = useState(false);
@@ -16,9 +17,9 @@ export default function FloatingActions() {
   return (
     <nav className={`floatingActions${visible ? " isVisible" : ""}`} aria-label="빠른 상담">
       <a
-        href="tel:18338384"
+        href={contactHref}
         data-placement="floating"
-        aria-label="1833-8384로 전화상담"
+        aria-label={`${projectConfig.contact.displayPhone}로 전화상담`}
         onClick={() => trackEvent("phone_click", { placement: "floating" })}
       >
         <span className="floatingIcon" aria-hidden="true">☎</span>

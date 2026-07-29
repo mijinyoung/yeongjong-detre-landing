@@ -2,31 +2,11 @@
 
 import { type KeyboardEvent, useRef, useState } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
-
-const films = [
-  {
-    id: "brand",
-    eyebrow: "BRAND FILM",
-    title: ["스카이라인으로 만나는", "디에트르 라 메르"],
-    description:
-      "최고 49층의 상징적인 외관과 바다를 품은 주거 가치를 영상으로 확인해 보세요.",
-    src: "/videos/brand-film.mp4?v=95",
-    poster: "/images/video/brand-poster-v95.webp",
-    label: "브랜드 영상",
-  },
-  {
-    id: "complex",
-    eyebrow: "COMPLEX FILM",
-    title: ["단지의 계획과 공간을", "한 편의 영상으로"],
-    description:
-      "단지 구성과 커뮤니티, 조경과 세대 계획을 담은 공식 단지 홍보영상입니다.",
-    src: "/videos/complex-film.mp4?v=95",
-    poster: "/images/video/complex-poster-v95.webp",
-    label: "단지 홍보영상",
-  },
-];
+import { projectConfig } from "@/data/project-config";
 
 export default function VideoShowcase() {
+  const section = projectConfig.sections.videos;
+  const films = section.items;
   const [activeId, setActiveId] = useState(films[0].id);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const active = films.find((film) => film.id === activeId) || films[0];
@@ -54,17 +34,14 @@ export default function VideoShowcase() {
       <div className="shell">
         <div className="videoShowcaseHeading">
           <div>
-            <p className="sectionEyebrow">CINEMATIC EXPERIENCE</p>
+            <p className="sectionEyebrow">{section.eyebrow}</p>
             <h2 className="sectionTitle">
-              영상으로 먼저 만나는
+              {section.titleLines[0]}
               <br />
-              영종 디에트르 라 메르
+              {section.titleLines[1]}
             </h2>
           </div>
-          <p className="bodyCopy">
-            드론 전경과 공식 단지 홍보영상을 통해 입지와 스카이라인,
-            단지의 주요 계획을 더욱 생생하게 확인할 수 있습니다.
-          </p>
+          <p className="bodyCopy">{section.intro}</p>
         </div>
 
         <div

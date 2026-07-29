@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { contactHref, projectConfig } from "@/data/project-config";
 
 export default function NotFound() {
   return (
@@ -12,8 +13,8 @@ export default function NotFound() {
         </p>
         <div className="thankYouActions">
           <Link href="/">홈페이지로 돌아가기</Link>
-          <a href="tel:18338384" className="secondary">
-            전화상담 1833-8384
+          <a href={contactHref} className="secondary">
+            전화상담 {projectConfig.contact.displayPhone}
           </a>
         </div>
       </section>

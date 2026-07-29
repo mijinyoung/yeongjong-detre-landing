@@ -4,10 +4,11 @@ import MetaPixel from "@/components/MetaPixel";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import ConversionTracker from "@/components/ConversionTracker";
 import ThankYouClient from "@/components/ThankYouClient";
+import { projectConfig } from "@/data/project-config";
 
 export const metadata: Metadata = {
   title: "관심고객 등록 완료",
-  description: "영종 디에트르 라 메르 관심고객 등록 완료 페이지",
+  description: `${projectConfig.identity.name} 관심고객 등록 완료 페이지`,
   robots: { index: false, follow: false },
 };
 

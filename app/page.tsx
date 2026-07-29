@@ -26,27 +26,28 @@ import PrivacyPolicy from "@/components/PrivacyPolicy";
 import StructuredData from "@/components/StructuredData";
 import VisitProcess from "@/components/VisitProcess";
 import AnalyticsConsentManager from "@/components/AnalyticsConsent";
+import { projectConfig } from "@/data/project-config";
 
 export const metadata: Metadata = {
-  title: "영종 디에트르 라 메르 | 관심고객 등록",
-  description: "청라하늘대교 생활권, 최고 49층 영종 디에트르 라 메르 분양 안내 및 관심고객 등록",
-  keywords: ["영종 디에트르", "영종 디에트르 라 메르", "청라하늘대교", "영종 분양", "관심고객 등록"],
+  title: projectConfig.seo.title,
+  description: projectConfig.seo.description,
+  keywords: projectConfig.seo.keywords,
   alternates: { canonical: "/" },
   category: "real estate",
   openGraph: {
     type: "website",
-    locale: "ko_KR",
+    locale: projectConfig.seo.locale,
     url: "/",
-    title: "영종 디에트르 라 메르",
-    description: "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내",
-    siteName: "영종 디에트르 라 메르",
-    images: [{ url: "/images/hero-og.jpg", width: 1200, height: 630, alt: "영종 디에트르 라 메르 투시도" }],
+    title: projectConfig.identity.name,
+    description: projectConfig.seo.shareDescription,
+    siteName: projectConfig.identity.name,
+    images: [{ url: projectConfig.seo.ogImage, width: 1200, height: 630, alt: projectConfig.seo.ogImageAlt }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "영종 디에트르 라 메르",
-    description: "청라하늘대교 생활권, 최고 49층 랜드마크 분양 안내",
-    images: ["/images/hero-og.jpg"],
+    title: projectConfig.identity.name,
+    description: projectConfig.seo.shareDescription,
+    images: [projectConfig.seo.ogImage],
   },
   robots: {
     index: true,
@@ -70,22 +71,22 @@ export default function Home() {
       <ConversionTracker />
       <UtmCapture />
       <Hero />
-      <QuickLead />
-      <VideoShowcase />
-      <WhyNow />
-      <InteractiveLocation />
-      <BusinessOverview />
-      <OfficialMaterials />
-      <Premium />
-      <DevelopmentTimeline />
-      <CommunityHighlights />
-      <ConsultationGuide />
-      <FloorPlans />
-      <Landmark />
-      <VisitProcess />
-      <Faq />
-      <FinalCta />
-      <LeadSection />
+      {projectConfig.display.quickLead ? <QuickLead /> : null}
+      {projectConfig.display.videos ? <VideoShowcase /> : null}
+      {projectConfig.display.whyNow ? <WhyNow /> : null}
+      {projectConfig.display.location ? <InteractiveLocation /> : null}
+      {projectConfig.display.businessOverview ? <BusinessOverview /> : null}
+      {projectConfig.display.officialMaterials ? <OfficialMaterials /> : null}
+      {projectConfig.display.premium ? <Premium /> : null}
+      {projectConfig.display.timeline ? <DevelopmentTimeline /> : null}
+      {projectConfig.display.community ? <CommunityHighlights /> : null}
+      {projectConfig.display.salesGuide ? <ConsultationGuide /> : null}
+      {projectConfig.display.floorPlans ? <FloorPlans /> : null}
+      {projectConfig.display.landmark ? <Landmark /> : null}
+      {projectConfig.display.visitProcess ? <VisitProcess /> : null}
+      {projectConfig.display.faq ? <Faq /> : null}
+      {projectConfig.display.finalCta ? <FinalCta /> : null}
+      {projectConfig.display.leadSection ? <LeadSection /> : null}
       <Footer />
       <FloatingActions />
       <LeadModal />

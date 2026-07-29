@@ -45,6 +45,12 @@ function escapeCsv(value: unknown) {
   return `"${safe.replaceAll('"', '""')}"`;
 }
 
+function isOverdueLead(lead: Lead, referenceTime: number) {
+  if (lead.status && lead.status !== "신규") return false;
+  const submitted = new Date(lead.submittedAt).getTime();
+  return Number.isFinite(submitted) && referenceTime - submitted >= 24 * 60 * 60 * 1000;
+}
+
 export default function AdminDashboardClient() {
   const [token, setToken] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -59,6 +65,7 @@ export default function AdminDashboardClient() {
   const [drafts, setDrafts] = useState<Record<string, { status: string; memo: string }>>({});
   const [savingId, setSavingId] = useState("");
   const [savedId, setSavedId] = useState("");
+  const [referenceTime, setReferenceTime] = useState(0);
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -72,11 +79,12 @@ export default function AdminDashboardClient() {
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "new" && (!lead.status || lead.status === "신규")) ||
+        (statusFilter === "overdue" && isOverdueLead(lead, referenceTime)) ||
         (statusFilter === "sms-failed" && lead.smsStatus === "실패") ||
         (statusFilter.startsWith("status:") && lead.status === statusFilter.slice(7));
       return matchesKeyword && matchesStatus;
     });
-  }, [leads, query, statusFilter]);
+  }, [leads, query, statusFilter, referenceTime]);
 
   const todayCount = useMemo(() => {
     const today = new Date().toLocaleDateString("ko-KR");
@@ -94,6 +102,47 @@ export default function AdminDashboardClient() {
     () => leads.filter((lead) => lead.smsStatus === "실패").length,
     [leads],
   );
+  const overdueCount = useMemo(
+    () => leads.filter((lead) => isOverdueLead(lead, referenceTime)).length,
+    [leads, referenceTime],
+  );
+  const sevenDayTrend = useMemo(() => {
+    if (!referenceTime) return [];
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(referenceTime);
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (6 - index));
+      return {
+        key: date.toLocaleDateString("ko-KR"),
+        label: `${date.getMonth() + 1}/${date.getDate()}`,
+        count: 0,
+      };
+    });
+    const indexByKey = new Map(days.map((day, index) => [day.key, index]));
+    for (const lead of leads) {
+      const date = new Date(lead.submittedAt);
+      if (Number.isNaN(date.getTime())) continue;
+      const index = indexByKey.get(date.toLocaleDateString("ko-KR"));
+      if (index !== undefined) days[index].count += 1;
+    }
+    return days;
+  }, [leads, referenceTime]);
+  const maxDailyCount = Math.max(1, ...sevenDayTrend.map((day) => day.count));
+  const sourceStats = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const lead of leads) {
+      const source = (lead.source || lead.campaign || "직접 방문").trim();
+      counts.set(source, (counts.get(source) || 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([source, count]) => ({
+        source,
+        count,
+        rate: leads.length ? Math.round((count / leads.length) * 100) : 0,
+      }));
+  }, [leads]);
 
   async function loadLeads() {
     if (!token.trim()) {
@@ -135,6 +184,7 @@ export default function AdminDashboardClient() {
       );
       setTotal(result.total || 0);
       setUpdatedAt(result.updatedAt || "");
+      setReferenceTime(Date.now());
       setLoaded(true);
     } catch (error) {
       const fallback =
@@ -259,11 +309,56 @@ export default function AdminDashboardClient() {
               <article><span>최근 갱신</span><strong>{formatDate(updatedAt)}</strong></article>
             </section>
 
+            {overdueCount ? (
+              <section className="adminOverdue" aria-label="미처리 상담 알림">
+                <div>
+                  <strong>24시간 이상 미처리된 신규 상담이 {overdueCount.toLocaleString("ko-KR")}건 있습니다.</strong>
+                  <span>고객 연락 여부를 확인하고 처리 상태를 변경해 주세요.</span>
+                </div>
+                <button type="button" onClick={() => setStatusFilter("overdue")}>미처리 고객 보기</button>
+              </section>
+            ) : null}
+
+            <section className="adminReports" aria-label="접수 운영 리포트">
+              <article className="adminTrend">
+                <div className="adminReportHeading">
+                  <div><span>7 DAY TREND</span><h2>최근 7일 접수 추이</h2></div>
+                  <strong>{sevenDayTrend.reduce((sum, day) => sum + day.count, 0).toLocaleString("ko-KR")}건</strong>
+                </div>
+                <div className="adminBars">
+                  {sevenDayTrend.map((day) => (
+                    <div key={day.key} aria-label={`${day.label} 접수 ${day.count}건`}>
+                      <strong>{day.count}</strong>
+                      <i style={{ height: `${Math.max(6, (day.count / maxDailyCount) * 100)}%` }} />
+                      <span>{day.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="adminSources">
+                <div className="adminReportHeading">
+                  <div><span>LEAD SOURCE</span><h2>주요 유입경로</h2></div>
+                </div>
+                {sourceStats.length ? (
+                  <ol>
+                    {sourceStats.map((item) => (
+                      <li key={item.source}>
+                        <div><strong>{item.source}</strong><span>{item.count}건 · {item.rate}%</span></div>
+                        <i><b style={{ width: `${item.rate}%` }} /></i>
+                      </li>
+                    ))}
+                  </ol>
+                ) : <p>아직 분석할 접수 데이터가 없습니다.</p>}
+              </article>
+            </section>
+
             <section className="adminToolbar">
               <input aria-label="접수 목록 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 유입경로 검색" />
               <select aria-label="접수 상태 필터" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="all">전체 상태</option>
                 <option value="new">신규 상담</option>
+                <option value="overdue">24시간 미처리</option>
                 <option value="status:연락완료">연락완료</option>
                 <option value="status:상담중">상담중</option>
                 <option value="status:방문예약">방문예약</option>

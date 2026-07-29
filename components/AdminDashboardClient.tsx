@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type Lead = {
@@ -26,6 +26,7 @@ type DashboardResponse = {
 };
 
 const STATUS_OPTIONS = ["신규", "연락완료", "상담중", "방문예약", "계약", "보류"];
+const ADMIN_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 
 function formatDate(value: string) {
   if (!value) return "-";
@@ -43,6 +44,14 @@ function escapeCsv(value: unknown) {
   const text = String(value ?? "");
   const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
   return `"${safe.replaceAll('"', '""')}"`;
+}
+
+function maskPhone(phone: string) {
+  const parts = phone.split("-");
+  if (parts.length === 3) return `${parts[0]}-${"*".repeat(parts[1].length)}-${parts[2]}`;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 7) return "***-****";
+  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
 }
 
 function isOverdueLead(lead: Lead, referenceTime: number) {
@@ -66,6 +75,55 @@ export default function AdminDashboardClient() {
   const [savingId, setSavingId] = useState("");
   const [savedId, setSavedId] = useState("");
   const [referenceTime, setReferenceTime] = useState(0);
+  const [revealedPhoneIds, setRevealedPhoneIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+
+  const lockDashboard = useCallback((reason: string) => {
+    setToken("");
+    setLeads([]);
+    setTotal(0);
+    setUpdatedAt("");
+    setLoaded(false);
+    setMessage(reason);
+    setSaveMessage("");
+    setQuery("");
+    setStatusFilter("all");
+    setDrafts({});
+    setSavingId("");
+    setSavedId("");
+    setReferenceTime(0);
+    setRevealedPhoneIds(new Set());
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+
+    let timer = 0;
+    const lockForIdle = () =>
+      lockDashboard("15분 동안 사용하지 않아 관리자 화면을 자동으로 잠갔습니다.");
+    const resetTimer = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(lockForIdle, ADMIN_IDLE_TIMEOUT_MS);
+    };
+    const events: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+      "scroll",
+      "touchstart",
+    ];
+
+    resetTimer();
+    events.forEach((eventName) =>
+      window.addEventListener(eventName, resetTimer, { passive: true }),
+    );
+    return () => {
+      window.clearTimeout(timer);
+      events.forEach((eventName) =>
+        window.removeEventListener(eventName, resetTimer),
+      );
+    };
+  }, [loaded, lockDashboard]);
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -185,6 +243,7 @@ export default function AdminDashboardClient() {
       setTotal(result.total || 0);
       setUpdatedAt(result.updatedAt || "");
       setReferenceTime(Date.now());
+      setRevealedPhoneIds(new Set());
       setLoaded(true);
     } catch (error) {
       const fallback =
@@ -211,6 +270,15 @@ export default function AdminDashboardClient() {
     }));
     setSavedId("");
     setSaveMessage("");
+  }
+
+  function togglePhone(leadId: string) {
+    setRevealedPhoneIds((current) => {
+      const next = new Set(current);
+      if (next.has(leadId)) next.delete(leadId);
+      else next.add(leadId);
+      return next;
+    });
   }
 
   async function saveLead(lead: Lead) {
@@ -282,7 +350,14 @@ export default function AdminDashboardClient() {
             <h1>관심고객 접수 현황</h1>
             <span>최근 200건을 Google Sheets에서 안전하게 불러옵니다.</span>
           </div>
-          <Link href="/">홈페이지 보기</Link>
+          <div className="adminHeaderActions">
+            <Link href="/">홈페이지 보기</Link>
+            {loaded ? (
+              <button type="button" onClick={() => lockDashboard("관리자 화면을 잠갔습니다.")}>
+                관리자 잠금
+              </button>
+            ) : null}
+          </div>
         </header>
 
         <section className="adminLogin">
@@ -307,6 +382,11 @@ export default function AdminDashboardClient() {
               <article><span>신규 상담</span><strong>{pendingCount.toLocaleString("ko-KR")}</strong></article>
               <article className={failedSmsCount ? "attention" : ""}><span>문자 확인 필요</span><strong>{failedSmsCount.toLocaleString("ko-KR")}</strong></article>
               <article><span>최근 갱신</span><strong>{formatDate(updatedAt)}</strong></article>
+            </section>
+
+            <section className="adminPrivacyNotice" aria-label="개인정보 보호 안내">
+              <strong>개인정보 보호 모드</strong>
+              <span>전화번호는 기본적으로 가려집니다. 상담할 고객의 번호만 개별적으로 확인해 주세요.</span>
             </section>
 
             {overdueCount ? (
@@ -388,7 +468,22 @@ export default function AdminDashboardClient() {
                     <tr key={lead.leadId} className={savedId === lead.leadId ? "saved" : ""}>
                       <td><small>{lead.leadId}</small>{formatDate(lead.submittedAt)}</td>
                       <td><strong>{lead.name || "-"}</strong></td>
-                      <td><a href={`tel:${lead.phone.replaceAll("-", "")}`}>{lead.phone || "-"}</a></td>
+                      <td>
+                        <div className="adminPhone">
+                          {revealedPhoneIds.has(lead.leadId) ? (
+                            <a href={`tel:${lead.phone.replaceAll("-", "")}`}>{lead.phone || "-"}</a>
+                          ) : <span>{lead.phone ? maskPhone(lead.phone) : "-"}</span>}
+                          {lead.phone ? (
+                            <button
+                              type="button"
+                              aria-label={`${lead.name || "고객"} 전화번호 ${revealedPhoneIds.has(lead.leadId) ? "숨기기" : "보기"}`}
+                              onClick={() => togglePhone(lead.leadId)}
+                            >
+                              {revealedPhoneIds.has(lead.leadId) ? "숨기기" : "번호 보기"}
+                            </button>
+                          ) : null}
+                        </div>
+                      </td>
                       <td>{lead.source || lead.campaign || "직접 방문"}</td>
                       <td>{lead.placement || "-"}</td>
                       <td>

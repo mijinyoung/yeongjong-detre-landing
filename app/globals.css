@@ -2289,49 +2289,44 @@ textarea[aria-invalid="true"] {
 }
 
 .communityV120Layout {
+  display: block;
+}
+
+.communityV120Intro {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(420px, .95fr);
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
   gap: 18px;
-  align-items: stretch;
+  align-items: center;
+}
+
+.communityV120Intro .bodyCopy {
+  margin: 0;
 }
 
 .communityV120Visual {
   position: relative;
-  min-height: 610px;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 390 / 184;
   margin: 0;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .15);
-  border-radius: 22px;
-  background: #071321;
+  border-radius: 14px;
+  background: #fff;
 }
 
 .communityV120Image {
-  object-fit: cover;
-  object-position: 54% center;
+  object-fit: contain;
+  object-position: center;
 }
 
 .communityV120Visual::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 65%, rgba(4, 12, 24, .8));
-  pointer-events: none;
-}
-
-.communityV120Visual figcaption {
-  position: absolute;
-  z-index: 2;
-  bottom: 22px;
-  left: 24px;
-  color: rgba(255, 255, 255, .74);
-  font-size: 10px;
-  font-weight: 850;
-  letter-spacing: .17em;
+  display: none;
 }
 
 .communityV120Grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   border-top: 1px solid rgba(255, 255, 255, .16);
   border-left: 1px solid rgba(255, 255, 255, .16);
 }
@@ -2372,8 +2367,7 @@ textarea[aria-invalid="true"] {
 }
 
 @media (max-width: 980px) {
-  .visualHighlightsHeading,
-  .communityV120Layout {
+  .visualHighlightsHeading {
     grid-template-columns: 1fr;
   }
 
@@ -2381,8 +2375,12 @@ textarea[aria-invalid="true"] {
     min-height: 620px;
   }
 
-  .communityV120Visual {
-    min-height: 520px;
+  .communityV120Intro {
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+
+  .communityV120Grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .whyV50Grid {
@@ -2458,6 +2456,10 @@ textarea[aria-invalid="true"] {
     min-height: 390px;
   }
 
+  .visualHighlightCard.featured .visualHighlightImage {
+    object-position: 82% center;
+  }
+
   .visualHighlightCopy {
     padding: 25px 22px;
   }
@@ -2477,21 +2479,14 @@ textarea[aria-invalid="true"] {
     min-height: 245px;
   }
 
+  .communityV120Intro {
+    grid-template-columns: minmax(0, 1fr) 132px;
+    gap: 14px;
+    align-items: center;
+  }
+
   .communityV120Visual {
-    min-height: 0;
-    aspect-ratio: 390 / 184;
-    border-radius: 16px;
-    background: #fff;
-  }
-
-  .communityV120Image {
-    object-fit: contain;
-    object-position: center;
-  }
-
-  .communityV120Visual::after,
-  .communityV120Visual figcaption {
-    display: none;
+    border-radius: 10px;
   }
 
   .communityV120Card {

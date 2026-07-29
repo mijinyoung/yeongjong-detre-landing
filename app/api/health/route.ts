@@ -2,6 +2,7 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 import { apiJson } from "@/lib/api-response";
 import { isSolapiConfigured } from "@/lib/solapi";
+import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,7 @@ export function GET(request: NextRequest) {
     return apiJson(
       {
         ok: true,
-        version: "9.8.0",
+        version: "9.9.0",
         authenticated: false,
         checkedAt: new Date().toISOString(),
       },
@@ -47,7 +48,9 @@ export function GET(request: NextRequest) {
   }
 
   const integrations = {
-    googleSheets: Boolean(process.env.GOOGLE_SHEET_WEBHOOK_URL),
+    googleSheets: Boolean(
+      process.env.GOOGLE_SHEET_WEBHOOK_URL && getSheetWebhookSecret(),
+    ),
     sms: Boolean(process.env.SMS_WEBHOOK_URL) || isSolapiConfigured(),
     metaPixel: Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID),
     googleAnalytics: Boolean(process.env.NEXT_PUBLIC_GA_ID),
@@ -64,7 +67,7 @@ export function GET(request: NextRequest) {
   return apiJson(
     {
       ok: true,
-      version: "9.8.0",
+      version: "9.9.0",
       authenticated: true,
       productionReady: integrations.googleSheets && integrations.sms,
       integrations,

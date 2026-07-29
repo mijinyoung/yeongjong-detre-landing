@@ -4,6 +4,7 @@ import { FormEvent, useRef, useState } from "react";
 import { trackLeadComplete } from "@/lib/analytics";
 import { createLeadEventId, formatPhoneInput, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
+import { LeadFieldErrors, validateLeadFields } from "@/lib/lead-form-validation";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -16,6 +17,10 @@ export default function LeadSection() {
   const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
   const [leadId, setLeadId] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<LeadFieldErrors>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,14 +28,22 @@ export default function LeadSection() {
 
     const form = new FormData(event.currentTarget);
     const website = String(form.get("website") || "");
+    const errors = validateLeadFields(name, phone, agree);
 
-    if (!name.trim() || !/^01[016789]-\d{3,4}-\d{4}$/.test(phone) || !agree) {
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
       setStatus("error");
-      setMessage("이름, 올바른 휴대폰 번호, 개인정보 동의를 확인해 주세요.");
+      setMessage("입력 내용을 확인해 주세요.");
+      window.requestAnimationFrame(() => {
+        if (errors.name) nameRef.current?.focus();
+        else if (errors.phone) phoneRef.current?.focus();
+        else consentRef.current?.focus();
+      });
       return;
     }
 
     submittingRef.current = true;
+    setFieldErrors({});
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
@@ -77,16 +90,66 @@ export default function LeadSection() {
         {status === "done" ? (
           <div className="successBox">
             <span>✓</span><h3>등록이 완료되었습니다.</h3><p>{message}</p>{leadId && <small className="leadReceipt">접수번호 {leadId}</small>}
-            <button className="textButton" type="button" onClick={() => { eventIdRef.current = ""; setStatus("idle"); setName(""); setPhone(""); setAgree(false); setLeadId(""); }}>다른 고객 등록하기</button>
+            <button className="textButton" type="button" onClick={() => { eventIdRef.current = ""; setStatus("idle"); setName(""); setPhone(""); setAgree(false); setLeadId(""); setFieldErrors({}); }}>다른 고객 등록하기</button>
           </div>
         ) : (
           <form className="leadForm" onSubmit={submit} noValidate>
-            <label>이름<input required maxLength={30} value={name} onChange={(event) => setName(event.target.value)} placeholder="성함을 입력하세요" autoComplete="name" /></label>
-            <label>휴대폰 번호<input required value={phone} onChange={(event) => setPhone(formatPhoneInput(event.target.value))} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" /></label>
+            <label>
+              이름
+              <input
+                required
+                minLength={2}
+                maxLength={30}
+                ref={nameRef}
+                value={name}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setFieldErrors((current) => ({ ...current, name: undefined }));
+                }}
+                placeholder="성함을 입력하세요"
+                autoComplete="name"
+                aria-invalid={Boolean(fieldErrors.name)}
+                aria-describedby={fieldErrors.name ? "lead-section-name-error" : undefined}
+              />
+              {fieldErrors.name ? <span className="fieldError" id="lead-section-name-error">{fieldErrors.name}</span> : null}
+            </label>
+            <label>
+              휴대폰 번호
+              <input
+                required
+                ref={phoneRef}
+                value={phone}
+                onChange={(event) => {
+                  setPhone(formatPhoneInput(event.target.value));
+                  setFieldErrors((current) => ({ ...current, phone: undefined }));
+                }}
+                placeholder="010-0000-0000"
+                inputMode="tel"
+                autoComplete="tel"
+                aria-invalid={Boolean(fieldErrors.phone)}
+                aria-describedby={fieldErrors.phone ? "lead-section-phone-error" : undefined}
+              />
+              {fieldErrors.phone ? <span className="fieldError" id="lead-section-phone-error">{fieldErrors.phone}</span> : null}
+            </label>
             <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
             <div className="consentRow agree">
-              <label><input required type="checkbox" checked={agree} onChange={(event) => setAgree(event.target.checked)} /> 개인정보 수집 및 상담 연락에 동의합니다.</label>
+              <label>
+                <input
+                  required
+                  ref={consentRef}
+                  type="checkbox"
+                  checked={agree}
+                  onChange={(event) => {
+                    setAgree(event.target.checked);
+                    setFieldErrors((current) => ({ ...current, consent: undefined }));
+                  }}
+                  aria-invalid={Boolean(fieldErrors.consent)}
+                  aria-describedby={fieldErrors.consent ? "lead-section-consent-error" : undefined}
+                />
+                개인정보 수집 및 상담 연락에 동의합니다.
+              </label>
               <PrivacyPolicyButton />
+              {fieldErrors.consent ? <span className="fieldError consentError" id="lead-section-consent-error">{fieldErrors.consent}</span> : null}
             </div>
             {status === "error" && <p className="formError" role="alert">{message}</p>}
             <button className="primaryButton wide" type="submit" aria-busy={status === "sending"} disabled={status === "sending"}>{status === "sending" ? "등록 중..." : "관심고객 등록하기"}</button>

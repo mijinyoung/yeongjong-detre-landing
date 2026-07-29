@@ -20,17 +20,11 @@ const facts = [
 
 export default function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoEnabled, setVideoEnabled] = useState(false);
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const openForm = (source: string) => openLeadModal(source);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.muted = true;
-    video.defaultMuted = true;
-    video.setAttribute("muted", "");
-
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const saveData = (
       navigator as Navigator & { connection?: { saveData?: boolean } }
@@ -40,6 +34,19 @@ export default function Hero() {
       const timer = window.setTimeout(() => setPlaybackBlocked(true), 0);
       return () => window.clearTimeout(timer);
     }
+
+    const timer = window.setTimeout(() => setVideoEnabled(true), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoEnabled) return;
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
+    video.load();
 
     const syncPlayback = () => {
       if (document.hidden) {
@@ -59,9 +66,14 @@ export default function Hero() {
       video.removeEventListener("loadeddata", syncPlayback);
       video.pause();
     };
-  }, []);
+  }, [videoEnabled]);
 
   async function playVideo() {
+    if (!videoEnabled) {
+      setVideoEnabled(true);
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+    }
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -80,17 +92,17 @@ export default function Hero() {
       <video
         ref={videoRef}
         className="heroV50Video"
-        autoPlay
+        autoPlay={videoEnabled}
         muted
         loop
         playsInline
-        preload="metadata"
+        preload={videoEnabled ? "metadata" : "none"}
         poster="/images/video/hero-poster-v95.webp"
         aria-label="영종 디에트르 라 메르 주변 드론 영상"
         onPlay={() => setPlaybackBlocked(false)}
         onError={() => setPlaybackBlocked(true)}
       >
-        <source src="/videos/hero-drone.mp4?v=95" type="video/mp4" />
+        {videoEnabled ? <source src="/videos/hero-drone.mp4?v=95" type="video/mp4" /> : null}
       </video>
       <div className="heroV50StampMask" aria-hidden="true" />
       <div className="heroV50Shade" aria-hidden="true" />

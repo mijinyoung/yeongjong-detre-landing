@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useRef, useState } from "react";
 import { openLeadModal } from "@/lib/analytics";
+import { useOverlayFocus } from "@/lib/use-overlay-focus";
 
 type Plan = {
   id: string;
@@ -26,20 +27,30 @@ const plans: Plan[] = [
 export default function FloorPlans() {
   const [selected, setSelected] = useState("84A");
   const [zoomOpen, setZoomOpen] = useState(false);
+  const zoomRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const plan = useMemo(() => plans.find((item) => item.id === selected) || plans[0], [selected]);
 
-  useEffect(() => {
-    if (!zoomOpen) return;
-    const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setZoomOpen(false);
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", close);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", close);
-    };
-  }, [zoomOpen]);
+  useOverlayFocus({
+    open: zoomOpen,
+    containerRef: zoomRef,
+    initialFocusRef: closeRef,
+    onClose: () => setZoomOpen(false),
+  });
+
+  const moveTab = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex = index;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % plans.length;
+    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + plans.length) % plans.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = plans.length - 1;
+    else return;
+
+    event.preventDefault();
+    setSelected(plans[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   return (
     <section className="section floorV60" id="floor-plans">
@@ -60,21 +71,31 @@ export default function FloorPlans() {
         </div>
 
         <div className="planTabs" role="tablist" aria-label="주거 타입 선택">
-          {plans.map((item) => (
+          {plans.map((item, index) => (
             <button
               key={item.id}
+              ref={(element) => { tabRefs.current[index] = element; }}
+              id={`floor-tab-${item.id}`}
               type="button"
               role="tab"
               aria-selected={selected === item.id}
+              aria-controls={`floor-panel-${item.id}`}
+              tabIndex={selected === item.id ? 0 : -1}
               className={selected === item.id ? "active" : ""}
               onClick={() => setSelected(item.id)}
+              onKeyDown={(event) => moveTab(event, index)}
             >
               {item.id}
             </button>
           ))}
         </div>
 
-        <div className="floorV60Panel">
+        <div
+          className="floorV60Panel"
+          id={`floor-panel-${plan.id}`}
+          role="tabpanel"
+          aria-labelledby={`floor-tab-${plan.id}`}
+        >
           <button className="floorV61ImageButton" type="button" onClick={() => setZoomOpen(true)} aria-label={`${plan.id} 타입 평면도 크게 보기`}>
             <Image
               key={plan.image}
@@ -105,10 +126,10 @@ export default function FloorPlans() {
       </div>
 
       {zoomOpen && (
-        <div className="brochureZoom" role="dialog" aria-modal="true" aria-label={`${plan.id} 타입 평면도 확대 이미지`} onClick={() => setZoomOpen(false)}>
-          <button type="button" className="brochureZoomClose" onClick={() => setZoomOpen(false)} aria-label="확대 이미지 닫기">×</button>
+        <div ref={zoomRef} className="brochureZoom" role="dialog" aria-modal="true" aria-label={`${plan.id} 타입 평면도 확대 이미지`} onClick={() => setZoomOpen(false)} tabIndex={-1}>
+          <button ref={closeRef} type="button" className="brochureZoomClose" onClick={() => setZoomOpen(false)} aria-label="확대 이미지 닫기">×</button>
           <div className="brochureZoomCanvas floorZoomCanvas" onClick={(event) => event.stopPropagation()}>
-            <Image src={plan.image} alt={`${plan.id} 타입 공식 평면도`} width={1867} height={882} className="brochureZoomImage" priority />
+            <Image src={plan.image} alt={`${plan.id} 타입 공식 평면도`} width={1867} height={882} className="brochureZoomImage" />
           </div>
         </div>
       )}

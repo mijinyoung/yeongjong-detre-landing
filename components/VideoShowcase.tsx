@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
 
 const films = [
@@ -27,35 +27,30 @@ const films = [
 ];
 
 export default function VideoShowcase() {
-  const sectionRef = useRef<HTMLElement>(null);
   const [activeId, setActiveId] = useState(films[0].id);
-  const [isNearViewport, setIsNearViewport] = useState(false);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const active = films.find((film) => film.id === activeId) || films[0];
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setIsNearViewport(true);
-        observer.disconnect();
-      },
-      { rootMargin: "100px 0px" },
-    );
-
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
 
   const selectFilm = (id: string) => {
     setActiveId(id);
     trackEvent("video_select", { video_id: id });
   };
 
+  const moveTab = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let nextIndex = index;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % films.length;
+    else if (event.key === "ArrowLeft") nextIndex = (index - 1 + films.length) % films.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = films.length - 1;
+    else return;
+
+    event.preventDefault();
+    selectFilm(films[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  };
+
   return (
-    <section ref={sectionRef} className="section videoShowcase" id="brand-film">
+    <section className="section videoShowcase" id="brand-film">
       <div className="shell">
         <div className="videoShowcaseHeading">
           <div>
@@ -72,7 +67,12 @@ export default function VideoShowcase() {
           </p>
         </div>
 
-        <div className="videoShowcasePanel">
+        <div
+          className="videoShowcasePanel"
+          id={`video-panel-${active.id}`}
+          role="tabpanel"
+          aria-labelledby={`video-tab-${active.id}`}
+        >
           <div className="videoPlayerWrap">
             <video
               key={active.id}
@@ -80,7 +80,7 @@ export default function VideoShowcase() {
               controls
               playsInline
               preload="none"
-              poster={isNearViewport ? active.poster : undefined}
+              poster={active.poster}
               onPlay={() =>
                 trackEvent("video_play", { video_id: active.id })
               }
@@ -88,7 +88,7 @@ export default function VideoShowcase() {
                 trackEvent("video_complete", { video_id: active.id })
               }
             >
-              {isNearViewport ? <source src={active.src} type="video/mp4" /> : null}
+              <source src={active.src} type="video/mp4" />
               브라우저에서 영상을 재생할 수 없습니다.
             </video>
           </div>
@@ -103,14 +103,19 @@ export default function VideoShowcase() {
             <p>{active.description}</p>
 
             <div className="videoShowcaseTabs" role="tablist" aria-label="영상 선택">
-              {films.map((film) => (
+              {films.map((film, index) => (
                 <button
                   key={film.id}
+                  ref={(element) => { tabRefs.current[index] = element; }}
+                  id={`video-tab-${film.id}`}
                   type="button"
                   role="tab"
                   aria-selected={active.id === film.id}
+                  aria-controls={`video-panel-${film.id}`}
+                  tabIndex={active.id === film.id ? 0 : -1}
                   className={active.id === film.id ? "active" : ""}
                   onClick={() => selectFilm(film.id)}
+                  onKeyDown={(event) => moveTab(event, index)}
                 >
                   <span>{film.eyebrow}</span>
                   <strong>{film.label}</strong>

@@ -147,7 +147,7 @@
 .consultationV41Card small{display:block;color:#697482;font-size:14px;line-height:1.75}
 .consultationV41Notice{margin:20px 0 0;color:#7b8189;font-size:12px;line-height:1.65}
 
-:where(a,button,input):focus-visible{outline:3px solid rgba(214,166,91,.72);outline-offset:3px}
+:where(a,button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid rgba(214,166,91,.72);outline-offset:3px}
 .srOnly{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
 @media(max-width:900px){.consultationV41Heading{grid-template-columns:1fr;gap:20px}.consultationV41Grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -766,7 +766,7 @@ body.mobileNavOpen{overflow:hidden}
 /* ===== v6.4 방문 분석 동의 ===== */
 .analyticsConsent {
   position: fixed;
-  z-index: 1200;
+  z-index: 90;
   right: 24px;
   bottom: 24px;
   left: 24px;
@@ -778,6 +778,26 @@ body.mobileNavOpen{overflow:hidden}
   border-radius: 22px;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(18px);
+}
+
+.analyticsConsentBackdrop {
+  position: fixed;
+  z-index: 1300;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 8, 18, .76);
+  backdrop-filter: blur(10px);
+}
+
+.analyticsConsent.analyticsConsentSettings {
+  position: relative;
+  z-index: auto;
+  inset: auto;
+  width: min(760px, 100%);
+  max-width: none;
+  margin: 0;
 }
 
 .analyticsConsentInner {
@@ -864,6 +884,13 @@ body.mobileNavOpen{overflow:hidden}
   .analyticsConsentActions button {
     padding-inline: 10px;
     font-size: 13px;
+  }
+
+  .analyticsConsent.analyticsConsentSettings {
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
   }
 }
 
@@ -2007,4 +2034,65 @@ body.mobileNavOpen{overflow:hidden}
   .heroV50Scroll {
     display: none;
   }
+}
+
+/* ===== v9.9 출시 전 접근성·운영 QA ===== */
+.fieldError {
+  display: block;
+  margin-top: 7px;
+  color: #bd3429;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.consentError {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #bd3429 !important;
+  box-shadow: 0 0 0 3px rgba(189, 52, 41, .12);
+}
+
+.leadModalClose:disabled {
+  cursor: wait;
+  opacity: .45;
+}
+
+.quickField {
+  align-self: start;
+  min-width: 0;
+}
+
+.quickField > input {
+  width: 100%;
+  height: 48px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.quickField > input::placeholder {
+  color: #b8c1ce;
+}
+
+.quickField .fieldError,
+.quickAgree .fieldError {
+  color: #ffb4aa;
+}
+
+.adminSaveNotice.error {
+  color: #a82d2d;
+}
+
+.adminTableWrap:focus-visible {
+  outline: 3px solid rgba(156, 112, 53, .28);
+  outline-offset: 4px;
 }

@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { trackEvent, trackLeadComplete } from "@/lib/analytics";
 import { createLeadEventId, getLeadAttribution, getMetaLeadContext, goToThankYou, submitLead } from "@/lib/client-lead";
 import { PrivacyPolicyButton } from "@/components/PrivacyPolicy";
+import { LeadFieldErrors, validateLeadFields } from "@/lib/lead-form-validation";
+import { useOverlayFocus } from "@/lib/use-overlay-focus";
 
 type Status = "idle" | "sending" | "done" | "error";
 
@@ -23,17 +25,24 @@ export default function LeadModal() {
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [leadId, setLeadId] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<LeadFieldErrors>({});
+  const dialogRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (event: Event) => {
+      if (submittingRef.current) return;
       const custom = event as CustomEvent<{ placement?: string }>;
       submittingRef.current = false;
       eventIdRef.current = "";
       setPlacement(custom.detail?.placement || "modal");
       setStatus("idle");
       setMessage("");
+      setPhone("");
       setLeadId("");
+      setFieldErrors({});
       setOpen(true);
       trackEvent("lead_modal_open", { placement: custom.detail?.placement || "modal" });
     };
@@ -41,18 +50,17 @@ export default function LeadModal() {
     return () => window.removeEventListener("open-lead-modal", handler);
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    document.body.style.overflow = "hidden";
-    const timer = window.setTimeout(() => nameRef.current?.focus(), 80);
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.clearTimeout(timer);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const closeModal = () => {
+    if (status === "sending") return;
+    setOpen(false);
+  };
+
+  useOverlayFocus({
+    open,
+    containerRef: dialogRef,
+    initialFocusRef: nameRef,
+    onClose: closeModal,
+  });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,14 +68,22 @@ export default function LeadModal() {
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") || "").trim();
     const consent = form.get("consent") === "on";
+    const errors = validateLeadFields(name, phone, consent);
 
-    if (!name || !/^01[016789]-\d{3,4}-\d{4}$/.test(phone) || !consent) {
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
       setStatus("error");
-      setMessage("이름, 휴대폰 번호, 개인정보 동의를 확인해 주세요.");
+      setMessage("입력 내용을 확인해 주세요.");
+      window.requestAnimationFrame(() => {
+        if (errors.name) nameRef.current?.focus();
+        else if (errors.phone) phoneRef.current?.focus();
+        else consentRef.current?.focus();
+      });
       return;
     }
 
     submittingRef.current = true;
+    setFieldErrors({});
     setStatus("sending");
     setMessage("");
     const attribution = getLeadAttribution();
@@ -104,9 +120,9 @@ export default function LeadModal() {
   if (!open) return null;
 
   return (
-    <div className="leadModalBackdrop" role="presentation" onMouseDown={() => setOpen(false)}>
-      <div className="leadModal" role="dialog" aria-modal="true" aria-labelledby="lead-modal-title" aria-describedby="lead-modal-description" onMouseDown={(e) => e.stopPropagation()}>
-        <button className="leadModalClose" type="button" aria-label="상담 신청창 닫기" onClick={() => setOpen(false)}>×</button>
+    <div className="leadModalBackdrop" role="presentation" onMouseDown={closeModal}>
+      <div ref={dialogRef} className="leadModal" role="dialog" aria-modal="true" aria-labelledby="lead-modal-title" aria-describedby="lead-modal-description" onMouseDown={(e) => e.stopPropagation()} tabIndex={-1}>
+        <button className="leadModalClose" type="button" aria-label="상담 신청창 닫기" onClick={closeModal} disabled={status === "sending"}>×</button>
         {status === "done" ? (
           <div className="leadModalSuccess" role="status">
             <span>✓</span>
@@ -124,10 +140,58 @@ export default function LeadModal() {
               <span>✓ 무료 상담</span><span>✓ 상담 외 사용 없음</span><span>✓ 언제든 취소 가능</span>
             </div>
             <form className="leadModalForm" onSubmit={submit} noValidate>
-              <label>이름<input required maxLength={30} ref={nameRef} name="name" placeholder="성함을 입력하세요" autoComplete="name" /></label>
-              <label>휴대폰 번호<input required name="phone" value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} placeholder="010-0000-0000" inputMode="tel" autoComplete="tel" /></label>
+              <label>
+                이름
+                <input
+                  required
+                  minLength={2}
+                  maxLength={30}
+                  ref={nameRef}
+                  name="name"
+                  placeholder="성함을 입력하세요"
+                  autoComplete="name"
+                  aria-invalid={Boolean(fieldErrors.name)}
+                  aria-describedby={fieldErrors.name ? "lead-modal-name-error" : undefined}
+                  onChange={() => setFieldErrors((current) => ({ ...current, name: undefined }))}
+                />
+                {fieldErrors.name ? <span className="fieldError" id="lead-modal-name-error">{fieldErrors.name}</span> : null}
+              </label>
+              <label>
+                휴대폰 번호
+                <input
+                  required
+                  ref={phoneRef}
+                  name="phone"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(formatPhone(e.target.value));
+                    setFieldErrors((current) => ({ ...current, phone: undefined }));
+                  }}
+                  placeholder="010-0000-0000"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  aria-invalid={Boolean(fieldErrors.phone)}
+                  aria-describedby={fieldErrors.phone ? "lead-modal-phone-error" : undefined}
+                />
+                {fieldErrors.phone ? <span className="fieldError" id="lead-modal-phone-error">{fieldErrors.phone}</span> : null}
+              </label>
               <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-              <div className="consentRow agree"><label><input required type="checkbox" name="consent" /> 개인정보 수집 및 상담 연락에 동의합니다.</label><PrivacyPolicyButton /></div>
+              <div className="consentRow agree">
+                <label>
+                  <input
+                    required
+                    ref={consentRef}
+                    type="checkbox"
+                    name="consent"
+                    aria-invalid={Boolean(fieldErrors.consent)}
+                    aria-describedby={fieldErrors.consent ? "lead-modal-consent-error" : undefined}
+                    onChange={() => setFieldErrors((current) => ({ ...current, consent: undefined }))}
+                  />
+                  개인정보 수집 및 상담 연락에 동의합니다.
+                </label>
+                <PrivacyPolicyButton />
+                {fieldErrors.consent ? <span className="fieldError consentError" id="lead-modal-consent-error">{fieldErrors.consent}</span> : null}
+              </div>
               {status === "error" && <p className="formError" role="alert">{message}</p>}
               <button className="primaryButton wide" type="submit" aria-busy={status === "sending"} disabled={status === "sending"}>{status === "sending" ? "등록 중..." : "관심고객 등록하기"}</button>
               <small>입력 정보는 분양 상담 안내 목적으로만 사용됩니다.</small>

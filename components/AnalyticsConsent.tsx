@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ANALYTICS_CONSENT_EVENT,
   getAnalyticsConsent,
   setAnalyticsConsent,
 } from "@/lib/analytics";
+import { useOverlayFocus } from "@/lib/use-overlay-focus";
 
 export default function AnalyticsConsentManager() {
   const consent = useSyncExternalStore(
@@ -17,6 +18,8 @@ export default function AnalyticsConsentManager() {
     () => null,
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const rejectRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onChanged = () => setSettingsOpen(false);
@@ -33,19 +36,31 @@ export default function AnalyticsConsentManager() {
   }, []);
 
   const visible = consent === null || settingsOpen;
-  if (!visible) return null;
+
+  useOverlayFocus({
+    open: settingsOpen,
+    containerRef: panelRef,
+    initialFocusRef: rejectRef,
+    onClose: () => setSettingsOpen(false),
+  });
 
   const choose = (value: "accepted" | "rejected") => {
     setAnalyticsConsent(value);
     setSettingsOpen(false);
   };
 
-  return (
+  if (!visible) return null;
+
+  const panel = (
     <section
-      className="analyticsConsent"
-      role="dialog"
+      ref={panelRef}
+      className={`analyticsConsent${settingsOpen ? " analyticsConsentSettings" : ""}`}
+      role={settingsOpen ? "dialog" : "region"}
       aria-modal={settingsOpen ? "true" : undefined}
       aria-labelledby="analytics-consent-title"
+      aria-label={settingsOpen ? undefined : "방문 분석 선택"}
+      onMouseDown={(event) => event.stopPropagation()}
+      tabIndex={settingsOpen ? -1 : undefined}
     >
       <div className="analyticsConsentInner">
         <div>
@@ -58,6 +73,7 @@ export default function AnalyticsConsentManager() {
         </div>
         <div className="analyticsConsentActions">
           <button
+            ref={settingsOpen ? rejectRef : undefined}
             type="button"
             className="analyticsConsentReject"
             onClick={() => choose("rejected")}
@@ -75,4 +91,10 @@ export default function AnalyticsConsentManager() {
       </div>
     </section>
   );
+
+  return settingsOpen ? (
+    <div className="analyticsConsentBackdrop" role="presentation" onMouseDown={() => setSettingsOpen(false)}>
+      {panel}
+    </div>
+  ) : panel;
 }

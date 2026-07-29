@@ -1,11 +1,14 @@
 /**
- * 영종 디에트르 Google Sheets 저장·관리자 운영용 Apps Script — v9.6
+ * 영종 디에트르 Google Sheets 저장·관리자 운영용 Apps Script — v9.9
  *
  * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
+ *
+ * 권장 설정: Apps Script의 프로젝트 설정 > 스크립트 속성에
+ * WEBHOOK_SECRET을 추가하고 Vercel의 GOOGLE_SHEET_WEBHOOK_SECRET과 같은 값을 입력합니다.
  */
 const SHEET_NAME = '관심고객';
-const WEBHOOK_SECRET = '여기에-Vercel과-동일한-비밀값-입력';
+const WEBHOOK_SECRET_FALLBACK = '여기에-Vercel과-동일한-비밀값-입력';
 
 const REQUIRED_HEADERS = [
   '접수번호','등록일시','이름','휴대폰','유입경로','캠페인','광고소재',
@@ -17,16 +20,13 @@ function doGet(e) {
   const params = e && e.parameter ? e.parameter : {};
 
   if (params.action === 'list') {
-    if (!isAuthorized({ _webhookSecret: params._webhookSecret || '' })) {
-      return jsonResponse({ ok: false, message: 'Unauthorized' });
-    }
-    return listLeads(params);
+    return jsonResponse({ ok: false, message: 'Use an authenticated POST request.' });
   }
 
   return jsonResponse({
     ok: true,
     service: 'yeongjong-detre-google-sheets',
-    version: '9.6.0',
+    version: '9.9.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -41,6 +41,13 @@ function doPost(e) {
 
     if (!isAuthorized(data)) {
       return jsonResponse({ ok: false, message: 'Unauthorized' });
+    }
+
+    if (data.action === 'list') {
+      return listLeads(data);
+    }
+    if (data.action === 'getLead') {
+      return getLeadDetail(data);
     }
 
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -67,11 +74,15 @@ function doPost(e) {
 }
 
 function isAuthorized(data) {
-  if (!WEBHOOK_SECRET ||
-      WEBHOOK_SECRET === '여기에-Vercel과-동일한-비밀값-입력') {
-    return true;
+  const propertySecret = PropertiesService.getScriptProperties()
+    .getProperty('WEBHOOK_SECRET');
+  const configuredSecret = String(propertySecret || WEBHOOK_SECRET_FALLBACK || '').trim();
+
+  if (!configuredSecret ||
+      configuredSecret === '여기에-Vercel과-동일한-비밀값-입력') {
+    return false;
   }
-  return data._webhookSecret === WEBHOOK_SECRET;
+  return String(data && data._webhookSecret || '') === configuredSecret;
 }
 
 function ensureRequiredHeaders(sheet) {
@@ -222,6 +233,28 @@ function listLeads(params) {
   });
 }
 
+function getLeadDetail(data) {
+  const leadId = String(data.leadId || '').trim();
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName(SHEET_NAME);
+
+  if (!leadId) return jsonResponse({ ok: false, message: 'leadId is required' });
+  if (!sheet || sheet.getLastRow() < 2) {
+    return jsonResponse({ ok: false, message: 'Lead row not found' });
+  }
+
+  const map = ensureRequiredHeaders(sheet);
+  const row = findLeadRow(sheet, map, leadId);
+  if (!row) return jsonResponse({ ok: false, message: 'Lead row not found' });
+
+  const phoneColumn = map['휴대폰'];
+  const phone = phoneColumn
+    ? sheet.getRange(row, phoneColumn).getDisplayValue()
+    : '';
+
+  return jsonResponse({ ok: true, leadId: leadId, phone: phone });
+}
+
 function read(row, map, header) {
   const column = map[header];
   return column ? String(row[column - 1] || '') : '';
@@ -241,12 +274,17 @@ function findLeadRow(sheet, map, leadId) {
 
 function put(row, map, header, value) {
   const column = map[header];
-  if (column) row[column - 1] = value;
+  if (column) row[column - 1] = sheetText(value);
 }
 
 function setByHeader(sheet, row, map, header, value) {
   const column = map[header];
-  if (column) sheet.getRange(row, column).setValue(value);
+  if (column) sheet.getRange(row, column).setValue(sheetText(value));
+}
+
+function sheetText(value) {
+  const text = String(value == null ? '' : value);
+  return /^[=+\-@\t\r]/.test(text) ? "'" + text : text;
 }
 
 function jsonResponse(payload) {

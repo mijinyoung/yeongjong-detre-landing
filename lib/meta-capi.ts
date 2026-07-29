@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+const META_TIMEOUT_MS = 8000;
+
 type MetaLeadEvent = {
   eventId: string;
   eventSourceUrl?: string;
@@ -70,20 +72,28 @@ export async function sendMetaLeadEvent(event: MetaLeadEvent) {
       : {}),
   };
 
-  const response = await fetch(
-    `https://graph.facebook.com/${apiVersion}/${pixelId}/events?access_token=${encodeURIComponent(accessToken)}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    },
-  );
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), META_TIMEOUT_MS);
 
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Meta CAPI failed: ${response.status} ${detail.slice(0, 300)}`);
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${apiVersion}/${pixelId}/events?access_token=${encodeURIComponent(accessToken)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+        signal: controller.signal,
+      },
+    );
+
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(`Meta CAPI failed: ${response.status} ${detail.slice(0, 300)}`);
+    }
+
+    return { configured: true, sent: true };
+  } finally {
+    clearTimeout(timer);
   }
-
-  return { configured: true, sent: true };
 }

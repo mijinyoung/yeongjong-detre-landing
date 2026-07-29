@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { openLeadModal, trackEvent } from "@/lib/analytics";
+import { useOverlayFocus } from "@/lib/use-overlay-focus";
 
 const links = [
   ["핵심가치", "#why-now"],
@@ -15,18 +17,21 @@ const links = [
 
 export default function MobileNavigation() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    document.body.classList.toggle("mobileNavOpen", open);
-    const onEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    window.addEventListener("keydown", onEscape);
-    return () => {
-      document.body.classList.remove("mobileNavOpen");
-      window.removeEventListener("keydown", onEscape);
-    };
-  }, [open]);
+    const timer = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useOverlayFocus({
+    open,
+    containerRef: panelRef,
+    initialFocusRef: closeRef,
+    onClose: () => setOpen(false),
+  });
 
   const closeAndTrack = (label: string) => {
     trackEvent("mobile_nav_click", { label });
@@ -48,20 +53,22 @@ export default function MobileNavigation() {
         <span />
       </button>
 
-      {open && (
+      {mounted && open ? createPortal(
         <div className="mobileNavOverlay" role="presentation" onClick={() => setOpen(false)}>
           <nav
+            ref={panelRef}
             id="mobile-navigation-panel"
             className="mobileNavPanel"
             aria-label="모바일 주요 메뉴"
             onClick={(event) => event.stopPropagation()}
+            tabIndex={-1}
           >
             <div className="mobileNavHeader">
               <div>
                 <strong>DÉTRE</strong>
                 <span>LA MER</span>
               </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기">×</button>
+              <button ref={closeRef} type="button" onClick={() => setOpen(false)} aria-label="메뉴 닫기">×</button>
             </div>
 
             <div className="mobileNavLinks">
@@ -93,8 +100,9 @@ export default function MobileNavigation() {
               </button>
             </div>
           </nav>
-        </div>
-      )}
+        </div>,
+        document.body,
+      ) : null}
     </>
   );
 }

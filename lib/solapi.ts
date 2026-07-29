@@ -1,5 +1,7 @@
 import { createHmac, randomBytes } from "node:crypto";
 
+const SOLAPI_TIMEOUT_MS = 8000;
+
 type SolapiLeadNotification = {
   leadId: string;
   name: string;
@@ -87,59 +89,67 @@ export async function sendSolapiLeadNotification(
     return { configured: false, sent: false } as const;
   }
 
-  const response = await fetch(
-    "https://api.solapi.com/messages/v4/send-many/detail",
-    {
-      method: "POST",
-      headers: {
-        Authorization: createAuthorization(apiKey, apiSecret),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            to,
-            from,
-            text: buildLeadText(lead),
-            autoTypeDetect: true,
-            customFields: {
-              leadId: lead.leadId,
-              placement: lead.placement || "",
-            },
-          },
-        ],
-        showMessageList: true,
-      }),
-      cache: "no-store",
-    },
-  );
-
-  const raw = await response.text();
-  let data: SolapiResponse = {};
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SOLAPI_TIMEOUT_MS);
 
   try {
-    data = raw ? (JSON.parse(raw) as SolapiResponse) : {};
-  } catch {
-    // Keep the raw response for the error below.
+    const response = await fetch(
+      "https://api.solapi.com/messages/v4/send-many/detail",
+      {
+        method: "POST",
+        headers: {
+          Authorization: createAuthorization(apiKey, apiSecret),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              to,
+              from,
+              text: buildLeadText(lead),
+              autoTypeDetect: true,
+              customFields: {
+                leadId: lead.leadId,
+                placement: lead.placement || "",
+              },
+            },
+          ],
+          showMessageList: true,
+        }),
+        cache: "no-store",
+        signal: controller.signal,
+      },
+    );
+
+    const raw = await response.text();
+    let data: SolapiResponse = {};
+
+    try {
+      data = raw ? (JSON.parse(raw) as SolapiResponse) : {};
+    } catch {
+      // Keep the raw response for the error below.
+    }
+
+    if (!response.ok) {
+      throw new Error(`SOLAPI ${response.status}: ${raw.slice(0, 300)}`);
+    }
+
+    const failed = data.failedMessageList || [];
+    const registeredFailed = data.groupInfo?.count?.registeredFailed || 0;
+
+    if (failed.length > 0 || registeredFailed > 0) {
+      const reason = failed
+        .map((item) => item.statusMessage || item.statusCode || "등록 실패")
+        .join(", ");
+      throw new Error(`SOLAPI message registration failed: ${reason}`);
+    }
+
+    return {
+      configured: true,
+      sent: true,
+      groupId: data.groupInfo?.groupId || "",
+    } as const;
+  } finally {
+    clearTimeout(timer);
   }
-
-  if (!response.ok) {
-    throw new Error(`SOLAPI ${response.status}: ${raw.slice(0, 300)}`);
-  }
-
-  const failed = data.failedMessageList || [];
-  const registeredFailed = data.groupInfo?.count?.registeredFailed || 0;
-
-  if (failed.length > 0 || registeredFailed > 0) {
-    const reason = failed
-      .map((item) => item.statusMessage || item.statusCode || "등록 실패")
-      .join(", ");
-    throw new Error(`SOLAPI message registration failed: ${reason}`);
-  }
-
-  return {
-    configured: true,
-    sent: true,
-    groupId: data.groupInfo?.groupId || "",
-  } as const;
 }

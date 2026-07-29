@@ -6,14 +6,6 @@ import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 export const runtime = "nodejs";
 
 const FETCH_TIMEOUT_MS = 8000;
-const ALLOWED_STATUSES = new Set([
-  "신규",
-  "연락완료",
-  "상담중",
-  "방문예약",
-  "계약",
-  "보류",
-]);
 
 function safeEqual(input: string, expected: string) {
   const a = Buffer.from(input);
@@ -25,7 +17,6 @@ function cleanText(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
   return value
     .replace(/[\u0000-\u001f\u007f]/g, " ")
-    .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
 }
@@ -42,15 +33,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = (await request.json()) as {
-      token?: unknown;
-      leadId?: unknown;
-      status?: unknown;
-      memo?: unknown;
-    };
+    let body: { token?: unknown; leadId?: unknown };
+    try {
+      body = (await request.json()) as { token?: unknown; leadId?: unknown };
+    } catch {
+      return apiJson(
+        { ok: false, message: "요청 내용을 확인해 주세요." },
+        requestId,
+        { status: 400 },
+      );
+    }
 
     const token = cleanText(body.token, 200);
+    const leadId = cleanText(body.leadId, 60);
     const expectedToken = process.env.ADMIN_DASHBOARD_TOKEN || "";
+
     if (!expectedToken || !token || !safeEqual(token, expectedToken)) {
       return apiJson(
         { ok: false, message: "관리자 비밀번호를 확인해 주세요." },
@@ -58,31 +55,19 @@ export async function POST(request: NextRequest) {
         { status: 401 },
       );
     }
-
-    const leadId = cleanText(body.leadId, 60);
-    const status = cleanText(body.status, 20);
-    const memo = cleanText(body.memo, 1000);
-
-    if (!leadId || !ALLOWED_STATUSES.has(status)) {
+    if (!leadId) {
       return apiJson(
-        { ok: false, message: "접수번호와 처리 상태를 확인해 주세요." },
+        { ok: false, message: "접수번호를 확인해 주세요." },
         requestId,
         { status: 400 },
       );
     }
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-    if (!sheetWebhook) {
+    const sheetSecret = getSheetWebhookSecret();
+    if (!sheetWebhook || !sheetSecret) {
       return apiJson(
         { ok: false, message: "Google Sheets 연동이 설정되지 않았습니다." },
-        requestId,
-        { status: 503 },
-      );
-    }
-    const sheetSecret = getSheetWebhookSecret();
-    if (!sheetSecret) {
-      return apiJson(
-        { ok: false, message: "Google Sheets 인증값이 설정되지 않았습니다." },
         requestId,
         { status: 503 },
       );
@@ -94,21 +79,15 @@ export async function POST(request: NextRequest) {
     try {
       const response = await fetch(sheetWebhook, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-webhook-secret": sheetSecret,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "updateLead",
+          action: "getLead",
           leadId,
-          status,
-          memo,
           _webhookSecret: sheetSecret,
         }),
         cache: "no-store",
         signal: controller.signal,
       });
-
       const raw = await response.text();
       if (!response.ok) {
         throw new Error(`Google Sheets response error: ${response.status}`);
@@ -117,30 +96,23 @@ export async function POST(request: NextRequest) {
       const result = JSON.parse(raw) as {
         ok?: boolean;
         message?: string;
+        phone?: string;
       };
-      if (!result.ok) {
-        throw new Error(result.message || "상담 정보를 저장하지 못했습니다.");
+      if (!result.ok || !result.phone) {
+        throw new Error(result.message || "전화번호를 확인하지 못했습니다.");
       }
 
-      return apiJson(
-        {
-          ok: true,
-          leadId,
-          status,
-          memo,
-          message: "상담 상태와 메모를 저장했습니다.",
-        },
-        requestId,
-      );
+      console.info("Admin phone revealed", { requestId, leadId });
+      return apiJson({ ok: true, leadId, phone: result.phone }, requestId);
     } finally {
       clearTimeout(timer);
     }
   } catch (error) {
-    console.error("Admin lead update error", { requestId, error });
+    console.error("Admin phone reveal error", { requestId, error });
     return apiJson(
-      { ok: false, message: "상담 정보를 저장하는 중 오류가 발생했습니다." },
+      { ok: false, message: "전화번호를 불러오는 중 오류가 발생했습니다." },
       requestId,
-      { status: 500 },
+      { status: 502 },
     );
   }
 }

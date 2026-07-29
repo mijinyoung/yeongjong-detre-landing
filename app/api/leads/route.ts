@@ -3,6 +3,7 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { validateLead } from "@/lib/lead";
 import { sendMetaLeadEvent } from "@/lib/meta-capi";
 import { sendSolapiLeadNotification } from "@/lib/solapi";
+import { getSheetWebhookSecret, getSmsWebhookSecret } from "@/lib/webhook-secrets";
 
 export const runtime = "nodejs";
 
@@ -21,12 +22,25 @@ type DuplicateRecord = {
 
 const duplicateStore = new Map<string, DuplicateRecord>();
 
+function pruneStores(now: number) {
+  for (const [ip, attempts] of rateStore) {
+    const recent = attempts.filter((time) => now - time < RATE_WINDOW_MS);
+    if (recent.length) rateStore.set(ip, recent);
+    else rateStore.delete(ip);
+  }
+
+  for (const [phone, record] of duplicateStore) {
+    if (now - record.at >= DUPLICATE_WINDOW_MS) duplicateStore.delete(phone);
+  }
+}
+
 function getClientIp(request: NextRequest) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
 
 function isRateLimited(ip: string) {
   const now = Date.now();
+  pruneStores(now);
   const recent = (rateStore.get(ip) || []).filter((time) => now - time < RATE_WINDOW_MS);
   if (recent.length >= RATE_LIMIT) return true;
   recent.push(now);
@@ -141,6 +155,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
     }
 
+    const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim();
+    const sheetSecret = getSheetWebhookSecret();
+    const smsSecret = getSmsWebhookSecret();
+    const testMode = process.env.LEAD_TEST_MODE === "true";
+
+    if (!sheetWebhook && !testMode) {
+      console.error("Lead storage is not configured.");
+      return NextResponse.json(
+        { ok: false, message: "현재 온라인 접수를 저장할 수 없습니다. 1833-8384로 연락해 주세요." },
+        { status: 503 },
+      );
+    }
+
+    if (sheetWebhook && !sheetSecret) {
+      console.error("Google Sheets webhook secret is not configured.");
+      return NextResponse.json(
+        { ok: false, message: "접수 저장 설정을 확인 중입니다. 1833-8384로 연락해 주세요." },
+        { status: 503 },
+      );
+    }
+
     const duplicate = isDuplicate(result.data.phone);
     if (
       duplicate &&
@@ -182,13 +217,10 @@ export async function POST(request: NextRequest) {
       smsConfigured,
     };
 
-    const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-    const secret = process.env.WEBHOOK_SECRET;
-
     // Store the lead first. When storage fails, do not send a notification.
     if (sheetWebhook) {
       try {
-        await postWebhook(sheetWebhook, lead, secret);
+        await postWebhook(sheetWebhook, lead, sheetSecret);
       } catch (error) {
         console.error("Google Sheets integration error", error);
         return NextResponse.json(
@@ -200,19 +232,21 @@ export async function POST(request: NextRequest) {
 
     markDuplicate(result.data.phone, result.data.eventId || "", leadId);
 
-    const smsStatus = smsConfigured ? "대기" : "미설정";
+    const smsStatus = sheetWebhook
+      ? (smsConfigured ? "대기" : "미설정")
+      : "테스트";
 
     // The durable Google Sheets write is the success boundary. Notifications and
     // ad measurement continue after the response so a slow provider cannot make
     // the customer retry an already-saved registration.
     after(async () => {
-      if (smsConfigured) {
+      if (sheetWebhook && smsConfigured) {
         let finalSmsStatus = "성공";
         let smsDetail = "";
 
         try {
           if (process.env.SMS_WEBHOOK_URL) {
-            await postWebhook(process.env.SMS_WEBHOOK_URL, lead, secret);
+            await postWebhook(process.env.SMS_WEBHOOK_URL, lead, smsSecret);
             smsDetail = "SMS webhook delivered";
           } else {
             const smsResult = await sendSolapiLeadNotification(lead);
@@ -241,7 +275,7 @@ export async function POST(request: NextRequest) {
                 smsProcessedAt: new Date().toISOString(),
                 smsDetail,
               },
-              secret,
+              sheetSecret,
             );
           } catch (error) {
             console.error("Google Sheets SMS status update error", error);
@@ -249,7 +283,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (result.data.analyticsConsent && result.data.eventId) {
+      if (sheetWebhook && result.data.analyticsConsent && result.data.eventId) {
         try {
           await sendMetaLeadEvent({
             eventId: result.data.eventId,
@@ -271,7 +305,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    if (!sheetWebhook && !smsConfigured) {
+    if (!sheetWebhook && testMode) {
       console.info("[LEAD:TEST_MODE]", {
         leadId,
         placement: lead.placement,

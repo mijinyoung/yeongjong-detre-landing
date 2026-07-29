@@ -34,29 +34,6 @@ export default function StructuredData() {
     },
   };
 
-  const videos = [
-    {
-      "@context": "https://schema.org",
-      "@type": "VideoObject",
-      name: "영종 디에트르 라 메르 브랜드 영상",
-      description:
-        "최고 49층 스카이라인과 영종 디에트르 라 메르의 주거 가치를 소개하는 브랜드 영상",
-      thumbnailUrl: [`${siteUrl}/images/video/brand-poster-v95.webp`],
-      contentUrl: `${siteUrl}/videos/brand-film.mp4`,
-      inLanguage: "ko-KR",
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "VideoObject",
-      name: "영종 디에트르 라 메르 단지 홍보영상",
-      description:
-        "단지 구성, 커뮤니티, 조경과 세대 계획을 소개하는 공식 단지 홍보영상",
-      thumbnailUrl: [`${siteUrl}/images/video/complex-poster-v95.webp`],
-      contentUrl: `${siteUrl}/videos/complex-film.mp4`,
-      inLanguage: "ko-KR",
-    },
-  ];
-
   const faq = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -72,7 +49,7 @@ export default function StructuredData() {
 
   return (
     <>
-      {[website, residence, ...videos, faq].map((item, index) => (
+      {[website, residence, faq].map((item, index) => (
         <script
           key={index}
           type="application/ld+json"

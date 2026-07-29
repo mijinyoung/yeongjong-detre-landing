@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 type Lead = {
@@ -46,14 +46,6 @@ function escapeCsv(value: unknown) {
   return `"${safe.replaceAll('"', '""')}"`;
 }
 
-function maskPhone(phone: string) {
-  const parts = phone.split("-");
-  if (parts.length === 3) return `${parts[0]}-${"*".repeat(parts[1].length)}-${parts[2]}`;
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 7) return "***-****";
-  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
-}
-
 function isOverdueLead(lead: Lead, referenceTime: number) {
   if (lead.status && lead.status !== "신규") return false;
   const submitted = new Date(lead.submittedAt).getTime();
@@ -69,17 +61,23 @@ export default function AdminDashboardClient() {
   const [loaded, setLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [drafts, setDrafts] = useState<Record<string, { status: string; memo: string }>>({});
   const [savingId, setSavingId] = useState("");
   const [savedId, setSavedId] = useState("");
   const [referenceTime, setReferenceTime] = useState(0);
-  const [revealedPhoneIds, setRevealedPhoneIds] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [revealedPhones, setRevealedPhones] = useState<Record<string, string>>({});
+  const [revealingId, setRevealingId] = useState("");
+  const sessionGenerationRef = useRef(0);
+  const activeRequestsRef = useRef<Set<AbortController>>(new Set());
+  const tokenInputRef = useRef<HTMLInputElement>(null);
 
   const lockDashboard = useCallback((reason: string) => {
+    sessionGenerationRef.current += 1;
+    activeRequestsRef.current.forEach((controller) => controller.abort());
+    activeRequestsRef.current.clear();
     setToken("");
     setLeads([]);
     setTotal(0);
@@ -87,13 +85,16 @@ export default function AdminDashboardClient() {
     setLoaded(false);
     setMessage(reason);
     setSaveMessage("");
+    setSaveStatus("idle");
     setQuery("");
     setStatusFilter("all");
     setDrafts({});
     setSavingId("");
     setSavedId("");
     setReferenceTime(0);
-    setRevealedPhoneIds(new Set());
+    setRevealedPhones({});
+    setRevealingId("");
+    window.setTimeout(() => tokenInputRef.current?.focus(), 0);
   }, []);
 
   useEffect(() => {
@@ -210,7 +211,9 @@ export default function AdminDashboardClient() {
 
     setLoading(true);
     setMessage("");
+    const generation = sessionGenerationRef.current;
     const controller = new AbortController();
+    activeRequestsRef.current.add(controller);
     const timer = window.setTimeout(() => controller.abort(), 10000);
 
     try {
@@ -229,6 +232,7 @@ export default function AdminDashboardClient() {
         throw new Error("관리자 서버 응답을 확인할 수 없습니다.");
       }
       if (!response.ok || !result.ok) throw new Error(result.message || "불러오기에 실패했습니다.");
+      if (generation !== sessionGenerationRef.current || controller.signal.aborted) return;
 
       const nextLeads = result.leads || [];
       setLeads(nextLeads);
@@ -243,9 +247,10 @@ export default function AdminDashboardClient() {
       setTotal(result.total || 0);
       setUpdatedAt(result.updatedAt || "");
       setReferenceTime(Date.now());
-      setRevealedPhoneIds(new Set());
+      setRevealedPhones({});
       setLoaded(true);
     } catch (error) {
+      if (generation !== sessionGenerationRef.current) return;
       const fallback =
         error instanceof DOMException && error.name === "AbortError"
           ? "접수 현황 요청 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
@@ -255,7 +260,8 @@ export default function AdminDashboardClient() {
       setMessage(fallback);
     } finally {
       window.clearTimeout(timer);
-      setLoading(false);
+      activeRequestsRef.current.delete(controller);
+      if (generation === sessionGenerationRef.current) setLoading(false);
     }
   }
 
@@ -270,15 +276,57 @@ export default function AdminDashboardClient() {
     }));
     setSavedId("");
     setSaveMessage("");
+    setSaveStatus("idle");
   }
 
-  function togglePhone(leadId: string) {
-    setRevealedPhoneIds((current) => {
-      const next = new Set(current);
-      if (next.has(leadId)) next.delete(leadId);
-      else next.add(leadId);
-      return next;
-    });
+  async function togglePhone(lead: Lead) {
+    if (revealedPhones[lead.leadId]) {
+      setRevealedPhones((current) => {
+        const next = { ...current };
+        delete next[lead.leadId];
+        return next;
+      });
+      return;
+    }
+
+    const generation = sessionGenerationRef.current;
+    const controller = new AbortController();
+    activeRequestsRef.current.add(controller);
+    setRevealingId(lead.leadId);
+    setSaveMessage("");
+    setSaveStatus("idle");
+
+    try {
+      const response = await fetch("/api/admin/leads/reveal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: token.trim(),
+          leadId: lead.leadId,
+        }),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      const result = (await response.json()) as DashboardResponse & { phone?: string };
+      if (!response.ok || !result.ok || !result.phone) {
+        throw new Error(result.message || "전화번호를 확인하지 못했습니다.");
+      }
+      if (generation !== sessionGenerationRef.current || controller.signal.aborted) return;
+
+      setRevealedPhones((current) => ({
+        ...current,
+        [lead.leadId]: result.phone || "",
+      }));
+    } catch (error) {
+      if (generation !== sessionGenerationRef.current) return;
+      setSaveMessage(
+        error instanceof Error ? error.message : "전화번호를 확인하지 못했습니다.",
+      );
+      setSaveStatus("error");
+    } finally {
+      activeRequestsRef.current.delete(controller);
+      if (generation === sessionGenerationRef.current) setRevealingId("");
+    }
   }
 
   async function saveLead(lead: Lead) {
@@ -290,6 +338,10 @@ export default function AdminDashboardClient() {
     setSavingId(lead.leadId);
     setSavedId("");
     setSaveMessage("");
+    setSaveStatus("idle");
+    const generation = sessionGenerationRef.current;
+    const controller = new AbortController();
+    activeRequestsRef.current.add(controller);
 
     try {
       const response = await fetch("/api/admin/leads/update", {
@@ -302,11 +354,13 @@ export default function AdminDashboardClient() {
           memo: draft.memo,
         }),
         cache: "no-store",
+        signal: controller.signal,
       });
       const result = (await response.json()) as DashboardResponse;
       if (!response.ok || !result.ok) {
         throw new Error(result.message || "상담 정보를 저장하지 못했습니다.");
       }
+      if (generation !== sessionGenerationRef.current || controller.signal.aborted) return;
 
       setLeads((current) =>
         current.map((item) =>
@@ -317,12 +371,16 @@ export default function AdminDashboardClient() {
       );
       setSavedId(lead.leadId);
       setSaveMessage(`${lead.name || "고객"}님의 상담 정보를 저장했습니다.`);
+      setSaveStatus("success");
     } catch (error) {
+      if (generation !== sessionGenerationRef.current) return;
       setSaveMessage(
         error instanceof Error ? error.message : "상담 정보를 저장하지 못했습니다.",
       );
+      setSaveStatus("error");
     } finally {
-      setSavingId("");
+      activeRequestsRef.current.delete(controller);
+      if (generation === sessionGenerationRef.current) setSavingId("");
     }
   }
 
@@ -363,7 +421,7 @@ export default function AdminDashboardClient() {
         <section className="adminLogin">
           <label>
             <span>관리자 비밀번호</span>
-            <input aria-describedby="admin-token-help" type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void loadLeads(); }} autoComplete="current-password" placeholder="ADMIN_DASHBOARD_TOKEN" />
+            <input ref={tokenInputRef} aria-describedby="admin-token-help" type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void loadLeads(); }} autoComplete="current-password" placeholder="ADMIN_DASHBOARD_TOKEN" />
           </label>
           <small id="admin-token-help">Vercel에 설정한 관리자 비밀번호를 입력하세요.</small>
           <button type="button" onClick={() => void loadLeads()} disabled={loading}>
@@ -372,7 +430,7 @@ export default function AdminDashboardClient() {
         </section>
 
         {message ? <p className="adminMessage" role="alert">{message}</p> : null}
-        <p className="adminSaveNotice" aria-live="polite">{saveMessage}</p>
+        <p className={`adminSaveNotice ${saveStatus}`} role={saveStatus === "error" ? "alert" : undefined} aria-live={saveStatus === "error" ? undefined : "polite"}>{saveMessage}</p>
 
         {loaded ? (
           <>
@@ -386,7 +444,7 @@ export default function AdminDashboardClient() {
 
             <section className="adminPrivacyNotice" aria-label="개인정보 보호 안내">
               <strong>개인정보 보호 모드</strong>
-              <span>전화번호는 기본적으로 가려집니다. 상담할 고객의 번호만 개별적으로 확인해 주세요.</span>
+              <span>목록과 CSV에는 가려진 전화번호만 제공됩니다. 상담할 고객의 번호만 서버에서 개별적으로 확인해 주세요.</span>
             </section>
 
             {overdueCount ? (
@@ -450,7 +508,7 @@ export default function AdminDashboardClient() {
               <button type="button" onClick={downloadCsv} disabled={!filtered.length}>CSV 내려받기</button>
             </section>
 
-            <section className="adminTableWrap">
+            <section className="adminTableWrap" role="region" aria-label="최근 관심고객 접수 목록, 가로로 스크롤하여 전체 항목 확인" tabIndex={0}>
               <table>
                 <caption className="srOnly">최근 관심고객 접수 목록</caption>
                 <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>상담 메모</th><th>문자</th><th>저장</th></tr></thead>
@@ -470,16 +528,17 @@ export default function AdminDashboardClient() {
                       <td><strong>{lead.name || "-"}</strong></td>
                       <td>
                         <div className="adminPhone">
-                          {revealedPhoneIds.has(lead.leadId) ? (
-                            <a href={`tel:${lead.phone.replaceAll("-", "")}`}>{lead.phone || "-"}</a>
-                          ) : <span>{lead.phone ? maskPhone(lead.phone) : "-"}</span>}
+                          {revealedPhones[lead.leadId] ? (
+                            <a href={`tel:${revealedPhones[lead.leadId].replaceAll("-", "")}`}>{revealedPhones[lead.leadId]}</a>
+                          ) : <span>{lead.phone || "-"}</span>}
                           {lead.phone ? (
                             <button
                               type="button"
-                              aria-label={`${lead.name || "고객"} 전화번호 ${revealedPhoneIds.has(lead.leadId) ? "숨기기" : "보기"}`}
-                              onClick={() => togglePhone(lead.leadId)}
+                              aria-label={`${lead.name || "고객"} 전화번호 ${revealedPhones[lead.leadId] ? "숨기기" : "보기"}`}
+                              disabled={revealingId === lead.leadId}
+                              onClick={() => void togglePhone(lead)}
                             >
-                              {revealedPhoneIds.has(lead.leadId) ? "숨기기" : "번호 보기"}
+                              {revealingId === lead.leadId ? "확인 중" : revealedPhones[lead.leadId] ? "숨기기" : "번호 보기"}
                             </button>
                           ) : null}
                         </div>
@@ -511,7 +570,7 @@ export default function AdminDashboardClient() {
                         <button
                           className="adminSaveButton"
                           type="button"
-                          disabled={!changed || savingId === lead.leadId}
+                          disabled={!changed || Boolean(savingId)}
                           onClick={() => void saveLead(lead)}
                         >
                           {savingId === lead.leadId ? "저장 중" : savedId === lead.leadId ? "완료" : "저장"}

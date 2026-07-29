@@ -2,6 +2,7 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 import { apiJson } from "@/lib/api-response";
 import { isSolapiConfigured, sendSolapiLeadNotification } from "@/lib/solapi";
+import { getSheetWebhookSecret, getSmsWebhookSecret } from "@/lib/webhook-secrets";
 
 export const runtime = "nodejs";
 
@@ -48,7 +49,16 @@ async function postWebhook(
       );
     }
 
-    return detail.slice(0, 300);
+    if (detail) {
+      try {
+        const parsed = JSON.parse(detail) as { ok?: boolean; message?: string };
+        if (parsed.ok === false) {
+          throw new Error(parsed.message || "Webhook rejected the test request.");
+        }
+      } catch (error) {
+        if (!(error instanceof SyntaxError)) throw error;
+      }
+    }
   } finally {
     clearTimeout(timer);
   }
@@ -123,8 +133,6 @@ export async function POST(request: NextRequest) {
     }
 
     const lead = createTestLead();
-    let responsePreview = "";
-
     if (input.target === "googleSheets") {
       const url = process.env.GOOGLE_SHEET_WEBHOOK_URL;
       if (!url) {
@@ -133,16 +141,22 @@ export async function POST(request: NextRequest) {
           { status: 503 },
         );
       }
-      responsePreview = await postWebhook(url, lead, process.env.WEBHOOK_SECRET);
+      const secret = getSheetWebhookSecret();
+      if (!secret) {
+        return respond(
+          { ok: false, message: "Google Sheets 인증값이 설정되지 않았습니다." },
+          { status: 503 },
+        );
+      }
+      await postWebhook(url, lead, secret);
     } else if (process.env.SMS_WEBHOOK_URL) {
-      responsePreview = await postWebhook(
+      await postWebhook(
         process.env.SMS_WEBHOOK_URL,
         lead,
-        process.env.WEBHOOK_SECRET,
+        getSmsWebhookSecret(),
       );
     } else if (isSolapiConfigured()) {
-      const result = await sendSolapiLeadNotification(lead);
-      responsePreview = result.sent ? `SOLAPI group: ${result.groupId || "registered"}` : "";
+      await sendSolapiLeadNotification(lead);
     } else {
       return respond(
         { ok: false, message: "SOLAPI 문자 환경변수가 설정되지 않았습니다." },
@@ -158,7 +172,6 @@ export async function POST(request: NextRequest) {
         input.target === "googleSheets"
           ? "Google Sheets 테스트 전송이 완료되었습니다."
           : "문자 알림 테스트 전송이 완료되었습니다.",
-      responsePreview,
     });
   } catch (error) {
     console.error("Integration test failed", { requestId, error });

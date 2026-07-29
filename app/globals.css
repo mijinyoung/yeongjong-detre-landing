@@ -1859,6 +1859,13 @@ body.mobileNavOpen{overflow:hidden}
 .adminLogin input, .adminToolbar input { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid #d7dce1; border-radius: 9px; font: inherit; }
 .adminLogin button, .adminToolbar button { min-height: 46px; padding: 0 18px; color: #fff; background: #9c7035; border: 0; border-radius: 9px; font-weight: 900; cursor: pointer; }
 .adminLogin button:disabled { opacity: .6; cursor: wait; }
+.adminLogin > small { max-width: 290px; color: #69717c; font-size: 11px; line-height: 1.5; }
+.adminSessionStatus { align-items: center; }
+.adminSessionStatus > div { display: grid; flex: 1; gap: 4px; }
+.adminSessionStatus > strong,
+.adminSessionStatus > div strong { color: #263345; font-size: 14px; }
+.adminSessionStatus > span,
+.adminSessionStatus > div span { color: #69717c; font-size: 12px; line-height: 1.5; }
 .adminMessage { margin: 14px 0 0; padding: 13px 15px; color: #9f2e2e; background: #fff0f0; border-radius: 10px; }
 .adminSaveNotice { min-height: 22px; margin: 12px 0 0; color: #276447; font-size: 13px; font-weight: 800; }
 .adminStats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 18px 0; }
@@ -1937,6 +1944,52 @@ body.mobileNavOpen{overflow:hidden}
   .adminReports article { padding: 18px 14px; }
   .adminBars { gap: 4px; height: 130px; }
   .adminBars i { width: min(22px, 72%); }
+  .adminTableWrap { overflow: visible; background: transparent; box-shadow: none; }
+  .adminTableWrap table { display: block; min-width: 0; }
+  .adminTableWrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .adminTableWrap tbody { display: grid; gap: 12px; }
+  .adminTableWrap tr {
+    display: grid;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e3e7eb;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(35, 42, 52, .05);
+  }
+  .adminTableWrap td {
+    display: grid;
+    grid-template-columns: 82px minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 12px 14px;
+    white-space: normal;
+  }
+  .adminTableWrap td::before {
+    content: attr(data-label);
+    color: #727b85;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .02em;
+  }
+  .adminTableWrap td > * { min-width: 0; }
+  .adminTableWrap td[data-label="이름"] { background: #f8f9fa; }
+  .adminTableWrap td[data-label="이름"] strong { font-size: 16px; }
+  .adminTableWrap td[data-label="저장"] { align-items: center; }
+  .adminPhone { justify-items: stretch; }
+  .adminPhone button { min-height: 38px; }
+  .adminStatusSelect,
+  .adminMemo,
+  .adminSaveButton { width: 100%; min-width: 0; }
+  .adminMemo { min-height: 86px; }
+  .adminSaveButton { min-height: 44px; }
 }
 
 /* v9.3 mobile hero: keep the video visible and gather the copy at the bottom */

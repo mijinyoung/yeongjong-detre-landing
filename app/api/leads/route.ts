@@ -9,28 +9,16 @@ export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 5;
-const DUPLICATE_WINDOW_MS = 60 * 1000;
 const WEBHOOK_TIMEOUT_MS = 7000;
 const MAX_BODY_BYTES = 16 * 1024;
 
 const rateStore = new Map<string, number[]>();
-type DuplicateRecord = {
-  at: number;
-  eventId: string;
-  leadId: string;
-};
-
-const duplicateStore = new Map<string, DuplicateRecord>();
 
 function pruneStores(now: number) {
   for (const [ip, attempts] of rateStore) {
     const recent = attempts.filter((time) => now - time < RATE_WINDOW_MS);
     if (recent.length) rateStore.set(ip, recent);
     else rateStore.delete(ip);
-  }
-
-  for (const [phone, record] of duplicateStore) {
-    if (now - record.at >= DUPLICATE_WINDOW_MS) duplicateStore.delete(phone);
   }
 }
 
@@ -48,21 +36,31 @@ function isRateLimited(ip: string) {
   return false;
 }
 
-function isDuplicate(phone: string) {
-  const now = Date.now();
-  const last = duplicateStore.get(phone);
-  return last && now - last.at < DUPLICATE_WINDOW_MS ? last : null;
-}
-
-function markDuplicate(phone: string, eventId: string, leadId: string) {
-  duplicateStore.set(phone, { at: Date.now(), eventId, leadId });
-}
-
 function createLeadId() {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replaceAll("-", "");
   const random = randomUUID().replaceAll("-", "").slice(0, 6).toUpperCase();
   return `YD-${date}-${random}`;
+}
+
+type WebhookResult = {
+  ok?: boolean;
+  message?: string;
+  code?: string;
+  duplicate?: boolean;
+  leadId?: string;
+  eventId?: string;
+  smsStatus?: string;
+};
+
+class WebhookError extends Error {
+  code: string;
+
+  constructor(message: string, code = "") {
+    super(message);
+    this.name = "WebhookError";
+    this.code = code;
+  }
 }
 
 async function postWebhook(url: string, payload: unknown, secret?: string) {
@@ -93,15 +91,20 @@ async function postWebhook(url: string, payload: unknown, secret?: string) {
 
     if (detail) {
       try {
-        const parsed = JSON.parse(detail) as { ok?: boolean; message?: string };
+        const parsed = JSON.parse(detail) as WebhookResult;
         if (parsed.ok === false) {
-          throw new Error(parsed.message || "Webhook rejected the request.");
+          throw new WebhookError(
+            parsed.message || "Webhook rejected the request.",
+            parsed.code,
+          );
         }
+        return parsed;
       } catch (error) {
-        if (error instanceof SyntaxError) return;
+        if (error instanceof SyntaxError) return undefined;
         throw error;
       }
     }
+    return undefined;
   } finally {
     clearTimeout(timer);
   }
@@ -176,28 +179,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const duplicate = isDuplicate(result.data.phone);
-    if (
-      duplicate &&
-      duplicate.eventId &&
-      result.data.eventId === duplicate.eventId
-    ) {
-      return NextResponse.json({
-        ok: true,
-        leadId: duplicate.leadId,
-        smsStatus: "대기",
-        message: "이미 정상적으로 접수되었습니다.",
-      });
-    }
-
-    if (duplicate) {
-      return NextResponse.json(
-        { ok: false, message: "이미 접수된 번호입니다. 잠시 후 다시 시도해 주세요." },
-        { status: 409 },
-      );
-    }
-
-    const leadId = createLeadId();
+    const candidateLeadId = createLeadId();
     const smsConfigured = Boolean(
       process.env.SMS_WEBHOOK_URL ||
       (
@@ -208,9 +190,9 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    const lead = {
+    const candidateLead = {
       ...result.data,
-      leadId,
+      leadId: candidateLeadId,
       consentAt: new Date().toISOString(),
       ip,
       userAgent: request.headers.get("user-agent") || "",
@@ -218,19 +200,59 @@ export async function POST(request: NextRequest) {
     };
 
     // Store the lead first. When storage fails, do not send a notification.
+    let leadId = candidateLeadId;
+    let lead = candidateLead;
     if (sheetWebhook) {
       try {
-        await postWebhook(sheetWebhook, lead, sheetSecret);
+        const stored = await postWebhook(
+          sheetWebhook,
+          { ...candidateLead, action: "appendLead" },
+          sheetSecret,
+        );
+        if (stored?.duplicate) {
+          if (!stored.leadId) {
+            throw new WebhookError(
+              "Stored duplicate did not include its lead ID.",
+              "INVALID_DUPLICATE_RESPONSE",
+            );
+          }
+          return NextResponse.json({
+            ok: true,
+            leadId: stored.leadId,
+            smsStatus: stored.smsStatus || "대기",
+            message: "이미 정상적으로 접수되었습니다.",
+          });
+        }
+        leadId = stored?.leadId || candidateLeadId;
+        lead = { ...candidateLead, leadId };
       } catch (error) {
         console.error("Google Sheets integration error", error);
+        if (error instanceof WebhookError) {
+          if (error.code === "IDEMPOTENCY_CONFLICT") {
+            return NextResponse.json(
+              { ok: false, message: "접수 확인값이 일치하지 않습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요." },
+              { status: 409 },
+            );
+          }
+          if (error.code === "INVALID_EVENT_ID") {
+            return NextResponse.json(
+              { ok: false, message: "접수 확인값이 올바르지 않습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요." },
+              { status: 400 },
+            );
+          }
+          if (error.code === "BUSY") {
+            return NextResponse.json(
+              { ok: false, message: "접수가 몰리고 있습니다. 잠시 후 같은 화면에서 다시 시도해 주세요." },
+              { status: 503, headers: { "Retry-After": "3" } },
+            );
+          }
+        }
         return NextResponse.json(
           { ok: false, message: "접수 저장 중 오류가 발생했습니다. 1833-8384로 연락해 주세요." },
           { status: 502 },
         );
       }
     }
-
-    markDuplicate(result.data.phone, result.data.eventId || "", leadId);
 
     const smsStatus = sheetWebhook
       ? (smsConfigured ? "대기" : "미설정")

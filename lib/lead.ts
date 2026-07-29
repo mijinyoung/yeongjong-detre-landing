@@ -58,6 +58,7 @@ export function validateLead(input: unknown) {
   const name = cleanText(raw.name, 30);
   const phone = normalizePhone(cleanText(raw.phone, 20));
   const validPhone = /^01[016789]-\d{3,4}-\d{4}$/.test(phone);
+  const eventId = cleanText(raw.eventId, 101);
 
   if (cleanText(raw.website, 200)) {
     return { ok: false as const, message: "잘못된 요청입니다." };
@@ -72,6 +73,12 @@ export function validateLead(input: unknown) {
     return {
       ok: false as const,
       message: "개인정보 수집 및 상담 연락 동의가 필요합니다.",
+    };
+  }
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,99}$/.test(eventId)) {
+    return {
+      ok: false as const,
+      message: "접수 확인값이 만료되었습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
     };
   }
 
@@ -93,7 +100,7 @@ export function validateLead(input: unknown) {
       referrer: cleanUrl(raw.referrer),
       pageUrl: cleanUrl(raw.pageUrl),
       placement: cleanText(raw.placement, 80),
-      eventId: cleanText(raw.eventId, 100),
+      eventId,
       analyticsConsent: raw.analyticsConsent === true,
       fbp: cleanText(raw.fbp, 200),
       fbc: cleanText(raw.fbc, 200),

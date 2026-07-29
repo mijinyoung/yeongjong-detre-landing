@@ -1,6 +1,7 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 import { apiJson } from "@/lib/api-response";
+import { isAdminSessionConfigured } from "@/lib/admin-session";
 import { isSolapiConfigured } from "@/lib/solapi";
 import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 
@@ -24,7 +25,7 @@ export function GET(request: NextRequest) {
     return apiJson(
       {
         ok: true,
-        version: "9.9.0",
+        version: "10.0.0",
         authenticated: false,
         checkedAt: new Date().toISOString(),
       },
@@ -62,12 +63,17 @@ export function GET(request: NextRequest) {
       (process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID) &&
       process.env.META_CAPI_ACCESS_TOKEN,
     ),
+    adminSession: Boolean(
+      process.env.ADMIN_DASHBOARD_TOKEN &&
+      isAdminSessionConfigured() &&
+      (process.env.ADMIN_ALLOWED_ORIGINS || process.env.NEXT_PUBLIC_SITE_URL),
+    ),
   };
 
   return apiJson(
     {
       ok: true,
-      version: "9.9.0",
+      version: "10.0.0",
       authenticated: true,
       productionReady: integrations.googleSheets && integrations.sms,
       integrations,

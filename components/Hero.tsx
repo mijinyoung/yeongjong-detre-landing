@@ -35,8 +35,44 @@ export default function Hero() {
       return () => window.clearTimeout(timer);
     }
 
-    const timer = window.setTimeout(() => setVideoEnabled(true), 0);
-    return () => window.clearTimeout(timer);
+    let idleId: number | null = null;
+    let fallbackTimer = 0;
+    let scheduled = false;
+    const idleApi = window as unknown as {
+      requestIdleCallback?: (
+        callback: IdleRequestCallback,
+        options?: IdleRequestOptions,
+      ) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+
+    const enableVideo = () => {
+      scheduled = false;
+      if (!document.hidden) setVideoEnabled(true);
+    };
+    const scheduleVideo = () => {
+      if (scheduled || document.hidden) return;
+      scheduled = true;
+      if (typeof idleApi.requestIdleCallback === "function") {
+        idleId = idleApi.requestIdleCallback(enableVideo, { timeout: 2000 });
+      } else {
+        fallbackTimer = window.setTimeout(enableVideo, 500);
+      }
+    };
+    const handleVisibility = () => {
+      if (!document.hidden) scheduleVideo();
+    };
+
+    if (document.readyState === "complete") scheduleVideo();
+    else window.addEventListener("load", scheduleVideo, { once: true });
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      window.removeEventListener("load", scheduleVideo);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      if (idleId !== null) idleApi.cancelIdleCallback?.(idleId);
+      window.clearTimeout(fallbackTimer);
+    };
   }, []);
 
   useEffect(() => {

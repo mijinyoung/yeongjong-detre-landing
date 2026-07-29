@@ -71,6 +71,7 @@ function createTestLead() {
 
   return {
     leadId: `TEST-${date}-${random}`,
+    eventId: randomUUID(),
     submittedAt: now.toISOString(),
     name: "연동 테스트",
     phone: "010-0000-0000",
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
           { status: 503 },
         );
       }
-      await postWebhook(url, lead, secret);
+      await postWebhook(url, { ...lead, action: "appendLead" }, secret);
     } else if (process.env.SMS_WEBHOOK_URL) {
       await postWebhook(
         process.env.SMS_WEBHOOK_URL,

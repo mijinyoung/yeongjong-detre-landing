@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
             <div><dt>방문·광고 분석</dt><dd>별도 동의한 경우에만 Meta Pixel, Google Analytics와 Meta 전환 API가 실행되며, 전환 측정을 위해 해시 처리된 이름·전화번호와 접속 정보가 사용될 수 있습니다. 푸터의 방문 분석 설정에서 언제든 선택을 변경할 수 있습니다.</dd></div>
           </dl>
           <p className="privacyDraftNote">
-            운영 전 실제 개인정보 처리 주체, 위탁사, 보유기간 및 연락처를 입주자모집공고와 운영 정책에 맞게 최종 확인해 주세요.
+            개인정보 동의 철회와 상담 정보 관련 문의는 분양 문의 1833-8384로 연락해 주세요.
           </p>
         </div>
         <button className="primaryButton wide" type="button" onClick={() => setOpen(false)}>확인했습니다</button>

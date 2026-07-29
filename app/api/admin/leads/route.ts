@@ -1,40 +1,15 @@
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
+import {
+  authorizeAdminMutation,
+  refreshAdminSession,
+} from "@/lib/admin-session";
 import { apiJson } from "@/lib/api-response";
 import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 
 export const runtime = "nodejs";
 
 const FETCH_TIMEOUT_MS = 8000;
-const AUTH_WINDOW_MS = 15 * 60 * 1000;
-const AUTH_LIMIT = 10;
-const authFailures = new Map<string, number[]>();
-
-function safeEqual(input: string, expected: string) {
-  const a = Buffer.from(input);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-function getClientIp(request: NextRequest) {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-}
-
-function isAuthBlocked(ip: string) {
-  const now = Date.now();
-  const recent = (authFailures.get(ip) || []).filter(
-    (time) => now - time < AUTH_WINDOW_MS,
-  );
-  if (recent.length) authFailures.set(ip, recent);
-  else authFailures.delete(ip);
-  return recent.length >= AUTH_LIMIT;
-}
-
-function recordAuthFailure(ip: string) {
-  const recent = authFailures.get(ip) || [];
-  recent.push(Date.now());
-  authFailures.set(ip, recent.slice(-AUTH_LIMIT));
-}
 
 function maskPhone(value: unknown) {
   const phone = String(value || "");
@@ -45,63 +20,42 @@ function maskPhone(value: unknown) {
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();
+  const authorization = authorizeAdminMutation(request);
+  if (!authorization.ok) {
+    return apiJson(
+      { ok: false, message: authorization.message },
+      requestId,
+      { status: authorization.status },
+    );
+  }
+  const respond = (
+    body: Record<string, unknown>,
+    init: ResponseInit = {},
+  ) => refreshAdminSession(
+    apiJson(body, requestId, init),
+    authorization.session,
+  );
 
   try {
-    const ip = getClientIp(request);
-    if (isAuthBlocked(ip)) {
-      return apiJson(
-        { ok: false, message: "로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요." },
-        requestId,
-        { status: 429, headers: { "Retry-After": "900" } },
-      );
-    }
-
     if (!request.headers.get("content-type")?.includes("application/json")) {
-      return apiJson(
+      return respond(
         { ok: false, message: "잘못된 요청 형식입니다." },
-        requestId,
         { status: 415 },
       );
     }
 
-    let body: { token?: unknown };
-    try {
-      body = (await request.json()) as { token?: unknown };
-    } catch {
-      return apiJson(
-        { ok: false, message: "요청 내용을 확인해 주세요." },
-        requestId,
-        { status: 400 },
-      );
-    }
-
-    const token = typeof body.token === "string" ? body.token.slice(0, 200) : "";
-    const expectedToken = process.env.ADMIN_DASHBOARD_TOKEN || "";
-
-    if (!expectedToken || !token || !safeEqual(token, expectedToken)) {
-      recordAuthFailure(ip);
-      return apiJson(
-        { ok: false, message: "관리자 비밀번호를 확인해 주세요." },
-        requestId,
-        { status: 401 },
-      );
-    }
-    authFailures.delete(ip);
-
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
     if (!sheetWebhook) {
-      return apiJson(
+      return respond(
         { ok: false, message: "Google Sheets 연동이 설정되지 않았습니다." },
-        requestId,
         { status: 503 },
       );
     }
 
     const sheetSecret = getSheetWebhookSecret();
     if (!sheetSecret) {
-      return apiJson(
+      return respond(
         { ok: false, message: "Google Sheets 인증값이 설정되지 않았습니다." },
-        requestId,
         { status: 503 },
       );
     }
@@ -147,23 +101,21 @@ export async function POST(request: NextRequest) {
           })
         : [];
 
-      return apiJson(
+      return respond(
         {
           ok: true,
           leads,
           total: Number(result.total || 0),
           updatedAt: result.updatedAt || new Date().toISOString(),
         },
-        requestId,
       );
     } finally {
       clearTimeout(timer);
     }
   } catch (error) {
     console.error("Admin dashboard error", { requestId, error });
-    return apiJson(
+    return respond(
       { ok: false, message: "접수 현황을 불러오는 중 오류가 발생했습니다." },
-      requestId,
       { status: 500 },
     );
   }

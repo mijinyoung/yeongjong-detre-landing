@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import Link from "next/link";
 
 type Lead = {
@@ -23,10 +30,14 @@ type DashboardResponse = {
   leads?: Lead[];
   total?: number;
   updatedAt?: string;
+  authenticated?: boolean;
+  csrfToken?: string;
 };
 
 const STATUS_OPTIONS = ["신규", "연락완료", "상담중", "방문예약", "계약", "보류"];
 const ADMIN_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const ADMIN_HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+type AdminAuthState = "checking" | "signedOut" | "signingIn" | "signedIn";
 
 function formatDate(value: string) {
   if (!value) return "-";
@@ -53,12 +64,14 @@ function isOverdueLead(lead: Lead, referenceTime: number) {
 }
 
 export default function AdminDashboardClient() {
-  const [token, setToken] = useState("");
+  const [password, setPassword] = useState("");
+  const [authState, setAuthState] = useState<AdminAuthState>("checking");
+  const [csrfToken, setCsrfToken] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
   const [updatedAt, setUpdatedAt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
@@ -73,16 +86,23 @@ export default function AdminDashboardClient() {
   const sessionGenerationRef = useRef(0);
   const activeRequestsRef = useRef<Set<AbortController>>(new Set());
   const tokenInputRef = useRef<HTMLInputElement>(null);
+  const csrfTokenRef = useRef("");
 
-  const lockDashboard = useCallback((reason: string) => {
+  const lockDashboard = useCallback((reason: string, deleteServerSession = true) => {
+    const csrf = csrfTokenRef.current;
     sessionGenerationRef.current += 1;
+    const generation = sessionGenerationRef.current;
     activeRequestsRef.current.forEach((controller) => controller.abort());
     activeRequestsRef.current.clear();
-    setToken("");
+    setPassword("");
+    csrfTokenRef.current = "";
+    setCsrfToken("");
+    setAuthState("signedOut");
     setLeads([]);
     setTotal(0);
     setUpdatedAt("");
-    setLoaded(false);
+    setLoading(false);
+    setDataLoaded(false);
     setMessage(reason);
     setSaveMessage("");
     setSaveStatus("idle");
@@ -95,17 +115,74 @@ export default function AdminDashboardClient() {
     setRevealedPhones({});
     setRevealingId("");
     window.setTimeout(() => tokenInputRef.current?.focus(), 0);
+
+    if (deleteServerSession) {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 5000);
+      void fetch("/api/admin/session", {
+        method: "DELETE",
+        headers: csrf ? { "x-admin-csrf": csrf } : undefined,
+        credentials: "same-origin",
+        cache: "no-store",
+        signal: controller.signal,
+      }).then((response) => {
+        if (!response.ok && generation === sessionGenerationRef.current) {
+          setMessage(
+            "화면은 잠겼지만 서버 로그아웃을 확인하지 못했습니다. 안전을 위해 브라우저 창을 닫아 주세요.",
+          );
+        }
+      }).catch(() => {
+        if (generation === sessionGenerationRef.current) {
+          setMessage(
+            "화면은 잠겼지만 서버 로그아웃을 확인하지 못했습니다. 안전을 위해 브라우저 창을 닫아 주세요.",
+          );
+        }
+      }).finally(() => window.clearTimeout(timer));
+    }
   }, []);
 
   useEffect(() => {
-    if (!loaded) return;
+    if (authState !== "signedIn" || !csrfToken) return;
 
     let timer = 0;
+    let heartbeatTimer = 0;
+    let heartbeatPending = false;
+    let lastHeartbeatAt = Date.now();
     const lockForIdle = () =>
       lockDashboard("15분 동안 사용하지 않아 관리자 화면을 자동으로 잠갔습니다.");
+    const refreshServerSession = async () => {
+      if (heartbeatPending) return;
+      heartbeatPending = true;
+      const controller = new AbortController();
+      heartbeatTimer = window.setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch("/api/admin/session", {
+          method: "PATCH",
+          headers: { "x-admin-csrf": csrfToken },
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          lockDashboard("관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.");
+        }
+      } catch {
+        lockDashboard(
+          "관리자 세션을 안전하게 연장하지 못해 화면을 잠갔습니다. 다시 로그인해 주세요.",
+        );
+      } finally {
+        window.clearTimeout(heartbeatTimer);
+        heartbeatPending = false;
+      }
+    };
     const resetTimer = () => {
       window.clearTimeout(timer);
       timer = window.setTimeout(lockForIdle, ADMIN_IDLE_TIMEOUT_MS);
+      const now = Date.now();
+      if (now - lastHeartbeatAt >= ADMIN_HEARTBEAT_INTERVAL_MS) {
+        lastHeartbeatAt = now;
+        void refreshServerSession();
+      }
     };
     const events: Array<keyof WindowEventMap> = [
       "pointerdown",
@@ -120,11 +197,12 @@ export default function AdminDashboardClient() {
     );
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(heartbeatTimer);
       events.forEach((eventName) =>
         window.removeEventListener(eventName, resetTimer),
       );
     };
-  }, [loaded, lockDashboard]);
+  }, [authState, csrfToken, lockDashboard]);
 
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -203,12 +281,11 @@ export default function AdminDashboardClient() {
       }));
   }, [leads]);
 
-  async function loadLeads() {
-    if (!token.trim()) {
-      setMessage("관리자 비밀번호를 입력해 주세요.");
+  const loadLeads = useCallback(async (csrf = csrfTokenRef.current) => {
+    if (!csrf) {
+      lockDashboard("관리자 로그인이 필요합니다.", false);
       return;
     }
-
     setLoading(true);
     setMessage("");
     const generation = sessionGenerationRef.current;
@@ -219,12 +296,20 @@ export default function AdminDashboardClient() {
     try {
       const response = await fetch("/api/admin/leads", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-csrf": csrf,
+        },
+        body: "{}",
         cache: "no-store",
+        credentials: "same-origin",
         signal: controller.signal,
       });
       const raw = await response.text();
+      if (response.status === 401 || response.status === 403) {
+        lockDashboard("관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.");
+        return;
+      }
       let result: DashboardResponse = {};
       try {
         result = raw ? (JSON.parse(raw) as DashboardResponse) : {};
@@ -248,7 +333,7 @@ export default function AdminDashboardClient() {
       setUpdatedAt(result.updatedAt || "");
       setReferenceTime(Date.now());
       setRevealedPhones({});
-      setLoaded(true);
+      setDataLoaded(true);
     } catch (error) {
       if (generation !== sessionGenerationRef.current) return;
       const fallback =
@@ -262,6 +347,111 @@ export default function AdminDashboardClient() {
       window.clearTimeout(timer);
       activeRequestsRef.current.delete(controller);
       if (generation === sessionGenerationRef.current) setLoading(false);
+    }
+  }, [lockDashboard]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const generation = sessionGenerationRef.current;
+
+    void fetch("/api/admin/session", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin",
+      signal: controller.signal,
+    }).then(async (response) => {
+      const raw = await response.text();
+      const result = raw ? (JSON.parse(raw) as DashboardResponse) : {};
+      if (controller.signal.aborted || generation !== sessionGenerationRef.current) return;
+
+      if (!response.ok || !result.ok || !result.csrfToken) {
+        setAuthState("signedOut");
+        if (response.status !== 401) {
+          setMessage(result.message || "관리자 세션을 확인하지 못했습니다.");
+        }
+        window.setTimeout(() => tokenInputRef.current?.focus(), 0);
+        return;
+      }
+
+      csrfTokenRef.current = result.csrfToken;
+      setCsrfToken(result.csrfToken);
+      setAuthState("signedIn");
+      void loadLeads(result.csrfToken);
+    }).catch((error) => {
+      if (
+        controller.signal.aborted ||
+        generation !== sessionGenerationRef.current
+      ) return;
+      setAuthState("signedOut");
+      setMessage(
+        error instanceof SyntaxError
+          ? "관리자 서버 응답을 확인할 수 없습니다."
+          : "관리자 세션을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+      window.setTimeout(() => tokenInputRef.current?.focus(), 0);
+    });
+
+    return () => controller.abort();
+  }, [loadLeads]);
+
+  async function login(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const token = password.trim();
+    if (!token) {
+      setMessage("관리자 비밀번호를 입력해 주세요.");
+      tokenInputRef.current?.focus();
+      return;
+    }
+
+    setAuthState("signingIn");
+    setMessage("");
+    sessionGenerationRef.current += 1;
+    const generation = sessionGenerationRef.current;
+    const controller = new AbortController();
+    activeRequestsRef.current.add(controller);
+    const timer = window.setTimeout(() => controller.abort(), 10000);
+
+    try {
+      const response = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+        cache: "no-store",
+        credentials: "same-origin",
+        signal: controller.signal,
+      });
+      const raw = await response.text();
+      const result = raw ? (JSON.parse(raw) as DashboardResponse) : {};
+      if (!response.ok || !result.ok || !result.csrfToken) {
+        throw new Error(result.message || "관리자 로그인에 실패했습니다.");
+      }
+      if (generation !== sessionGenerationRef.current || controller.signal.aborted) return;
+
+      setPassword("");
+      csrfTokenRef.current = result.csrfToken;
+      setCsrfToken(result.csrfToken);
+      setAuthState("signedIn");
+      setDataLoaded(false);
+      await loadLeads(result.csrfToken);
+    } catch (error) {
+      if (generation !== sessionGenerationRef.current) return;
+      setAuthState("signedOut");
+      const fallback =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "관리자 로그인 요청 시간이 초과되었습니다. 다시 시도해 주세요."
+          : error instanceof SyntaxError
+            ? "관리자 서버 응답을 확인할 수 없습니다."
+            : error instanceof Error
+              ? error.message
+              : "관리자 로그인에 실패했습니다.";
+      setMessage(fallback);
+      window.setTimeout(() => {
+        tokenInputRef.current?.focus();
+        tokenInputRef.current?.select();
+      }, 0);
+    } finally {
+      window.clearTimeout(timer);
+      activeRequestsRef.current.delete(controller);
     }
   }
 
@@ -299,14 +489,21 @@ export default function AdminDashboardClient() {
     try {
       const response = await fetch("/api/admin/leads/reveal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-csrf": csrfTokenRef.current,
+        },
         body: JSON.stringify({
-          token: token.trim(),
           leadId: lead.leadId,
         }),
         cache: "no-store",
+        credentials: "same-origin",
         signal: controller.signal,
       });
+      if (response.status === 401 || response.status === 403) {
+        lockDashboard("관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.");
+        return;
+      }
       const result = (await response.json()) as DashboardResponse & { phone?: string };
       if (!response.ok || !result.ok || !result.phone) {
         throw new Error(result.message || "전화번호를 확인하지 못했습니다.");
@@ -346,16 +543,23 @@ export default function AdminDashboardClient() {
     try {
       const response = await fetch("/api/admin/leads/update", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-csrf": csrfTokenRef.current,
+        },
         body: JSON.stringify({
-          token: token.trim(),
           leadId: lead.leadId,
           status: draft.status,
           memo: draft.memo,
         }),
         cache: "no-store",
+        credentials: "same-origin",
         signal: controller.signal,
       });
+      if (response.status === 401 || response.status === 403) {
+        lockDashboard("관리자 로그인이 만료되었습니다. 다시 로그인해 주세요.");
+        return;
+      }
       const result = (await response.json()) as DashboardResponse;
       if (!response.ok || !result.ok) {
         throw new Error(result.message || "상담 정보를 저장하지 못했습니다.");
@@ -410,29 +614,55 @@ export default function AdminDashboardClient() {
           </div>
           <div className="adminHeaderActions">
             <Link href="/">홈페이지 보기</Link>
-            {loaded ? (
-              <button type="button" onClick={() => lockDashboard("관리자 화면을 잠갔습니다.")}>
-                관리자 잠금
+            {authState === "signedIn" ? (
+              <button type="button" onClick={() => lockDashboard("관리자 화면을 안전하게 잠갔습니다.")}>
+                로그아웃·잠금
               </button>
             ) : null}
           </div>
         </header>
 
-        <section className="adminLogin">
-          <label>
-            <span>관리자 비밀번호</span>
-            <input ref={tokenInputRef} aria-describedby="admin-token-help" type="password" value={token} onChange={(event) => setToken(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void loadLeads(); }} autoComplete="current-password" placeholder="ADMIN_DASHBOARD_TOKEN" />
-          </label>
-          <small id="admin-token-help">Vercel에 설정한 관리자 비밀번호를 입력하세요.</small>
-          <button type="button" onClick={() => void loadLeads()} disabled={loading}>
-            {loading ? "불러오는 중..." : loaded ? "새로고침" : "접수 현황 열기"}
-          </button>
-        </section>
+        {authState === "checking" ? (
+          <section className="adminLogin adminSessionStatus" aria-live="polite" aria-busy="true">
+            <strong>관리자 세션 확인 중…</strong>
+            <span>안전한 로그인 상태를 확인하고 있습니다.</span>
+          </section>
+        ) : authState === "signedOut" || authState === "signingIn" ? (
+          <form className="adminLogin" onSubmit={(event) => void login(event)} aria-busy={authState === "signingIn"}>
+            <label>
+              <span>관리자 비밀번호</span>
+              <input
+                ref={tokenInputRef}
+                aria-describedby="admin-token-help"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                placeholder="ADMIN_DASHBOARD_TOKEN"
+                disabled={authState === "signingIn"}
+              />
+            </label>
+            <small id="admin-token-help">비밀번호는 로그인할 때 한 번만 확인하며 브라우저에 저장하지 않습니다.</small>
+            <button type="submit" disabled={authState === "signingIn"}>
+              {authState === "signingIn" ? "안전하게 로그인 중…" : "접수 현황 열기"}
+            </button>
+          </form>
+        ) : (
+          <section className="adminLogin adminSessionStatus" aria-live="polite" aria-busy={loading}>
+            <div>
+              <strong>보호된 관리자 세션</strong>
+              <span>15분 동안 사용하지 않으면 고객정보가 자동으로 잠깁니다.</span>
+            </div>
+            <button type="button" onClick={() => void loadLeads()} disabled={loading}>
+              {loading ? "새로고침 중…" : "접수 목록 새로고침"}
+            </button>
+          </section>
+        )}
 
         {message ? <p className="adminMessage" role="alert">{message}</p> : null}
         <p className={`adminSaveNotice ${saveStatus}`} role={saveStatus === "error" ? "alert" : undefined} aria-live={saveStatus === "error" ? undefined : "polite"}>{saveMessage}</p>
 
-        {loaded ? (
+        {dataLoaded ? (
           <>
             <section className="adminStats">
               <article><span>전체 누적</span><strong>{total.toLocaleString("ko-KR")}</strong></article>
@@ -508,7 +738,7 @@ export default function AdminDashboardClient() {
               <button type="button" onClick={downloadCsv} disabled={!filtered.length}>CSV 내려받기</button>
             </section>
 
-            <section className="adminTableWrap" role="region" aria-label="최근 관심고객 접수 목록, 가로로 스크롤하여 전체 항목 확인" tabIndex={0}>
+            <section className="adminTableWrap" role="region" aria-label="최근 관심고객 접수 목록" tabIndex={0} aria-busy={loading}>
               <table>
                 <caption className="srOnly">최근 관심고객 접수 목록</caption>
                 <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>상담 메모</th><th>문자</th><th>저장</th></tr></thead>
@@ -524,9 +754,9 @@ export default function AdminDashboardClient() {
 
                     return (
                     <tr key={lead.leadId} className={savedId === lead.leadId ? "saved" : ""}>
-                      <td><small>{lead.leadId}</small>{formatDate(lead.submittedAt)}</td>
-                      <td><strong>{lead.name || "-"}</strong></td>
-                      <td>
+                      <td data-label="등록일시"><small>{lead.leadId}</small>{formatDate(lead.submittedAt)}</td>
+                      <td data-label="이름"><strong>{lead.name || "-"}</strong></td>
+                      <td data-label="휴대폰">
                         <div className="adminPhone">
                           {revealedPhones[lead.leadId] ? (
                             <a href={`tel:${revealedPhones[lead.leadId].replaceAll("-", "")}`}>{revealedPhones[lead.leadId]}</a>
@@ -543,9 +773,9 @@ export default function AdminDashboardClient() {
                           ) : null}
                         </div>
                       </td>
-                      <td>{lead.source || lead.campaign || "직접 방문"}</td>
-                      <td>{lead.placement || "-"}</td>
-                      <td>
+                      <td data-label="유입경로">{lead.source || lead.campaign || "직접 방문"}</td>
+                      <td data-label="신청위치">{lead.placement || "-"}</td>
+                      <td data-label="상태">
                         <select
                           className="adminStatusSelect"
                           aria-label={`${lead.name || "고객"} 처리 상태`}
@@ -555,7 +785,7 @@ export default function AdminDashboardClient() {
                           {STATUS_OPTIONS.map((status) => <option key={status}>{status}</option>)}
                         </select>
                       </td>
-                      <td>
+                      <td data-label="상담 메모">
                         <textarea
                           className="adminMemo"
                           aria-label={`${lead.name || "고객"} 상담 메모`}
@@ -565,8 +795,8 @@ export default function AdminDashboardClient() {
                           onChange={(event) => updateDraft(lead.leadId, { memo: event.target.value })}
                         />
                       </td>
-                      <td><span className={`adminBadge ${lead.smsStatus === "실패" ? "failed" : ""}`}>{lead.smsStatus || "-"}</span></td>
-                      <td>
+                      <td data-label="문자"><span className={`adminBadge ${lead.smsStatus === "실패" ? "failed" : ""}`}>{lead.smsStatus || "-"}</span></td>
+                      <td data-label="저장">
                         <button
                           className="adminSaveButton"
                           type="button"

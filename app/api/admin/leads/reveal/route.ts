@@ -1,17 +1,15 @@
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
+import {
+  authorizeAdminMutation,
+  refreshAdminSession,
+} from "@/lib/admin-session";
 import { apiJson } from "@/lib/api-response";
 import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 
 export const runtime = "nodejs";
 
 const FETCH_TIMEOUT_MS = 8000;
-
-function safeEqual(input: string, expected: string) {
-  const a = Buffer.from(input);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 function cleanText(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
@@ -23,42 +21,44 @@ function cleanText(value: unknown, maxLength: number) {
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();
+  const authorization = authorizeAdminMutation(request);
+  if (!authorization.ok) {
+    return apiJson(
+      { ok: false, message: authorization.message },
+      requestId,
+      { status: authorization.status },
+    );
+  }
+  const respond = (
+    body: Record<string, unknown>,
+    init: ResponseInit = {},
+  ) => refreshAdminSession(
+    apiJson(body, requestId, init),
+    authorization.session,
+  );
 
   try {
     if (!request.headers.get("content-type")?.includes("application/json")) {
-      return apiJson(
+      return respond(
         { ok: false, message: "잘못된 요청 형식입니다." },
-        requestId,
         { status: 415 },
       );
     }
 
-    let body: { token?: unknown; leadId?: unknown };
+    let body: { leadId?: unknown };
     try {
-      body = (await request.json()) as { token?: unknown; leadId?: unknown };
+      body = (await request.json()) as { leadId?: unknown };
     } catch {
-      return apiJson(
+      return respond(
         { ok: false, message: "요청 내용을 확인해 주세요." },
-        requestId,
         { status: 400 },
       );
     }
 
-    const token = cleanText(body.token, 200);
     const leadId = cleanText(body.leadId, 60);
-    const expectedToken = process.env.ADMIN_DASHBOARD_TOKEN || "";
-
-    if (!expectedToken || !token || !safeEqual(token, expectedToken)) {
-      return apiJson(
-        { ok: false, message: "관리자 비밀번호를 확인해 주세요." },
-        requestId,
-        { status: 401 },
-      );
-    }
     if (!leadId) {
-      return apiJson(
+      return respond(
         { ok: false, message: "접수번호를 확인해 주세요." },
-        requestId,
         { status: 400 },
       );
     }
@@ -66,9 +66,8 @@ export async function POST(request: NextRequest) {
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
     const sheetSecret = getSheetWebhookSecret();
     if (!sheetWebhook || !sheetSecret) {
-      return apiJson(
+      return respond(
         { ok: false, message: "Google Sheets 연동이 설정되지 않았습니다." },
-        requestId,
         { status: 503 },
       );
     }
@@ -103,15 +102,14 @@ export async function POST(request: NextRequest) {
       }
 
       console.info("Admin phone revealed", { requestId, leadId });
-      return apiJson({ ok: true, leadId, phone: result.phone }, requestId);
+      return respond({ ok: true, leadId, phone: result.phone });
     } finally {
       clearTimeout(timer);
     }
   } catch (error) {
     console.error("Admin phone reveal error", { requestId, error });
-    return apiJson(
+    return respond(
       { ok: false, message: "전화번호를 불러오는 중 오류가 발생했습니다." },
-      requestId,
       { status: 502 },
     );
   }

@@ -1,5 +1,9 @@
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
+import {
+  authorizeAdminMutation,
+  refreshAdminSession,
+} from "@/lib/admin-session";
 import { apiJson } from "@/lib/api-response";
 import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 
@@ -15,12 +19,6 @@ const ALLOWED_STATUSES = new Set([
   "보류",
 ]);
 
-function safeEqual(input: string, expected: string) {
-  const a = Buffer.from(input);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 function cleanText(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
   return value
@@ -32,30 +30,41 @@ function cleanText(value: unknown, maxLength: number) {
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();
+  const authorization = authorizeAdminMutation(request);
+  if (!authorization.ok) {
+    return apiJson(
+      { ok: false, message: authorization.message },
+      requestId,
+      { status: authorization.status },
+    );
+  }
+  const respond = (
+    body: Record<string, unknown>,
+    init: ResponseInit = {},
+  ) => refreshAdminSession(
+    apiJson(body, requestId, init),
+    authorization.session,
+  );
 
   try {
     if (!request.headers.get("content-type")?.includes("application/json")) {
-      return apiJson(
+      return respond(
         { ok: false, message: "잘못된 요청 형식입니다." },
-        requestId,
         { status: 415 },
       );
     }
 
-    const body = (await request.json()) as {
-      token?: unknown;
+    let body: {
       leadId?: unknown;
       status?: unknown;
       memo?: unknown;
     };
-
-    const token = cleanText(body.token, 200);
-    const expectedToken = process.env.ADMIN_DASHBOARD_TOKEN || "";
-    if (!expectedToken || !token || !safeEqual(token, expectedToken)) {
-      return apiJson(
-        { ok: false, message: "관리자 비밀번호를 확인해 주세요." },
-        requestId,
-        { status: 401 },
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return respond(
+        { ok: false, message: "요청 내용을 확인해 주세요." },
+        { status: 400 },
       );
     }
 
@@ -64,26 +73,23 @@ export async function POST(request: NextRequest) {
     const memo = cleanText(body.memo, 1000);
 
     if (!leadId || !ALLOWED_STATUSES.has(status)) {
-      return apiJson(
+      return respond(
         { ok: false, message: "접수번호와 처리 상태를 확인해 주세요." },
-        requestId,
         { status: 400 },
       );
     }
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
     if (!sheetWebhook) {
-      return apiJson(
+      return respond(
         { ok: false, message: "Google Sheets 연동이 설정되지 않았습니다." },
-        requestId,
         { status: 503 },
       );
     }
     const sheetSecret = getSheetWebhookSecret();
     if (!sheetSecret) {
-      return apiJson(
+      return respond(
         { ok: false, message: "Google Sheets 인증값이 설정되지 않았습니다." },
-        requestId,
         { status: 503 },
       );
     }
@@ -122,7 +128,7 @@ export async function POST(request: NextRequest) {
         throw new Error(result.message || "상담 정보를 저장하지 못했습니다.");
       }
 
-      return apiJson(
+      return respond(
         {
           ok: true,
           leadId,
@@ -130,16 +136,14 @@ export async function POST(request: NextRequest) {
           memo,
           message: "상담 상태와 메모를 저장했습니다.",
         },
-        requestId,
       );
     } finally {
       clearTimeout(timer);
     }
   } catch (error) {
     console.error("Admin lead update error", { requestId, error });
-    return apiJson(
+    return respond(
       { ok: false, message: "상담 정보를 저장하는 중 오류가 발생했습니다." },
-      requestId,
       { status: 500 },
     );
   }

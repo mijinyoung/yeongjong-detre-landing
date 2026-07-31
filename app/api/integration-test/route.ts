@@ -6,9 +6,16 @@ import { getSheetWebhookSecret, getSmsWebhookSecret } from "@/lib/webhook-secret
 
 export const runtime = "nodejs";
 
-const WEBHOOK_TIMEOUT_MS = 7000;
+const WEBHOOK_TIMEOUT_MS = 15000;
 
 type IntegrationTarget = "googleSheets" | "sms";
+
+class IntegrationTestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "IntegrationTestError";
+  }
+}
 
 function safeEqual(value: string, expected: string) {
   const valueBuffer = Buffer.from(value);
@@ -22,6 +29,7 @@ async function postWebhook(
   url: string,
   payload: Record<string, unknown>,
   secret?: string,
+  expectJson = false,
 ) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
@@ -44,8 +52,8 @@ async function postWebhook(
     const detail = await response.text();
 
     if (!response.ok) {
-      throw new Error(
-        `Webhook failed: ${response.status} ${detail.slice(0, 200)}`,
+      throw new IntegrationTestError(
+        `연동 서버가 HTTP ${response.status} 응답을 반환했습니다. 웹 앱 배포 권한과 주소를 확인해 주세요.`,
       );
     }
 
@@ -53,11 +61,30 @@ async function postWebhook(
       try {
         const parsed = JSON.parse(detail) as { ok?: boolean; message?: string };
         if (parsed.ok === false) {
-          throw new Error(parsed.message || "Webhook rejected the test request.");
+          const providerMessage = String(parsed.message || "").trim();
+          if (/unauthorized/i.test(providerMessage)) {
+            throw new IntegrationTestError(
+              "Google Sheets 인증값이 일치하지 않습니다. Apps Script의 WEBHOOK_SECRET과 Vercel의 GOOGLE_SHEET_WEBHOOK_SECRET을 동일하게 설정해 주세요.",
+            );
+          }
+          throw new IntegrationTestError(
+            providerMessage
+              ? `Google Sheets 오류: ${providerMessage.slice(0, 160)}`
+              : "Google Sheets가 테스트 요청을 거부했습니다.",
+          );
         }
       } catch (error) {
         if (!(error instanceof SyntaxError)) throw error;
+        if (expectJson) {
+          throw new IntegrationTestError(
+            "Google Sheets 웹 앱이 올바른 응답을 반환하지 않았습니다. 웹 앱 실행 사용자를 본인으로, 접근 권한을 배포 가능한 범위로 다시 확인해 주세요.",
+          );
+        }
       }
+    } else if (expectJson) {
+      throw new IntegrationTestError(
+        "Google Sheets 웹 앱의 응답이 비어 있습니다. Apps Script 배포 상태를 확인해 주세요.",
+      );
     }
   } finally {
     clearTimeout(timer);
@@ -149,7 +176,7 @@ export async function POST(request: NextRequest) {
           { status: 503 },
         );
       }
-      await postWebhook(url, { ...lead, action: "appendLead" }, secret);
+      await postWebhook(url, { ...lead, action: "appendLead" }, secret, true);
     } else if (process.env.SMS_WEBHOOK_URL) {
       await postWebhook(
         process.env.SMS_WEBHOOK_URL,
@@ -177,10 +204,19 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Integration test failed", { requestId, error });
 
+    const message =
+      error instanceof IntegrationTestError
+        ? error.message
+        : error instanceof DOMException && error.name === "AbortError"
+          ? "Google Sheets 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요."
+          : error instanceof TypeError
+            ? "연동 서버에 연결할 수 없습니다. Vercel에 등록한 웹 앱 주소를 확인해 주세요."
+            : "연동 테스트 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+
     return respond(
       {
         ok: false,
-        message: "연동 테스트 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        message,
       },
       { status: 502 },
     );

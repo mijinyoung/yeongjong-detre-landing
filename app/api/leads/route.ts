@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 5;
-const WEBHOOK_TIMEOUT_MS = 7000;
+const WEBHOOK_TIMEOUT_MS = 15000;
 const MAX_BODY_BYTES = 16 * 1024;
 
 const rateStore = new Map<string, number[]>();

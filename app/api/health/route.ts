@@ -87,6 +87,10 @@ export function GET(request: NextRequest) {
       (process.env.ADMIN_ALLOWED_ORIGINS || process.env.NEXT_PUBLIC_SITE_URL),
     ),
     liveLeadMode: process.env.LEAD_TEST_MODE !== "true",
+    liveTrackingMode: !(
+      process.env.META_CAPI_ACCESS_TOKEN &&
+      process.env.META_TEST_EVENT_CODE?.trim()
+    ),
   };
 
   const launchChecks = [
@@ -134,6 +138,13 @@ export function GET(request: NextRequest) {
         integrations.googleAnalytics ||
         integrations.googleAds,
       required: false,
+    },
+    {
+      key: "liveTrackingMode",
+      label: "실제 광고 전환 모드",
+      description: "Meta 테스트 이벤트 코드가 제거되어 실제 광고 성과로 집계되는지 확인합니다.",
+      ready: integrations.liveTrackingMode,
+      required: true,
     },
     {
       key: "serverTracking",

@@ -2,56 +2,48 @@
 
 import { useEffect } from "react";
 import {
+  ANALYTICS_CONSENT_EVENT,
+  getAnalyticsConsent,
   getTrackingSessionId,
   trackEvent,
 } from "@/lib/analytics";
-
-const ATTRIBUTION_KEYS = [
-  "utm_source",
-  "utm_medium",
-  "utm_campaign",
-  "utm_content",
-  "utm_term",
-  "gclid",
-  "fbclid",
-] as const;
+import {
+  captureAttribution,
+  clearPersistentAttribution,
+  persistSessionAttribution,
+} from "@/lib/attribution";
 
 export default function UtmCapture() {
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    let hasCampaignValue = false;
-
-    ATTRIBUTION_KEYS.forEach((key) => {
-      const value = params.get(key);
-      if (!value) return;
-
-      window.sessionStorage.setItem(key, value);
-      hasCampaignValue = true;
-    });
-
-    if (!window.sessionStorage.getItem("landing_page")) {
-      window.sessionStorage.setItem(
-        "landing_page",
-        `${window.location.pathname}${window.location.search}`,
-      );
-    }
-
-    if (!window.sessionStorage.getItem("landing_referrer")) {
-      window.sessionStorage.setItem(
-        "landing_referrer",
-        document.referrer || "",
-      );
-    }
+    const initialConsent = getAnalyticsConsent();
+    const attribution = captureAttribution(initialConsent === "accepted");
+    let landingTracked = false;
 
     getTrackingSessionId();
 
-    trackEvent("landing_view", {
-      has_campaign: hasCampaignValue,
-      source:
-        params.get("utm_source") ||
-        window.sessionStorage.getItem("utm_source") ||
-        "direct",
-    });
+    const trackLanding = () => {
+      if (landingTracked || getAnalyticsConsent() !== "accepted") return;
+      landingTracked = true;
+      trackEvent("landing_view", {
+        has_campaign: attribution.hasCampaignValue,
+        source: attribution.source,
+      });
+    };
+
+    trackLanding();
+
+    const onConsentChanged = () => {
+      if (getAnalyticsConsent() === "accepted") {
+        persistSessionAttribution();
+        trackLanding();
+      } else {
+        clearPersistentAttribution();
+      }
+    };
+
+    window.addEventListener(ANALYTICS_CONSENT_EVENT, onConsentChanged);
+    return () =>
+      window.removeEventListener(ANALYTICS_CONSENT_EVENT, onConsentChanged);
   }, []);
 
   return null;

@@ -22,6 +22,7 @@ type Lead = {
   medium: string;
   campaign: string;
   content: string;
+  term: string;
   placement: string;
   status: string;
   smsStatus: string;
@@ -82,6 +83,7 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [drafts, setDrafts] = useState<Record<string, { status: string; memo: string }>>({});
   const [savingId, setSavingId] = useState("");
   const [savedId, setSavedId] = useState("");
@@ -113,6 +115,7 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
     setSaveStatus("idle");
     setQuery("");
     setStatusFilter("all");
+    setSourceFilter("all");
     setDrafts({});
     setSavingId("");
     setSavedId("");
@@ -209,24 +212,46 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
     };
   }, [authState, csrfToken, lockDashboard]);
 
+  const sourceOptions = useMemo(() => {
+    const values = new Map<string, string>();
+    for (const lead of leads) {
+      const source = lead.source?.trim() || "direct";
+      const medium = lead.medium?.trim() || "";
+      const key = `${source}|||${medium}`;
+      values.set(
+        key,
+        [source === "direct" ? "직접 방문" : source, medium]
+          .filter(Boolean)
+          .join(" / "),
+      );
+    }
+    return [...values.entries()].sort((a, b) =>
+      a[1].localeCompare(b[1], "ko"),
+    );
+  }, [leads]);
+
   const filtered = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     return leads.filter((lead) => {
       const matchesKeyword =
         !keyword ||
-        [lead.leadId, lead.name, lead.phone, lead.source, lead.medium, lead.campaign, lead.content, lead.placement, lead.status, lead.smsStatus, lead.memo]
+        [lead.leadId, lead.name, lead.phone, lead.source, lead.medium, lead.campaign, lead.content, lead.term, lead.placement, lead.status, lead.smsStatus, lead.memo]
         .join(" ")
         .toLowerCase()
         .includes(keyword);
+      const matchesSource =
+        sourceFilter === "all" ||
+        sourceFilter ===
+          `${lead.source?.trim() || "direct"}|||${lead.medium?.trim() || ""}`;
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "new" && (!lead.status || lead.status === "신규")) ||
         (statusFilter === "overdue" && isOverdueLead(lead, referenceTime)) ||
         (statusFilter === "sms-failed" && lead.smsStatus === "실패") ||
         (statusFilter.startsWith("status:") && lead.status === statusFilter.slice(7));
-      return matchesKeyword && matchesStatus;
+      return matchesKeyword && matchesSource && matchesStatus;
     });
-  }, [leads, query, statusFilter, referenceTime]);
+  }, [leads, query, sourceFilter, statusFilter, referenceTime]);
 
   const todayCount = useMemo(() => {
     const today = new Date().toLocaleDateString("ko-KR");
@@ -611,10 +636,10 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
   }
 
   function downloadCsv() {
-    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "매체유형", "캠페인", "광고소재", "신청위치", "처리상태", "상담메모", "문자상태"];
+    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "매체유형", "캠페인", "광고소재", "검색어", "신청위치", "처리상태", "상담메모", "문자상태"];
     const rows = filtered.map((lead) => [
       lead.leadId, lead.submittedAt, lead.name, lead.phone, lead.source,
-      lead.medium, lead.campaign, lead.content, lead.placement, lead.status, lead.memo, lead.smsStatus,
+      lead.medium, lead.campaign, lead.content, lead.term, lead.placement, lead.status, lead.memo, lead.smsStatus,
     ]);
     const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -758,7 +783,13 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
             </section>
 
             <section className="adminToolbar">
-              <input aria-label="접수 목록 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 유입경로 검색" />
+              <input aria-label="접수 목록 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 캠페인·검색어 검색" />
+              <select aria-label="광고 유입경로 필터" value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)}>
+                <option value="all">전체 유입경로</option>
+                {sourceOptions.map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
               <select aria-label="접수 상태 필터" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <option value="all">전체 상태</option>
                 <option value="new">신규 상담</option>
@@ -811,8 +842,12 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
                       </td>
                       <td data-label="유입경로">
                         <strong>{[lead.source || "직접 방문", lead.medium].filter(Boolean).join(" / ")}</strong>
-                        {lead.campaign || lead.content ? (
-                          <small>{[lead.campaign, lead.content].filter(Boolean).join(" / ")}</small>
+                        {lead.campaign || lead.content || lead.term ? (
+                          <small>
+                            {[lead.campaign, lead.content, lead.term ? `검색어: ${lead.term}` : ""]
+                              .filter(Boolean)
+                              .join(" / ")}
+                          </small>
                         ) : null}
                       </td>
                       <td data-label="신청위치">{lead.placement || "-"}</td>

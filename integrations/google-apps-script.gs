@@ -1,5 +1,5 @@
 /**
- * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v12.0
+ * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v14.0
  *
  * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
@@ -12,7 +12,7 @@ const SHEET_NAME = '관심고객';
 const WEBHOOK_SECRET_FALLBACK = '여기에-Vercel과-동일한-비밀값-입력';
 
 const REQUIRED_HEADERS = [
-  '접수번호','현장코드','현장명','등록일시','이름','휴대폰','유입경로','매체유형','캠페인','광고소재',
+  '접수번호','현장코드','현장명','등록일시','이름','휴대폰','유입경로','매체유형','캠페인','광고소재','검색어',
   'Google클릭ID','Meta클릭ID',
   '신청위치','페이지','이전페이지','개인정보동의시각','방문분석동의',
   'IP','브라우저','처리상태','상담메모','문자상태','문자처리시각','문자상세',
@@ -29,7 +29,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: PROJECT_CODE + '-google-sheets',
-    version: '13.0.0',
+    version: '14.0.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -189,11 +189,12 @@ function appendLead(sheet, map, data) {
   put(row, map, '매체유형', data.medium || '');
   put(row, map, '캠페인', data.campaign || '');
   put(row, map, '광고소재', data.content || '');
+  put(row, map, '검색어', data.term || '');
   put(row, map, 'Google클릭ID', data.gclid || '');
   put(row, map, 'Meta클릭ID', data.fbclid || '');
   put(row, map, '신청위치', data.placement || '');
-  put(row, map, '페이지', data.pageUrl || '');
-  put(row, map, '이전페이지', data.referrer || '');
+  put(row, map, '페이지', data.landingPage || data.pageUrl || '');
+  put(row, map, '이전페이지', data.landingReferrer || data.referrer || '');
   put(row, map, '개인정보동의시각', data.consentAt || '');
   put(row, map, '방문분석동의', data.analyticsConsent ? '동의' : '미동의');
   put(row, map, 'IP', data.ip || '');
@@ -294,6 +295,7 @@ function listLeads(params) {
       medium: read(row, map, '매체유형'),
       campaign: read(row, map, '캠페인'),
       content: read(row, map, '광고소재'),
+      term: read(row, map, '검색어'),
       placement: read(row, map, '신청위치'),
       status: read(row, map, '처리상태') || '신규',
       smsStatus: read(row, map, '문자상태'),

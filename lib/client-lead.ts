@@ -1,3 +1,5 @@
+import { getAttributionSnapshot } from "@/lib/attribution";
+
 export type LeadApiResponse = {
   ok: boolean;
   leadId?: string;
@@ -69,34 +71,7 @@ export async function submitLead(payload: Record<string, unknown>): Promise<Lead
 }
 
 export function getLeadAttribution() {
-  if (typeof window === "undefined") {
-    return {
-      source: "direct",
-      medium: "",
-      campaign: "",
-      content: "",
-      term: "",
-      gclid: "",
-      fbclid: "",
-      landingPage: "",
-      landingReferrer: "",
-    };
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const read = (key: string) => params.get(key) || window.sessionStorage.getItem(key) || "";
-
-  return {
-    source: read("utm_source") || "direct",
-    medium: read("utm_medium"),
-    campaign: read("utm_campaign"),
-    content: read("utm_content"),
-    term: read("utm_term"),
-    gclid: read("gclid"),
-    fbclid: read("fbclid"),
-    landingPage: window.sessionStorage.getItem("landing_page") || "",
-    landingReferrer: window.sessionStorage.getItem("landing_referrer") || "",
-  };
+  return getAttributionSnapshot();
 }
 
 export function openPrivacyPolicy() {

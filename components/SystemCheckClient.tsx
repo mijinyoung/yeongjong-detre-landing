@@ -18,6 +18,7 @@ type HealthData = {
     metaConversionsApi: boolean;
     adminSession: boolean;
     liveLeadMode: boolean;
+    liveTrackingMode: boolean;
   };
   launchChecks: Array<{
     key: string;
@@ -42,6 +43,7 @@ const labels: Array<[keyof HealthData["integrations"], string, string]> = [
   ["googleAds", "Google Ads", "상담 완료 전환 측정"],
   ["adminSession", "관리자 보안", "고객정보 보호 로그인·세션·허용 주소"],
   ["liveLeadMode", "실제 접수 모드", "개발용 테스트 모드 해제 여부"],
+  ["liveTrackingMode", "실제 광고 전환", "Meta 테스트 이벤트 코드 해제 여부"],
 ];
 
 const setupSteps = [

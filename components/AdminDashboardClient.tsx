@@ -11,6 +11,7 @@ import {
   type FormEvent,
 } from "react";
 import Link from "next/link";
+import CampaignLinkBuilder from "@/components/CampaignLinkBuilder";
 
 type Lead = {
   leadId: string;
@@ -67,7 +68,7 @@ function isOverdueLead(lead: Lead, referenceTime: number) {
   return Number.isFinite(submitted) && referenceTime - submitted >= 24 * 60 * 60 * 1000;
 }
 
-export default function AdminDashboardClient() {
+export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
   const [password, setPassword] = useState("");
   const [authState, setAuthState] = useState<AdminAuthState>("checking");
   const [csrfToken, setCsrfToken] = useState("");
@@ -682,6 +683,8 @@ export default function AdminDashboardClient() {
 
         {message ? <p className="adminMessage" role="alert">{message}</p> : null}
         <p className={`adminSaveNotice ${saveStatus}`} role={saveStatus === "error" ? "alert" : undefined} aria-live={saveStatus === "error" ? undefined : "polite"}>{saveMessage}</p>
+
+        {authState === "signedIn" ? <CampaignLinkBuilder siteUrl={siteUrl} /> : null}
 
         {dataLoaded ? (
           <>

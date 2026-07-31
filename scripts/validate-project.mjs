@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const configPath = join(root, "data", "project-content.json");
 const config = JSON.parse(readFileSync(configPath, "utf8"));
+const packageJson = JSON.parse(
+  readFileSync(join(root, "package.json"), "utf8")
+);
 const errors = [];
 const warnings = [];
 
@@ -28,6 +31,12 @@ for (const [label, value] of requiredStrings) {
   if (typeof value !== "string" || !value.trim()) {
     errors.push(`${label} 값이 비어 있습니다.`);
   }
+}
+
+if (packageJson.version !== config.version) {
+  errors.push(
+    `package version(${packageJson.version})과 project version(${config.version})이 다릅니다.`
+  );
 }
 
 if (!/^[a-z0-9][a-z0-9-]{2,49}$/.test(config.projectCode || "")) {

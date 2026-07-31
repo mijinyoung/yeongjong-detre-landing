@@ -7,14 +7,25 @@ type HealthData = {
   ok: boolean;
   version: string;
   productionReady?: boolean;
+  advertisingReady?: boolean;
   integrations: {
+    siteUrl: boolean;
     googleSheets: boolean;
     sms: boolean;
     metaPixel: boolean;
     googleAnalytics: boolean;
     googleAds: boolean;
     metaConversionsApi: boolean;
+    adminSession: boolean;
+    liveLeadMode: boolean;
   };
+  launchChecks: Array<{
+    key: string;
+    label: string;
+    description: string;
+    ready: boolean;
+    required: boolean;
+  }>;
   checkedAt: string;
   requestId?: string;
 };
@@ -22,12 +33,15 @@ type HealthData = {
 type TestTarget = "googleSheets" | "sms";
 
 const labels: Array<[keyof HealthData["integrations"], string, string]> = [
+  ["siteUrl", "운영 대표 주소", "실제 HTTPS 도메인과 검색·공유 대표 주소"],
   ["googleSheets", "Google Sheets", "관심고객 DB 자동 저장"],
   ["sms", "문자 알림", "신규 문의 담당자 알림 및 시트 상태 기록"],
   ["metaPixel", "Meta Pixel", "브라우저 광고 전환 측정"],
   ["metaConversionsApi", "Meta CAPI", "서버 광고 전환 측정"],
   ["googleAnalytics", "Google Analytics", "방문 행동 분석"],
   ["googleAds", "Google Ads", "상담 완료 전환 측정"],
+  ["adminSession", "관리자 보안", "고객정보 보호 로그인·세션·허용 주소"],
+  ["liveLeadMode", "실제 접수 모드", "개발용 테스트 모드 해제 여부"],
 ];
 
 const setupSteps = [
@@ -200,13 +214,13 @@ export default function SystemCheckClient() {
           </button>
         </section>
 
-        <div className="systemCheckSummary">
+        <div className="systemCheckSummary systemCheckSummaryV130">
           <div>
             <span>현재 버전</span>
             <strong>{data?.version || "인증 필요"}</strong>
           </div>
           <div>
-            <span>운영 준비</span>
+            <span>상담 운영</span>
             <strong>
               {data
                 ? data.productionReady
@@ -215,7 +229,43 @@ export default function SystemCheckClient() {
                 : "인증 필요"}
             </strong>
           </div>
+          <div>
+            <span>광고 송출</span>
+            <strong>
+              {data
+                ? data.advertisingReady
+                  ? "송출 가능"
+                  : "설정 확인 필요"
+                : "인증 필요"}
+            </strong>
+          </div>
         </div>
+
+        {data ? (
+          <section className="launchCheckSection" aria-labelledby="launch-check-title">
+            <div className="launchCheckHeading">
+              <div>
+                <p className="systemCheckEyebrow">LAUNCH READINESS</p>
+                <h2 id="launch-check-title">광고 송출 전 최종 판정</h2>
+              </div>
+              <strong className={data.advertisingReady ? "ready" : "attention"}>
+                {data.advertisingReady ? "광고 송출 가능" : "설정 확인 필요"}
+              </strong>
+            </div>
+            <div className="launchCheckGrid">
+              {data.launchChecks.map((check) => (
+                <article className={check.ready ? "ready" : "attention"} key={check.key}>
+                  <div>
+                    <span>{check.required ? "필수" : "권장"}</span>
+                    <strong>{check.ready ? "완료" : "확인 필요"}</strong>
+                  </div>
+                  <h3>{check.label}</h3>
+                  <p>{check.description}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <div className="systemCheckGrid">
           {labels.map(([key, title, description]) => {

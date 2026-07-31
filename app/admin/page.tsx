@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminDashboardClient from "@/components/AdminDashboardClient";
+import { getSiteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = {
   title: "관심고객 관리자",
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <AdminDashboardClient />;
+  return <AdminDashboardClient siteUrl={getSiteUrl()} />;
 }

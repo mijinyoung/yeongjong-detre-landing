@@ -2,7 +2,8 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 import { apiJson } from "@/lib/api-response";
 import { isSolapiConfigured, sendSolapiLeadNotification } from "@/lib/solapi";
-import { getSheetWebhookSecret, getSmsWebhookSecret } from "@/lib/webhook-secrets";
+import { getSmsWebhookSecret } from "@/lib/webhook-secrets";
+import { createSheetWebhookPayload } from "@/lib/sheet-auth";
 
 export const runtime = "nodejs";
 
@@ -43,7 +44,7 @@ async function postWebhook(
       },
       body: JSON.stringify({
         ...payload,
-        _webhookSecret: secret || "",
+        ...(secret ? { _webhookSecret: secret } : {}),
       }),
       cache: "no-store",
       signal: controller.signal,
@@ -64,7 +65,7 @@ async function postWebhook(
           const providerMessage = String(parsed.message || "").trim();
           if (/unauthorized/i.test(providerMessage)) {
             throw new IntegrationTestError(
-              "Google Sheets 인증값이 일치하지 않습니다. Apps Script의 WEBHOOK_SECRET과 Vercel의 GOOGLE_SHEET_WEBHOOK_SECRET을 동일하게 설정해 주세요.",
+              "Google Sheets 연결 인증에 실패했습니다. v15 Apps Script가 새 버전으로 배포되었는지와 Vercel의 GOOGLE_SHEET_WEBHOOK_URL이 같은 웹 앱 주소인지 확인해 주세요.",
             );
           }
           throw new IntegrationTestError(
@@ -169,14 +170,12 @@ export async function POST(request: NextRequest) {
           { status: 503 },
         );
       }
-      const secret = getSheetWebhookSecret();
-      if (!secret) {
-        return respond(
-          { ok: false, message: "Google Sheets 인증값이 설정되지 않았습니다." },
-          { status: 503 },
-        );
-      }
-      await postWebhook(url, { ...lead, action: "appendLead" }, secret, true);
+      await postWebhook(
+        url,
+        createSheetWebhookPayload(url, { ...lead, action: "appendLead" }),
+        undefined,
+        true,
+      );
     } else if (process.env.SMS_WEBHOOK_URL) {
       await postWebhook(
         process.env.SMS_WEBHOOK_URL,

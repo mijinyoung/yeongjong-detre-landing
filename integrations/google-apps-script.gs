@@ -1,14 +1,15 @@
 /**
- * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v14.0
+ * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v15.0
  *
  * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
  *
- * 권장 설정: Apps Script의 프로젝트 설정 > 스크립트 속성에
- * WEBHOOK_SECRET을 추가하고 Vercel의 GOOGLE_SHEET_WEBHOOK_SECRET과 같은 값을 입력합니다.
+ * v15부터 웹 앱 주소에서 자동 생성한 연결 키를 사용합니다.
+ * 기존 WEBHOOK_SECRET은 순차 배포 호환용으로만 계속 지원합니다.
  */
 const PROJECT_CODE = 'yeongjong-detre';
 const SHEET_NAME = '관심고객';
+const SHEET_CONNECTION_VERSION = 'YD_SHEET_CAPABILITY_V1';
 const WEBHOOK_SECRET_FALLBACK = '여기에-Vercel과-동일한-비밀값-입력';
 
 const REQUIRED_HEADERS = [
@@ -29,7 +30,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: PROJECT_CODE + '-google-sheets',
-    version: '14.1.0',
+    version: '15.0.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -93,6 +94,16 @@ function doPost(e) {
 }
 
 function isAuthorized(data) {
+  const expectedConnectionKey = createSheetConnectionKey();
+  const receivedConnectionKey = String(
+    data && data._sheetConnectionKey || ''
+  ).trim();
+  if (expectedConnectionKey &&
+      receivedConnectionKey === expectedConnectionKey) {
+    return true;
+  }
+
+  // v14 이하 배포와의 순차 전환을 위해 기존 비밀번호도 계속 허용합니다.
   const propertySecret = PropertiesService.getScriptProperties()
     .getProperty('WEBHOOK_SECRET');
   const configuredSecret = String(propertySecret || WEBHOOK_SECRET_FALLBACK || '').trim();
@@ -102,6 +113,25 @@ function isAuthorized(data) {
     return false;
   }
   return String(data && data._webhookSecret || '') === configuredSecret;
+}
+
+function createSheetConnectionKey() {
+  const serviceUrl = String(ScriptApp.getService().getUrl() || '')
+    .replace(/[?#].*$/, '')
+    .replace(/\/+$/, '');
+  if (!serviceUrl) return '';
+
+  const input =
+    serviceUrl + '|' + PROJECT_CODE + '|' + SHEET_CONNECTION_VERSION;
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    input,
+    Utilities.Charset.UTF_8
+  );
+
+  return digest.map(function(value) {
+    return ('0' + ((value + 256) % 256).toString(16)).slice(-2);
+  }).join('');
 }
 
 function ensureRequiredHeaders(sheet) {

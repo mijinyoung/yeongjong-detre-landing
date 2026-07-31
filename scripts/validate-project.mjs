@@ -150,6 +150,21 @@ if (!appsScript.includes(`const PROJECT_CODE = '${config.projectCode}';`)) {
 if (!appsScript.includes(`version: '${config.version}'`)) {
   errors.push("Google Apps Script의 version이 현장 설정과 다릅니다.");
 }
+const sheetAuth = readFileSync(
+  join(root, "lib", "sheet-auth.ts"),
+  "utf8"
+);
+const connectionVersion = "YD_SHEET_CAPABILITY_V1";
+if (
+  !appsScript.includes(
+    `const SHEET_CONNECTION_VERSION = '${connectionVersion}';`
+  ) ||
+  !sheetAuth.includes(
+    `const SHEET_CONNECTION_VERSION = "${connectionVersion}";`
+  )
+) {
+  errors.push("Vercel과 Google Apps Script의 자동 연결 규칙이 다릅니다.");
+}
 
 for (const warning of warnings) console.warn(`주의: ${warning}`);
 

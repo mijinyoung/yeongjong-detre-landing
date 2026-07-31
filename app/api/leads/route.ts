@@ -3,7 +3,8 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { validateLead } from "@/lib/lead";
 import { sendMetaLeadEvent } from "@/lib/meta-capi";
 import { sendSolapiLeadNotification } from "@/lib/solapi";
-import { getSheetWebhookSecret, getSmsWebhookSecret } from "@/lib/webhook-secrets";
+import { getSmsWebhookSecret } from "@/lib/webhook-secrets";
+import { createSheetWebhookPayload } from "@/lib/sheet-auth";
 import { projectConfig } from "@/data/project-config";
 
 export const runtime = "nodejs";
@@ -71,7 +72,10 @@ async function postWebhook(url: string, payload: unknown, secret?: string) {
   try {
     const body =
       payload && typeof payload === "object"
-        ? { ...(payload as Record<string, unknown>), _webhookSecret: secret || "" }
+        ? {
+            ...(payload as Record<string, unknown>),
+            ...(secret ? { _webhookSecret: secret } : {}),
+          }
         : payload;
 
     const response = await fetch(url, {
@@ -160,7 +164,6 @@ export async function POST(request: NextRequest) {
     }
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL?.trim();
-    const sheetSecret = getSheetWebhookSecret();
     const smsSecret = getSmsWebhookSecret();
     const testMode = process.env.LEAD_TEST_MODE === "true";
 
@@ -168,14 +171,6 @@ export async function POST(request: NextRequest) {
       console.error("Lead storage is not configured.");
       return NextResponse.json(
         { ok: false, message: `현재 온라인 접수를 저장할 수 없습니다. ${projectConfig.contact.displayPhone}로 연락해 주세요.` },
-        { status: 503 },
-      );
-    }
-
-    if (sheetWebhook && !sheetSecret) {
-      console.error("Google Sheets webhook secret is not configured.");
-      return NextResponse.json(
-        { ok: false, message: `접수 저장 설정을 확인 중입니다. ${projectConfig.contact.displayPhone}로 연락해 주세요.` },
         { status: 503 },
       );
     }
@@ -209,8 +204,10 @@ export async function POST(request: NextRequest) {
       try {
         const stored = await postWebhook(
           sheetWebhook,
-          { ...candidateLead, action: "appendLead" },
-          sheetSecret,
+          createSheetWebhookPayload(sheetWebhook, {
+            ...candidateLead,
+            action: "appendLead",
+          }),
         );
         if (stored?.duplicate) {
           if (!stored.leadId) {
@@ -293,14 +290,13 @@ export async function POST(request: NextRequest) {
           try {
             await postWebhook(
               sheetWebhook,
-              {
+              createSheetWebhookPayload(sheetWebhook, {
                 action: "updateDelivery",
                 leadId,
                 smsStatus: finalSmsStatus,
                 smsProcessedAt: new Date().toISOString(),
                 smsDetail,
-              },
-              sheetSecret,
+              }),
             );
           } catch (error) {
             console.error("Google Sheets SMS status update error", error);

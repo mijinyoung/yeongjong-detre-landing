@@ -51,13 +51,13 @@ const setupSteps = [
     number: "01",
     title: "Google Sheets 웹앱 만들기",
     description:
-      "integrations/google-apps-script.gs 내용을 Apps Script에 붙여넣고 웹 앱으로 배포합니다.",
+      "integrations/google-apps-script.gs 내용을 Apps Script에 붙여넣고 v15 웹 앱으로 배포합니다.",
   },
   {
     number: "02",
     title: "Vercel 환경변수 입력",
     description:
-      "GOOGLE_SHEET_WEBHOOK_URL, SMS_WEBHOOK_URL, WEBHOOK_SECRET를 Production 환경에 저장합니다.",
+      "GOOGLE_SHEET_WEBHOOK_URL과 문자 알림 설정을 Production 환경에 저장합니다. 시트 연결 비밀번호는 필요하지 않습니다.",
   },
   {
     number: "03",

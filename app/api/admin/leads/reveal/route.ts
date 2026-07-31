@@ -5,8 +5,8 @@ import {
   refreshAdminSession,
 } from "@/lib/admin-session";
 import { apiJson } from "@/lib/api-response";
-import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 import { projectConfig } from "@/data/project-config";
+import { createSheetWebhookPayload } from "@/lib/sheet-auth";
 
 export const runtime = "nodejs";
 
@@ -65,8 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-    const sheetSecret = getSheetWebhookSecret();
-    if (!sheetWebhook || !sheetSecret) {
+    if (!sheetWebhook) {
       return respond(
         { ok: false, message: "Google Sheets 연동이 설정되지 않았습니다." },
         { status: 503 },
@@ -80,12 +79,11 @@ export async function POST(request: NextRequest) {
       const response = await fetch(sheetWebhook, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(createSheetWebhookPayload(sheetWebhook, {
           action: "getLead",
           leadId,
           projectCode: projectConfig.projectCode,
-          _webhookSecret: sheetSecret,
-        }),
+        })),
         cache: "no-store",
         signal: controller.signal,
       });

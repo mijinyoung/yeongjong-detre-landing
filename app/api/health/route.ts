@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 import { apiJson } from "@/lib/api-response";
 import { isAdminSessionConfigured } from "@/lib/admin-session";
 import { isSolapiConfigured } from "@/lib/solapi";
-import { getSheetWebhookSecret } from "@/lib/webhook-secrets";
 import { projectConfig } from "@/data/project-config";
 
 export const runtime = "nodejs";
@@ -67,9 +66,7 @@ export function GET(request: NextRequest) {
 
   const integrations = {
     siteUrl: isProductionSiteUrlConfigured(),
-    googleSheets: Boolean(
-      process.env.GOOGLE_SHEET_WEBHOOK_URL && getSheetWebhookSecret(),
-    ),
+    googleSheets: Boolean(process.env.GOOGLE_SHEET_WEBHOOK_URL),
     sms: Boolean(process.env.SMS_WEBHOOK_URL) || isSolapiConfigured(),
     metaPixel: Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID),
     googleAnalytics: Boolean(process.env.NEXT_PUBLIC_GA_ID),

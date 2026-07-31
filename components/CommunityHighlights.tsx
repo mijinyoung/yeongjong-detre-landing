@@ -18,18 +18,6 @@ export default function CommunityHighlights() {
           </div>
           <div className="communityV120Intro">
             <p className="bodyCopy">{section.intro}</p>
-            <figure className="communityV120Visual">
-              <Image
-                src={section.image}
-                alt={section.imageAlt}
-                fill
-                sizes="(max-width: 760px) 36vw, 240px"
-                className="communityV120Image"
-              />
-              <figcaption className="srOnly">
-                영종 디에트르 라 메르 커뮤니티 시스템 공식 안내
-              </figcaption>
-            </figure>
           </div>
         </div>
 
@@ -37,10 +25,21 @@ export default function CommunityHighlights() {
           <div className="communityV120Grid">
             {section.items.map((item, index) => (
               <article className="communityV120Card" key={item.title}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <p>{item.label}</p>
-                <h3>{item.title}</h3>
-                <small>{item.description}</small>
+                <div className="communityV120CardCopy">
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <p>{item.label}</p>
+                  <h3>{item.title}</h3>
+                  <small>{item.description}</small>
+                </div>
+                <figure className="communityV120Media">
+                  <Image
+                    src={item.image}
+                    alt={item.imageAlt}
+                    fill
+                    sizes="(max-width: 760px) 38vw, (max-width: 980px) 36vw, 20vw"
+                    className="communityV120FacilityImage"
+                  />
+                </figure>
               </article>
             ))}
           </div>

@@ -342,22 +342,30 @@
         {
           "label": "AQUA",
           "title": "수영장·사우나",
-          "description": "일상 속 휴식과 건강 관리를 고려한 프리미엄 커뮤니티 계획"
+          "description": "일상 속 휴식과 건강 관리를 고려한 프리미엄 커뮤니티 계획",
+          "image": "/images/community/pool.jpg",
+          "imageAlt": "영종 디에트르 라 메르 입주민 전용 수영장"
         },
         {
           "label": "FITNESS",
           "title": "피트니스·골프",
-          "description": "단지 안에서 운동과 취미를 편리하게 누릴 수 있는 공간"
+          "description": "단지 안에서 운동과 취미를 편리하게 누릴 수 있는 공간",
+          "image": "/images/community/golf-lounge.jpg",
+          "imageAlt": "영종 디에트르 라 메르 골프라운지"
         },
         {
           "label": "FAMILY",
           "title": "키즈·돌봄 공간",
-          "description": "어린이집, 돌봄센터와 가족 중심 생활을 고려한 커뮤니티"
+          "description": "어린이집, 돌봄센터와 가족 중심 생활을 고려한 커뮤니티",
+          "image": "/images/community/kids-room.jpg",
+          "imageAlt": "영종 디에트르 라 메르 키즈룸"
         },
         {
           "label": "LOUNGE",
           "title": "D라운지·휴게 공간",
-          "description": "입주민의 교류와 여유로운 일상을 위한 라운지형 공간"
+          "description": "입주민의 교류와 여유로운 일상을 위한 라운지형 공간",
+          "image": "/images/community/resident-lounge.jpg",
+          "imageAlt": "영종 디에트르 라 메르 입주민 작은도서관과 휴게 공간"
         }
       ]
     },

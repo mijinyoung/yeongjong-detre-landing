@@ -1,6 +1,6 @@
 # 새 현장 제작 자료 체크리스트
 
-새 현장을 제작할 때 아래 자료를 한 번에 전달하면 `data/project-content.json`을 교체하고 기존 기능을 그대로 복제할 수 있습니다.
+새 현장을 제작할 때 아래 자료를 한 번에 전달하면 현장 전용 설정과 자료 폴더를 만들고 기존 기능을 그대로 복제할 수 있습니다. 기존 영종 현장 파일은 교체하지 않습니다.
 
 ## 1. 기본 정보
 
@@ -60,10 +60,11 @@
 
 ## 복제 후 반드시 바꿀 항목
 
-1. `data/project-content.json`
-2. `public/images/`, `public/videos/`의 현장 자료
-3. `integrations/google-apps-script.gs` 상단의 현장 코드와 시트명
-4. Vercel의 `NEXT_PUBLIC_SITE_URL` 및 현장별 연동 환경변수
-5. `npm run project:check`, TypeScript, ESLint, 프로덕션 빌드
+1. `data/projects/현장코드.json`의 현장 정보와 광고 문구
+2. `public/projects/현장코드/`의 이미지와 영상
+3. `integrations/projects/현장코드/google-apps-script.gs`의 시트 연동
+4. 현장별 Vercel 프로젝트의 `NEXT_PUBLIC_PROJECT_CODE`, `NEXT_PUBLIC_SITE_URL` 및 연동 환경변수
+5. 현장 등록부의 상태를 `draft`에서 `active`로 변경
+6. `npm run verify` 전체 검증
 
 `node_modules`, `.next`, 실제 `.env` 파일은 복제·배포 ZIP에 포함하지 않습니다.

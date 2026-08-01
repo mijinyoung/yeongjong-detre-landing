@@ -1,13 +1,19 @@
 {
   "name": "property-campaign-landing",
-  "version": "17.0.0",
+  "version": "18.0.0",
   "private": true,
   "scripts": {
+    "predev": "npm run project:sync",
     "dev": "next dev",
+    "prebuild": "npm run project:sync",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "project:sync": "node scripts/generate-project-registry.mjs",
+    "project:list": "node scripts/list-projects.mjs",
+    "project:new": "node scripts/create-project.mjs",
     "project:check": "node scripts/validate-project.mjs",
+    "preverify": "npm run project:sync",
     "verify": "npm run project:check && tsc --noEmit && npm run lint && npm run build"
   },
   "dependencies": {

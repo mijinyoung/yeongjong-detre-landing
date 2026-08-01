@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "defaultProjectCode": "yeongjong-detre",
+  "projects": [
+    {
+      "code": "yeongjong-detre",
+      "name": "영종 디에트르 라 메르",
+      "status": "active",
+      "configPath": "data/project-content.json",
+      "appsScriptPath": "integrations/google-apps-script.gs",
+      "assetBasePath": "/"
+    }
+  ]
+}

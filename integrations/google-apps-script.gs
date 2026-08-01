@@ -1,8 +1,8 @@
 /**
- * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v15.0
+ * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v15.1
  *
- * 표·드롭다운·스마트칩·열 유형과 충돌하지 않도록 서식 변경을 하지 않습니다.
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
+ * 시간 열은 한국시간의 실제 날짜 값으로 저장하고 읽기 쉬운 형식만 적용합니다.
  *
  * v15부터 웹 앱 주소에서 자동 생성한 연결 키를 사용합니다.
  * 기존 WEBHOOK_SECRET은 순차 배포 호환용으로만 계속 지원합니다.
@@ -11,6 +11,10 @@ const PROJECT_CODE = 'yeongjong-detre';
 const SHEET_NAME = '관심고객';
 const SHEET_CONNECTION_VERSION = 'YD_SHEET_CAPABILITY_V1';
 const WEBHOOK_SECRET_FALLBACK = '여기에-Vercel과-동일한-비밀값-입력';
+const KOREAN_TIME_ZONE = 'Asia/Seoul';
+const TIMESTAMP_NUMBER_FORMAT = 'yyyy-mm-dd hh:mm:ss';
+const TIMESTAMP_MIGRATION_VERSION = 'V151';
+const TIMESTAMP_HEADERS = ['등록일시', '개인정보동의시각', '문자처리시각'];
 
 const REQUIRED_HEADERS = [
   '접수번호','현장코드','현장명','등록일시','이름','휴대폰','유입경로','매체유형','캠페인','광고소재','검색어',
@@ -30,7 +34,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: PROJECT_CODE + '-google-sheets',
-    version: '15.0.0',
+    version: '15.1.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -74,6 +78,7 @@ function doPost(e) {
       spreadsheet.insertSheet(SHEET_NAME);
 
     const headerMap = ensureRequiredHeaders(sheet);
+    prepareTimestampColumns(spreadsheet, sheet, headerMap);
 
     if (action === 'updateDelivery') {
       return updateDeliveryStatus(sheet, headerMap, data);
@@ -212,7 +217,7 @@ function appendLead(sheet, map, data) {
   put(row, map, '접수번호', leadId);
   put(row, map, '현장코드', data.projectCode || PROJECT_CODE);
   put(row, map, '현장명', data.projectName || '');
-  put(row, map, '등록일시', data.submittedAt || new Date().toISOString());
+  putTimestamp(row, map, '등록일시', data.submittedAt || new Date());
   put(row, map, '이름', data.name || '');
   put(row, map, '휴대폰', data.phone || '');
   put(row, map, '유입경로', data.source || '');
@@ -225,7 +230,7 @@ function appendLead(sheet, map, data) {
   put(row, map, '신청위치', data.placement || '');
   put(row, map, '페이지', data.landingPage || data.pageUrl || '');
   put(row, map, '이전페이지', data.landingReferrer || data.referrer || '');
-  put(row, map, '개인정보동의시각', data.consentAt || '');
+  putTimestamp(row, map, '개인정보동의시각', data.consentAt || '');
   put(row, map, '방문분석동의', data.analyticsConsent ? '동의' : '미동의');
   put(row, map, 'IP', data.ip || '');
   put(row, map, '브라우저', data.userAgent || '');
@@ -234,13 +239,15 @@ function appendLead(sheet, map, data) {
   put(row, map, '이벤트ID', eventId);
 
   sheet.appendRow(row);
+  const appendedRow = sheet.getLastRow();
+  formatTimestampCells(sheet, appendedRow, map);
   SpreadsheetApp.flush();
   return jsonResponse({
     ok: true,
     duplicate: false,
     leadId: leadId,
     eventId: eventId,
-    row: sheet.getLastRow()
+    row: appendedRow
   });
 }
 
@@ -252,7 +259,7 @@ function updateDeliveryStatus(sheet, map, data) {
   if (!row) return jsonResponse({ ok: false, message: 'Lead row not found', leadId: leadId });
 
   setByHeader(sheet, row, map, '문자상태', data.smsStatus || '확인필요');
-  setByHeader(sheet, row, map, '문자처리시각',
+  setTimestampByHeader(sheet, row, map, '문자처리시각',
     data.smsProcessedAt || new Date().toISOString());
   setByHeader(sheet, row, map, '문자상세', data.smsDetail || '');
 
@@ -309,16 +316,27 @@ function listLeads(params) {
   const limit = Math.max(1, Math.min(200, requestedLimit));
   const startRow = Math.max(2, sheet.getLastRow() - limit + 1);
   const rowCount = sheet.getLastRow() - startRow + 1;
-  const values = sheet.getRange(startRow, 1, rowCount, sheet.getLastColumn())
-    .getDisplayValues();
+  const leadRange = sheet.getRange(
+    startRow,
+    1,
+    rowCount,
+    sheet.getLastColumn()
+  );
+  const values = leadRange.getDisplayValues();
+  const rawValues = leadRange.getValues();
 
   const projectCode = String(params.projectCode || '').trim();
-  const leads = values.reverse().map(function(row) {
+  const leads = values.map(function(row, index) {
     return {
       leadId: read(row, map, '접수번호'),
       projectCode: read(row, map, '현장코드'),
       projectName: read(row, map, '현장명'),
-      submittedAt: read(row, map, '등록일시'),
+      submittedAt: readTimestamp(
+        rawValues[index],
+        row,
+        map,
+        '등록일시'
+      ),
       name: read(row, map, '이름'),
       phone: read(row, map, '휴대폰'),
       source: read(row, map, '유입경로'),
@@ -331,7 +349,7 @@ function listLeads(params) {
       smsStatus: read(row, map, '문자상태'),
       memo: read(row, map, '상담메모')
     };
-  }).filter(function(lead) {
+  }).reverse().filter(function(lead) {
     return !projectCode || lead.projectCode === projectCode;
   });
 
@@ -372,6 +390,18 @@ function getLeadDetail(data) {
 function read(row, map, header) {
   const column = map[header];
   return column ? String(row[column - 1] || '') : '';
+}
+
+function readTimestamp(rawRow, displayRow, map, header) {
+  const column = map[header];
+  if (!column) return '';
+
+  const value = rawRow[column - 1];
+  if (value instanceof Date && !isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+
+  return String(displayRow[column - 1] || '');
 }
 
 function findLeadRow(sheet, map, leadId) {
@@ -419,9 +449,85 @@ function put(row, map, header, value) {
   if (column) row[column - 1] = sheetText(value);
 }
 
+function putTimestamp(row, map, header, value) {
+  const column = map[header];
+  if (!column) return;
+
+  const timestamp = parseIsoTimestamp(value);
+  row[column - 1] = timestamp || sheetText(value);
+}
+
 function setByHeader(sheet, row, map, header, value) {
   const column = map[header];
   if (column) sheet.getRange(row, column).setValue(sheetText(value));
+}
+
+function setTimestampByHeader(sheet, row, map, header, value) {
+  const column = map[header];
+  if (!column) return;
+
+  const timestamp = parseIsoTimestamp(value);
+  const range = sheet.getRange(row, column);
+  range.setValue(timestamp || sheetText(value));
+  if (timestamp) range.setNumberFormat(TIMESTAMP_NUMBER_FORMAT);
+}
+
+function parseIsoTimestamp(value) {
+  if (value instanceof Date && !isNaN(value.getTime())) return value;
+
+  const text = String(value == null ? '' : value).trim();
+  const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
+  if (!isoPattern.test(text)) return null;
+
+  const timestamp = new Date(text);
+  return isNaN(timestamp.getTime()) ? null : timestamp;
+}
+
+function formatTimestampCells(sheet, row, map) {
+  TIMESTAMP_HEADERS.forEach(function(header) {
+    const column = map[header];
+    if (column) {
+      sheet.getRange(row, column).setNumberFormat(TIMESTAMP_NUMBER_FORMAT);
+    }
+  });
+}
+
+function prepareTimestampColumns(spreadsheet, sheet, map) {
+  if (spreadsheet.getSpreadsheetTimeZone() !== KOREAN_TIME_ZONE) {
+    spreadsheet.setSpreadsheetTimeZone(KOREAN_TIME_ZONE);
+  }
+
+  const propertyKey = [
+    'timestamp-migration',
+    TIMESTAMP_MIGRATION_VERSION,
+    spreadsheet.getId(),
+    sheet.getSheetId()
+  ].join(':');
+  const properties = PropertiesService.getScriptProperties();
+  if (properties.getProperty(propertyKey) === 'done') return;
+
+  const rowCount = sheet.getLastRow() - 1;
+  if (rowCount > 0) {
+    TIMESTAMP_HEADERS.forEach(function(header) {
+      const column = map[header];
+      if (!column) return;
+
+      const timestampRange = sheet.getRange(2, column, rowCount, 1);
+      const values = timestampRange.getValues();
+      const formulas = timestampRange.getFormulas();
+      values.forEach(function(row, index) {
+        if (formulas[index][0]) return;
+        const timestamp = parseIsoTimestamp(row[0]);
+        if (!timestamp) return;
+
+        sheet.getRange(index + 2, column)
+          .setValue(timestamp)
+          .setNumberFormat(TIMESTAMP_NUMBER_FORMAT);
+      });
+    });
+  }
+
+  properties.setProperty(propertyKey, 'done');
 }
 
 function sheetText(value) {

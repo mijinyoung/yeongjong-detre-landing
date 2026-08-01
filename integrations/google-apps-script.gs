@@ -1,5 +1,5 @@
 /**
- * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v15.1
+ * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v16.0
  *
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
  * 시간 열은 한국시간의 실제 날짜 값으로 저장하고 읽기 쉬운 형식만 적용합니다.
@@ -13,15 +13,18 @@ const SHEET_CONNECTION_VERSION = 'YD_SHEET_CAPABILITY_V1';
 const WEBHOOK_SECRET_FALLBACK = '여기에-Vercel과-동일한-비밀값-입력';
 const KOREAN_TIME_ZONE = 'Asia/Seoul';
 const TIMESTAMP_NUMBER_FORMAT = 'yyyy-mm-dd hh:mm:ss';
-const TIMESTAMP_MIGRATION_VERSION = 'V151';
-const TIMESTAMP_HEADERS = ['등록일시', '개인정보동의시각', '문자처리시각'];
+const TIMESTAMP_MIGRATION_VERSION = 'V160';
+const CONVERSION_PROCESSING_LEASE_MS = 5 * 60 * 1000;
+const TIMESTAMP_HEADERS = [
+  '등록일시', '개인정보동의시각', '문자처리시각', '광고전환처리시각'
+];
 
 const REQUIRED_HEADERS = [
   '접수번호','현장코드','현장명','등록일시','이름','휴대폰','유입경로','매체유형','캠페인','광고소재','검색어',
   'Google클릭ID','Meta클릭ID',
   '신청위치','페이지','이전페이지','개인정보동의시각','방문분석동의',
   'IP','브라우저','처리상태','상담메모','문자상태','문자처리시각','문자상세',
-  '이벤트ID'
+  '이벤트ID', '광고전환상태', '광고전환처리시각', '광고전환상세'
 ];
 
 function doGet(e) {
@@ -34,7 +37,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: PROJECT_CODE + '-google-sheets',
-    version: '15.1.0',
+    version: '16.0.0',
     checkedAt: new Date().toISOString()
   });
 }
@@ -59,7 +62,10 @@ function doPost(e) {
     }
 
     const action = String(data.action || 'appendLead');
-    if (['appendLead', 'updateDelivery', 'updateLead'].indexOf(action) === -1) {
+    if ([
+      'appendLead', 'claimDelivery', 'updateDelivery',
+      'claimConversion', 'updateConversion', 'updateLead'
+    ].indexOf(action) === -1) {
       return jsonResponse({ ok: false, code: 'INVALID_ACTION', message: 'Invalid action' });
     }
 
@@ -80,8 +86,20 @@ function doPost(e) {
     const headerMap = ensureRequiredHeaders(sheet);
     prepareTimestampColumns(spreadsheet, sheet, headerMap);
 
+    if (action === 'claimDelivery') {
+      return claimPendingStatus(sheet, headerMap, data, '문자상태', 'delivery');
+    }
+
     if (action === 'updateDelivery') {
       return updateDeliveryStatus(sheet, headerMap, data);
+    }
+
+    if (action === 'claimConversion') {
+      return claimPendingStatus(sheet, headerMap, data, '광고전환상태', 'conversion');
+    }
+
+    if (action === 'updateConversion') {
+      return updateConversionStatus(sheet, headerMap, data);
     }
 
     if (action === 'updateLead') {
@@ -201,6 +219,7 @@ function appendLead(sheet, map, data) {
       leadId: readSheetCell(sheet, eventRow, map, '접수번호'),
       eventId: eventId,
       smsStatus: readSheetCell(sheet, eventRow, map, '문자상태'),
+      conversionStatus: readSheetCell(sheet, eventRow, map, '광고전환상태'),
       row: eventRow
     });
   }
@@ -237,6 +256,12 @@ function appendLead(sheet, map, data) {
   put(row, map, '처리상태', '신규');
   put(row, map, '문자상태', data.smsConfigured === false ? '미설정' : '대기');
   put(row, map, '이벤트ID', eventId);
+  put(row, map, '광고전환상태',
+    data.analyticsConsent !== true
+      ? '미동의'
+      : data.metaConversionConfigured === true
+        ? '대기'
+        : '미설정');
 
   sheet.appendRow(row);
   const appendedRow = sheet.getLastRow();
@@ -262,6 +287,70 @@ function updateDeliveryStatus(sheet, map, data) {
   setTimestampByHeader(sheet, row, map, '문자처리시각',
     data.smsProcessedAt || new Date().toISOString());
   setByHeader(sheet, row, map, '문자상세', data.smsDetail || '');
+
+  return jsonResponse({ ok: true, updated: true, leadId: leadId, row: row });
+}
+
+function claimPendingStatus(sheet, map, data, header, task) {
+  const leadId = String(data.leadId || '').trim();
+  const row = findLeadRow(sheet, map, leadId);
+
+  if (!leadId) return jsonResponse({ ok: false, message: 'leadId is required' });
+  if (!row) return jsonResponse({ ok: false, message: 'Lead row not found', leadId: leadId });
+
+  const currentStatus = readSheetCell(sheet, row, map, header);
+  const timeHeader = task === 'delivery'
+    ? '문자처리시각'
+    : '광고전환처리시각';
+  const timeColumn = map[timeHeader];
+  const processingValue = timeColumn
+    ? sheet.getRange(row, timeColumn).getValue()
+    : '';
+  const processingStartedAt = processingValue instanceof Date
+    ? processingValue.getTime()
+    : NaN;
+  const staleProcessing =
+    task === 'conversion' &&
+    currentStatus === '처리중' &&
+    Number.isFinite(processingStartedAt) &&
+    Date.now() - processingStartedAt >= CONVERSION_PROCESSING_LEASE_MS;
+
+  if (currentStatus !== '대기' && !staleProcessing) {
+    return jsonResponse({
+      ok: true,
+      claimed: false,
+      task: task,
+      status: currentStatus,
+      leadId: leadId,
+      row: row
+    });
+  }
+
+  setByHeader(sheet, row, map, header, '처리중');
+  setTimestampByHeader(sheet, row, map, timeHeader, new Date());
+  SpreadsheetApp.flush();
+  return jsonResponse({
+    ok: true,
+    claimed: true,
+    reclaimed: staleProcessing,
+    task: task,
+    status: '처리중',
+    leadId: leadId,
+    row: row
+  });
+}
+
+function updateConversionStatus(sheet, map, data) {
+  const leadId = String(data.leadId || '').trim();
+  const row = findLeadRow(sheet, map, leadId);
+
+  if (!leadId) return jsonResponse({ ok: false, message: 'leadId is required' });
+  if (!row) return jsonResponse({ ok: false, message: 'Lead row not found', leadId: leadId });
+
+  setByHeader(sheet, row, map, '광고전환상태', data.conversionStatus || '확인필요');
+  setTimestampByHeader(sheet, row, map, '광고전환처리시각',
+    data.conversionProcessedAt || new Date().toISOString());
+  setByHeader(sheet, row, map, '광고전환상세', data.conversionDetail || '');
 
   return jsonResponse({ ok: true, updated: true, leadId: leadId, row: row });
 }
@@ -347,6 +436,7 @@ function listLeads(params) {
       placement: read(row, map, '신청위치'),
       status: read(row, map, '처리상태') || '신규',
       smsStatus: read(row, map, '문자상태'),
+      conversionStatus: read(row, map, '광고전환상태'),
       memo: read(row, map, '상담메모')
     };
   }).reverse().filter(function(lead) {

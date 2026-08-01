@@ -150,6 +150,18 @@ if (!appsScript.includes(`const PROJECT_CODE = '${config.projectCode}';`)) {
 if (!appsScript.includes(`version: '${config.version}'`)) {
   errors.push("Google Apps Script의 version이 현장 설정과 다릅니다.");
 }
+for (const marker of [
+  "'광고전환상태'",
+  "'광고전환처리시각'",
+  "'광고전환상세'",
+  "'claimDelivery'",
+  "'claimConversion'",
+  "'updateConversion'",
+]) {
+  if (!appsScript.includes(marker)) {
+    errors.push(`Google Apps Script의 v16 운영 항목이 빠져 있습니다: ${marker}`);
+  }
+}
 const sheetAuth = readFileSync(
   join(root, "lib", "sheet-auth.ts"),
   "utf8"

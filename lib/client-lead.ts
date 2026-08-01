@@ -47,7 +47,11 @@ export async function submitLead(payload: Record<string, unknown>): Promise<Lead
     }
 
     if (!response.ok || data.ok !== true) {
-      throw new Error(data.message || "등록에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      const requestId = data.requestId || response.headers.get("x-request-id") || "";
+      const detail = requestId ? ` (요청 ID: ${requestId})` : "";
+      throw new Error(
+        `${data.message || "등록에 실패했습니다. 잠시 후 다시 시도해 주세요."}${detail}`,
+      );
     }
 
     return {

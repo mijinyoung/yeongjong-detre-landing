@@ -51,7 +51,7 @@ const setupSteps = [
     number: "01",
     title: "Google Sheets 웹앱 만들기",
     description:
-      "integrations/google-apps-script.gs 내용을 Apps Script에 붙여넣고 v15 웹 앱으로 배포합니다.",
+      "integrations/google-apps-script.gs 내용을 Apps Script에 붙여넣고 v16 웹 앱으로 배포합니다.",
   },
   {
     number: "02",

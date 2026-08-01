@@ -65,7 +65,7 @@ async function postWebhook(
           const providerMessage = String(parsed.message || "").trim();
           if (/unauthorized/i.test(providerMessage)) {
             throw new IntegrationTestError(
-              "Google Sheets 연결 인증에 실패했습니다. v15 Apps Script가 새 버전으로 배포되었는지와 Vercel의 GOOGLE_SHEET_WEBHOOK_URL이 같은 웹 앱 주소인지 확인해 주세요.",
+              "Google Sheets 연결 인증에 실패했습니다. v16 Apps Script가 새 버전으로 배포되었는지와 Vercel의 GOOGLE_SHEET_WEBHOOK_URL이 같은 웹 앱 주소인지 확인해 주세요.",
             );
           }
           throw new IntegrationTestError(

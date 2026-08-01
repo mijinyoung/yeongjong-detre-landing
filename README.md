@@ -1,11 +1,11 @@
 # 현장 복제형 부동산 광고 랜딩페이지
 
 현재 운영 현장: **영종 디에트르 라 메르**  
-현재 버전: **15.1.0**
+현재 버전: **16.0.0**
 
 새 현장은 `data/project-content.json`과 `public/images`, `public/videos`의 자료를 교체해 제작합니다.
 
-- 이번 버전 상세: `README-v151.md`
+- 이번 버전 상세: `README-v160.md`
 - 새 현장 자료 목록: `PROJECT-MATERIALS-TEMPLATE.md`
 - 설정 검사: `npm run project:check`
 - 전체 검증: `npm run verify`

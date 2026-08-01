@@ -32,13 +32,20 @@ function normalizeName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, "");
 }
 
+export function isMetaCapiConfigured() {
+  return Boolean(
+    (process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID) &&
+    process.env.META_CAPI_ACCESS_TOKEN,
+  );
+}
+
 export async function sendMetaLeadEvent(event: MetaLeadEvent) {
   const pixelId = process.env.META_PIXEL_ID || process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
   const apiVersion = process.env.META_GRAPH_API_VERSION || "v24.0";
 
   if (!pixelId || !accessToken) {
-    return { configured: false, sent: false };
+    return { configured: false, sent: false, detail: "Meta CAPI not configured" };
   }
 
   const userData: Record<string, unknown> = {
@@ -95,7 +102,21 @@ export async function sendMetaLeadEvent(event: MetaLeadEvent) {
       throw new Error(`Meta CAPI failed: ${response.status} ${detail.slice(0, 300)}`);
     }
 
-    return { configured: true, sent: true };
+    const result = await response.json().catch(() => ({})) as {
+      events_received?: number;
+      fbtrace_id?: string;
+    };
+    const received = Number(result.events_received || 0);
+    const trace = String(result.fbtrace_id || "").slice(0, 80);
+
+    return {
+      configured: true,
+      sent: true,
+      detail: [
+        `Meta CAPI accepted ${received || 1} event`,
+        trace ? `trace ${trace}` : "",
+      ].filter(Boolean).join(" / "),
+    };
   } finally {
     clearTimeout(timer);
   }

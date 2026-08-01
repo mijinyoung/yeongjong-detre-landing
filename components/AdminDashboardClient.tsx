@@ -26,6 +26,7 @@ type Lead = {
   placement: string;
   status: string;
   smsStatus: string;
+  conversionStatus: string;
   memo: string;
 };
 
@@ -235,7 +236,7 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
     return leads.filter((lead) => {
       const matchesKeyword =
         !keyword ||
-        [lead.leadId, lead.name, lead.phone, lead.source, lead.medium, lead.campaign, lead.content, lead.term, lead.placement, lead.status, lead.smsStatus, lead.memo]
+        [lead.leadId, lead.name, lead.phone, lead.source, lead.medium, lead.campaign, lead.content, lead.term, lead.placement, lead.status, lead.smsStatus, lead.conversionStatus, lead.memo]
         .join(" ")
         .toLowerCase()
         .includes(keyword);
@@ -247,7 +248,8 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
         statusFilter === "all" ||
         (statusFilter === "new" && (!lead.status || lead.status === "신규")) ||
         (statusFilter === "overdue" && isOverdueLead(lead, referenceTime)) ||
-        (statusFilter === "sms-failed" && lead.smsStatus === "실패") ||
+        (statusFilter === "sms-attention" && ["대기", "처리중", "실패"].includes(lead.smsStatus)) ||
+        (statusFilter === "conversion-attention" && ["대기", "처리중", "실패"].includes(lead.conversionStatus)) ||
         (statusFilter.startsWith("status:") && lead.status === statusFilter.slice(7));
       return matchesKeyword && matchesSource && matchesStatus;
     });
@@ -265,8 +267,12 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
     () => leads.filter((lead) => !lead.status || lead.status === "신규").length,
     [leads],
   );
-  const failedSmsCount = useMemo(
-    () => leads.filter((lead) => lead.smsStatus === "실패").length,
+  const smsAttentionCount = useMemo(
+    () => leads.filter((lead) => ["대기", "처리중", "실패"].includes(lead.smsStatus)).length,
+    [leads],
+  );
+  const conversionAttentionCount = useMemo(
+    () => leads.filter((lead) => ["대기", "처리중", "실패"].includes(lead.conversionStatus)).length,
     [leads],
   );
   const overdueCount = useMemo(
@@ -636,10 +642,10 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
   }
 
   function downloadCsv() {
-    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "매체유형", "캠페인", "광고소재", "검색어", "신청위치", "처리상태", "상담메모", "문자상태"];
+    const headers = ["접수번호", "등록일시", "이름", "휴대폰", "유입경로", "매체유형", "캠페인", "광고소재", "검색어", "신청위치", "처리상태", "상담메모", "문자상태", "광고전환상태"];
     const rows = filtered.map((lead) => [
       lead.leadId, lead.submittedAt, lead.name, lead.phone, lead.source,
-      lead.medium, lead.campaign, lead.content, lead.term, lead.placement, lead.status, lead.memo, lead.smsStatus,
+      lead.medium, lead.campaign, lead.content, lead.term, lead.placement, lead.status, lead.memo, lead.smsStatus, lead.conversionStatus,
     ]);
     const csv = "\uFEFF" + [headers, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -717,7 +723,8 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
               <article><span>전체 누적</span><strong>{total.toLocaleString("ko-KR")}</strong></article>
               <article><span>오늘 접수</span><strong>{todayCount.toLocaleString("ko-KR")}</strong></article>
               <article><span>신규 상담</span><strong>{pendingCount.toLocaleString("ko-KR")}</strong></article>
-              <article className={failedSmsCount ? "attention" : ""}><span>문자 확인 필요</span><strong>{failedSmsCount.toLocaleString("ko-KR")}</strong></article>
+              <article className={smsAttentionCount ? "attention" : ""}><span>문자 확인 필요</span><strong>{smsAttentionCount.toLocaleString("ko-KR")}</strong></article>
+              <article className={conversionAttentionCount ? "attention" : ""}><span>광고전환 확인</span><strong>{conversionAttentionCount.toLocaleString("ko-KR")}</strong></article>
               <article><span>최근 갱신</span><strong>{formatDate(updatedAt)}</strong></article>
             </section>
 
@@ -799,7 +806,8 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
                 <option value="status:방문예약">방문예약</option>
                 <option value="status:계약">계약</option>
                 <option value="status:보류">보류</option>
-                <option value="sms-failed">문자 실패</option>
+                <option value="sms-attention">문자 확인 필요</option>
+                <option value="conversion-attention">광고전환 확인 필요</option>
               </select>
               <span aria-live="polite">표시 {filtered.length.toLocaleString("ko-KR")}건</span>
               <button type="button" onClick={downloadCsv} disabled={!filtered.length}>CSV 내려받기</button>
@@ -808,7 +816,7 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
             <section className="adminTableWrap" role="region" aria-label="최근 관심고객 접수 목록" tabIndex={0} aria-busy={loading}>
               <table>
                 <caption className="srOnly">최근 관심고객 접수 목록</caption>
-                <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>상담 메모</th><th>문자</th><th>저장</th></tr></thead>
+                <thead><tr><th>등록일시</th><th>이름</th><th>휴대폰</th><th>유입경로</th><th>신청위치</th><th>상태</th><th>상담 메모</th><th>문자</th><th>광고전환</th><th>저장</th></tr></thead>
                 <tbody>
                   {filtered.map((lead) => {
                     const draft = drafts[lead.leadId] || {
@@ -871,7 +879,22 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
                           onChange={(event) => updateDraft(lead.leadId, { memo: event.target.value })}
                         />
                       </td>
-                      <td data-label="문자"><span className={`adminBadge ${lead.smsStatus === "실패" ? "failed" : ""}`}>{lead.smsStatus || "-"}</span></td>
+                      <td data-label="문자"><span className={`adminBadge ${
+                        lead.smsStatus === "실패"
+                          ? "failed"
+                          : ["대기", "처리중"].includes(lead.smsStatus)
+                            ? "processing"
+                            : ""
+                      }`}>{lead.smsStatus || "-"}</span></td>
+                      <td data-label="광고전환">
+                        <span className={`adminBadge ${
+                          lead.conversionStatus === "실패"
+                            ? "failed"
+                            : ["대기", "처리중"].includes(lead.conversionStatus)
+                              ? "processing"
+                              : ""
+                        }`}>{lead.conversionStatus || "-"}</span>
+                      </td>
                       <td data-label="저장">
                         <button
                           className="adminSaveButton"

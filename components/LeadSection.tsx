@@ -68,7 +68,11 @@ export default function LeadSection() {
       setStatus("done");
       setLeadId(String(data.leadId || ""));
       setMessage(data.message);
-      trackLeadComplete(eventId, { placement: "lead-section", source: attribution.source });
+      trackLeadComplete(eventId, {
+        lead_id: String(data.leadId || ""),
+        placement: "lead-section",
+        source: attribution.source,
+      });
       submittingRef.current = false;
       eventIdRef.current = "";
       goToThankYou(String(data.leadId || ""), "lead-section");

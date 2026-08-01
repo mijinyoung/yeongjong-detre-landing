@@ -69,7 +69,11 @@ export default function QuickLead() {
       setMessage(data.message);
       formElement.reset();
       setPhone("");
-      trackLeadComplete(eventId, { placement: "quick-lead", source: attribution.source });
+      trackLeadComplete(eventId, {
+        lead_id: String(data.leadId || ""),
+        placement: "quick-lead",
+        source: attribution.source,
+      });
       submittingRef.current = false;
       eventIdRef.current = "";
       goToThankYou(String(data.leadId || ""), "quick-lead");

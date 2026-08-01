@@ -38,9 +38,11 @@ if (!source) throw new Error(`복제 원본 현장을 찾을 수 없습니다: $
 const sourceConfig = readJson(resolveRootPath(source.configPath));
 const configPath = join(root, "data", "projects", `${code}.json`);
 const appsScriptPath = join(root, "integrations", "projects", code, "google-apps-script.gs");
+const trackingEnvPath = join(root, "integrations", "projects", code, "vercel-environment.example");
+const setupGuidePath = join(root, "integrations", "projects", code, "CAMPAIGN-SETUP.md");
 const assetRoot = join(root, "public", "projects", code);
 
-for (const path of [configPath, appsScriptPath, assetRoot]) {
+for (const path of [configPath, appsScriptPath, trackingEnvPath, setupGuidePath, assetRoot]) {
   if (existsSync(path)) throw new Error(`덮어쓰기를 막았습니다. 이미 존재합니다: ${path}`);
 }
 
@@ -93,6 +95,8 @@ if (dryRun) {
   console.log(`- 설정: ${configPath}`);
   console.log(`- 자료: ${assetRoot}`);
   console.log(`- 시트 연동: ${appsScriptPath}`);
+  console.log(`- 광고 환경변수: ${trackingEnvPath}`);
+  console.log(`- 현장 준비 안내: ${setupGuidePath}`);
   process.exit(0);
 }
 
@@ -107,6 +111,59 @@ writeFileSync(registryPath, `${JSON.stringify(nextRegistry, null, 2)}\n`, "utf8"
 const sourceAppsScript = readFileSync(resolveRootPath(source.appsScriptPath), "utf8")
   .replace(/const PROJECT_CODE = '[^']+';/, `const PROJECT_CODE = '${code}';`);
 writeFileSync(appsScriptPath, sourceAppsScript, "utf8");
+writeFileSync(
+  trackingEnvPath,
+  `# ${name} Vercel 환경변수 체크리스트
+NEXT_PUBLIC_PROJECT_CODE=${code}
+NEXT_PUBLIC_SITE_URL=https://${code}.example
+ADMIN_ALLOWED_ORIGINS=https://${code}.example
+
+NEXT_PUBLIC_TRACKING_MODE=gtm
+NEXT_PUBLIC_GTM_ID=
+NEXT_PUBLIC_TRACKING_DEBUG=false
+NEXT_PUBLIC_GA_ID=
+NEXT_PUBLIC_GOOGLE_ADS_ID=
+NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL=
+
+NEXT_PUBLIC_META_PIXEL_ID=
+META_PIXEL_ID=
+META_CAPI_ACCESS_TOKEN=
+META_GRAPH_API_VERSION=v24.0
+META_TEST_EVENT_CODE=
+
+NEXT_PUBLIC_KAKAO_PIXEL_ID=
+NEXT_PUBLIC_KAKAO_LEAD_TAG=Consulting
+NEXT_PUBLIC_NAVER_WCS_ACCOUNT_ID=
+NEXT_PUBLIC_NAVER_WCS_DOMAIN=${code}.example
+NEXT_PUBLIC_NAVER_WCS_LEAD_TYPE=lead
+
+GOOGLE_SHEET_WEBHOOK_URL=
+SOLAPI_API_KEY=
+SOLAPI_API_SECRET=
+SOLAPI_SENDER_NUMBER=
+SMS_RECIPIENT_NUMBER=
+SYSTEM_CHECK_TOKEN=
+ADMIN_DASHBOARD_TOKEN=
+ADMIN_SESSION_SECRET=
+`,
+  "utf8",
+);
+writeFileSync(
+  setupGuidePath,
+  `# ${name} 현장 준비 체크리스트
+
+1. \`data/projects/${code}.json\`의 현장명, 전화번호, 사업정보와 문구를 교체합니다.
+2. \`public/projects/${code}/images\`와 \`videos\`에 현장 자료를 넣습니다.
+3. \`vercel-environment.example\`을 보며 현장 전용 Vercel 환경변수를 입력합니다.
+4. Google Sheets용 Apps Script를 배포하고 웹 앱 주소를 연결합니다.
+5. Meta·Google/GDN·카카오·네이버 광고 ID를 입력합니다.
+6. GTM 모드라면 \`generate_lead\` 이벤트로 각 채널의 문의 완료 태그를 연결합니다.
+7. 자료 확인 후 \`data/projects/registry.json\`의 status를 \`active\`로 바꿉니다.
+8. \`NEXT_PUBLIC_PROJECT_CODE=${code} npm run verify\`로 최종 검증합니다.
+9. 배포 후 \`/system-check\`에서 광고 송출 가능 판정을 확인합니다.
+`,
+  "utf8",
+);
 writeFileSync(
   join(assetRoot, "ASSETS.txt"),
   `${name} 전용 이미지와 영상을 images, videos 폴더에 넣으세요.\n초안 상태에서는 운영 배포가 차단됩니다.\n`,

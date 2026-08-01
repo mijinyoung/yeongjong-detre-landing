@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import MetaPixel from "@/components/MetaPixel";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
+import AdvertisingTracking from "@/components/AdvertisingTracking";
 import ConversionTracker from "@/components/ConversionTracker";
 import ThankYouClient from "@/components/ThankYouClient";
 import { projectConfig } from "@/data/project-config";
@@ -15,8 +14,7 @@ export const metadata: Metadata = {
 export default function ThankYouPage() {
   return (
     <>
-      <MetaPixel />
-      <GoogleAnalytics />
+      <AdvertisingTracking />
       <ConversionTracker />
       <Suspense fallback={<main className="thankYouPage" id="main-content" />}>
         <ThankYouClient />

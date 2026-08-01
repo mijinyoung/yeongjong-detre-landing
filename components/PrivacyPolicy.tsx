@@ -58,7 +58,7 @@ export default function PrivacyPolicy() {
             <div><dt>보유 및 이용 기간</dt><dd>{projectConfig.legal.privacyRetention}</dd></div>
             <div><dt>동의 거부 권리</dt><dd>동의를 거부할 수 있으나, 거부 시 상담 신청이 제한됩니다.</dd></div>
             <div><dt>처리 서비스</dt><dd>접수 정보는 Google Sheets에 저장될 수 있으며 담당자 알림을 위해 SOLAPI 또는 별도 문자 연동이 사용될 수 있습니다.</dd></div>
-            <div><dt>방문·광고 분석</dt><dd>별도 동의한 경우에만 Meta Pixel, Google Analytics와 Meta 전환 API가 실행되며, 전환 측정을 위해 해시 처리된 이름·전화번호와 접속 정보가 사용될 수 있습니다. 푸터의 방문 분석 설정에서 언제든 선택을 변경할 수 있습니다.</dd></div>
+            <div><dt>방문·광고 분석</dt><dd>별도 동의한 경우에만 Meta Pixel, Google Tag Manager·Analytics, 카카오 픽셀, 네이버 광고 전환 및 Meta 전환 API가 실행됩니다. 전환 측정을 위해 해시 처리된 이름·전화번호와 접속 정보가 사용될 수 있으며, 푸터의 방문 분석 설정에서 언제든 선택을 변경할 수 있습니다.</dd></div>
           </dl>
           <p className="privacyDraftNote">
             개인정보 동의 철회와 상담 정보 관련 문의는 {projectConfig.contact.privacyContactLabel} {projectConfig.contact.displayPhone}로 연락해 주세요.

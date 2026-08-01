@@ -19,8 +19,7 @@ import LeadSection from "@/components/LeadSection";
 import FloatingActions from "@/components/FloatingActions";
 import Footer from "@/components/Footer";
 import LeadModal from "@/components/LeadModal";
-import MetaPixel from "@/components/MetaPixel";
-import GoogleAnalytics from "@/components/GoogleAnalytics";
+import AdvertisingTracking from "@/components/AdvertisingTracking";
 import ConversionTracker from "@/components/ConversionTracker";
 import UtmCapture from "@/components/UtmCapture";
 import PrivacyPolicy from "@/components/PrivacyPolicy";
@@ -67,8 +66,7 @@ export default function Home() {
   return (
     <main id="main-content">
       <StructuredData />
-      <MetaPixel />
-      <GoogleAnalytics />
+      <AdvertisingTracking />
       <ConversionTracker />
       <UtmCapture />
       <Hero />

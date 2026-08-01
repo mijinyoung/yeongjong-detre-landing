@@ -107,7 +107,11 @@ export default function LeadModal() {
       setStatus("done");
       setLeadId(String(data.leadId || ""));
       setMessage(data.message);
-      trackLeadComplete(eventId, { placement, source: attribution.source });
+      trackLeadComplete(eventId, {
+        lead_id: String(data.leadId || ""),
+        placement,
+        source: attribution.source,
+      });
       submittingRef.current = false;
       eventIdRef.current = "";
       goToThankYou(String(data.leadId || ""), placement);

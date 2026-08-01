@@ -67,8 +67,8 @@ export default function AnalyticsConsentManager() {
           <p className="analyticsConsentEyebrow">PRIVACY CHOICE</p>
           <h2 id="analytics-consent-title">광고·방문 성과 분석</h2>
           <p>
-            동의하면 Meta·Google 광고 성과를 분석합니다. 거부해도 상담 신청은
-            정상 이용됩니다.
+            동의하면 Meta·Google·카카오·네이버 광고 성과를 분석합니다. 거부해도
+            상담 신청은 정상 이용됩니다.
           </p>
         </div>
         <div className="analyticsConsentActions">

@@ -123,6 +123,10 @@ export function GET(request: NextRequest) {
   }
 
   const domain = getDomainStatus(request);
+  const trackingMode =
+    process.env.NEXT_PUBLIC_TRACKING_MODE?.trim().toLowerCase() === "gtm"
+      ? "gtm"
+      : "direct";
   const integrations = {
     siteUrl: Boolean(domain.configuredUrl),
     customDomain: domain.customDomain,
@@ -131,8 +135,11 @@ export function GET(request: NextRequest) {
     sms: Boolean(process.env.SMS_WEBHOOK_URL) || isSolapiConfigured(),
     metaPixel: Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID),
     googleAnalytics: Boolean(process.env.NEXT_PUBLIC_GA_ID),
+    googleTagManager: Boolean(process.env.NEXT_PUBLIC_GTM_ID),
     googleSearchConsole: Boolean(process.env.GOOGLE_SITE_VERIFICATION?.trim()),
     naverSearchAdvisor: Boolean(process.env.NAVER_SITE_VERIFICATION?.trim()),
+    kakaoPixel: Boolean(process.env.NEXT_PUBLIC_KAKAO_PIXEL_ID?.trim()),
+    naverAdsTracking: Boolean(process.env.NEXT_PUBLIC_NAVER_WCS_ACCOUNT_ID?.trim()),
     googleAds: Boolean(
       process.env.NEXT_PUBLIC_GOOGLE_ADS_ID &&
       process.env.NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL,
@@ -152,6 +159,25 @@ export function GET(request: NextRequest) {
       process.env.META_TEST_EVENT_CODE?.trim()
     ),
   };
+
+  const browserTrackingReady =
+    trackingMode === "gtm"
+      ? integrations.googleTagManager
+      : integrations.metaPixel ||
+        integrations.googleAnalytics ||
+        integrations.googleAds ||
+        integrations.kakaoPixel ||
+        integrations.naverAdsTracking;
+  const completeAdvertisingStack = Boolean(
+    browserTrackingReady &&
+      integrations.googleAnalytics &&
+      integrations.googleAds &&
+      integrations.metaPixel &&
+      integrations.metaConversionsApi &&
+      integrations.kakaoPixel &&
+      integrations.naverAdsTracking &&
+      integrations.liveTrackingMode,
+  );
 
   const launchChecks = [
     {
@@ -205,12 +231,12 @@ export function GET(request: NextRequest) {
     },
     {
       key: "browserTracking",
-      label: "브라우저 광고 측정",
-      description: "Meta Pixel, GA4 또는 Google Ads 중 사용하는 광고 측정을 확인합니다.",
-      ready:
-        integrations.metaPixel ||
-        integrations.googleAnalytics ||
-        integrations.googleAds,
+      label: trackingMode === "gtm" ? "GTM 통합 측정" : "직접 설치 광고 측정",
+      description:
+        trackingMode === "gtm"
+          ? "GTM 컨테이너가 문의 완료 표준 이벤트를 각 광고 플랫폼으로 전달합니다."
+          : "사이트가 각 광고 플랫폼의 태그를 직접 실행합니다.",
+      ready: browserTrackingReady,
       required: false,
     },
     {
@@ -241,13 +267,18 @@ export function GET(request: NextRequest) {
       ready: integrations.naverSearchAdvisor,
       required: false,
     },
+    {
+      key: "completeAdvertisingStack",
+      label: "4대 광고채널 전환 측정",
+      description: "Meta·Google/GDN·카카오·네이버와 Meta 서버 전환이 모두 설정됐는지 확인합니다.",
+      ready: completeAdvertisingStack,
+      required: false,
+    },
   ];
   const productionReady = launchChecks
     .filter((check) => check.required)
     .every((check) => check.ready);
-  const advertisingReady =
-    productionReady &&
-    launchChecks.find((check) => check.key === "browserTracking")?.ready;
+  const advertisingReady = productionReady && completeAdvertisingStack;
 
   return apiJson(
     {
@@ -256,6 +287,7 @@ export function GET(request: NextRequest) {
       authenticated: true,
       productionReady,
       advertisingReady: Boolean(advertisingReady),
+      trackingMode,
       integrations,
       domain,
       launchChecks,

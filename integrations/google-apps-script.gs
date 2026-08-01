@@ -37,7 +37,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: PROJECT_CODE + '-google-sheets',
-    version: '19.0.0',
+    version: '20.0.0',
     checkedAt: new Date().toISOString()
   });
 }

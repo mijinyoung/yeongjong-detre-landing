@@ -65,10 +65,10 @@ export default function AnalyticsConsentManager() {
       <div className="analyticsConsentInner">
         <div>
           <p className="analyticsConsentEyebrow">PRIVACY CHOICE</p>
-          <h2 id="analytics-consent-title">방문 분석 사용 여부를 선택해 주세요</h2>
+          <h2 id="analytics-consent-title">광고·방문 성과 분석</h2>
           <p>
-            필수 상담 기능은 선택과 관계없이 사용할 수 있습니다. 동의하면
-            Meta Pixel과 Google Analytics를 통해 광고·방문 성과를 분석합니다.
+            동의하면 Meta·Google 광고 성과를 분석합니다. 거부해도 상담 신청은
+            정상 이용됩니다.
           </p>
         </div>
         <div className="analyticsConsentActions">
@@ -78,14 +78,14 @@ export default function AnalyticsConsentManager() {
             className="analyticsConsentReject"
             onClick={() => choose("rejected")}
           >
-            선택 기능 거부
+            거부
           </button>
           <button
             type="button"
             className="analyticsConsentAccept"
             onClick={() => choose("accepted")}
           >
-            분석 사용 동의
+            동의
           </button>
         </div>
       </div>

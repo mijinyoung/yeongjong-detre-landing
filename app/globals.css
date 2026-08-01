@@ -3079,3 +3079,118 @@ textarea[aria-invalid="true"] {
     align-self: flex-start;
   }
 }
+
+/* ===== v20.0 compact analytics choice + floor-plan label cleanup ===== */
+.analyticsConsent:not(.analyticsConsentSettings) {
+  right: auto;
+  bottom: 18px;
+  left: 18px;
+  width: min(720px, calc(100% - 36px));
+  max-width: none;
+  border-radius: 14px;
+}
+
+.analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentInner {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  padding: 13px 15px;
+}
+
+.analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentEyebrow {
+  display: none;
+}
+
+.analyticsConsent:not(.analyticsConsentSettings) h2 {
+  margin-bottom: 3px;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.analyticsConsent:not(.analyticsConsentSettings) p:not(.analyticsConsentEyebrow) {
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentActions {
+  gap: 6px;
+}
+
+.analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentActions button {
+  min-width: 62px;
+  min-height: 38px;
+  padding-inline: 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+}
+
+.floorPlanArtwork {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+
+.floorPlanArtwork::after {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  width: 15.8%;
+  height: 26.5%;
+  background: #fff;
+  content: "";
+  pointer-events: none;
+}
+
+.floorZoomArtwork {
+  min-width: 100%;
+}
+
+@media (max-width: 760px) {
+  .analyticsConsent:not(.analyticsConsentSettings) {
+    right: 8px;
+    bottom: 74px;
+    left: 8px;
+    width: auto;
+    border-radius: 12px;
+  }
+
+  .analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentInner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 11px 12px;
+  }
+
+  .analyticsConsent:not(.analyticsConsentSettings) h2 {
+    font-size: 14px;
+  }
+
+  .analyticsConsent:not(.analyticsConsentSettings) p:not(.analyticsConsentEyebrow) {
+    max-width: 48ch;
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+
+  .analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(56px, 1fr));
+  }
+
+  .analyticsConsent:not(.analyticsConsentSettings) .analyticsConsentActions button {
+    min-width: 0;
+    min-height: 36px;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+
+  .floorZoomArtwork {
+    width: max(100%, 1180px);
+  }
+
+  .floorZoomArtwork .brochureZoomImage {
+    width: 100%;
+    max-width: none;
+  }
+}

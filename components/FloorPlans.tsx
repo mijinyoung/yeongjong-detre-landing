@@ -78,15 +78,17 @@ export default function FloorPlans() {
           aria-labelledby={`floor-tab-${plan.id}`}
         >
           <button className="floorV61ImageButton" type="button" onClick={() => setZoomOpen(true)} aria-label={`${plan.id} 타입 평면도 크게 보기`}>
-            <Image
-              key={plan.image}
-              src={plan.image}
-              alt={`${plan.id} 타입 공식 평면도`}
-              width={1867}
-              height={882}
-              sizes="(max-width: 900px) 100vw, 68vw"
-              className="floorV61Image"
-            />
+            <span className="floorPlanArtwork">
+              <Image
+                key={plan.image}
+                src={plan.image}
+                alt={`${plan.id} 타입 공식 평면도`}
+                width={1867}
+                height={882}
+                sizes="(max-width: 900px) 100vw, 68vw"
+                className="floorV61Image"
+              />
+            </span>
             <span className="imageZoomHint">클릭하여 평면도 크게 보기</span>
           </button>
 
@@ -110,7 +112,9 @@ export default function FloorPlans() {
         <div ref={zoomRef} className="brochureZoom" role="dialog" aria-modal="true" aria-label={`${plan.id} 타입 평면도 확대 이미지`} onClick={() => setZoomOpen(false)} tabIndex={-1}>
           <button ref={closeRef} type="button" className="brochureZoomClose" onClick={() => setZoomOpen(false)} aria-label="확대 이미지 닫기">×</button>
           <div className="brochureZoomCanvas floorZoomCanvas" onClick={(event) => event.stopPropagation()}>
-            <Image src={plan.image} alt={`${plan.id} 타입 공식 평면도`} width={1867} height={882} className="brochureZoomImage" />
+            <div className="floorPlanArtwork floorZoomArtwork">
+              <Image src={plan.image} alt={`${plan.id} 타입 공식 평면도`} width={1867} height={882} className="brochureZoomImage" />
+            </div>
           </div>
         </div>
       )}

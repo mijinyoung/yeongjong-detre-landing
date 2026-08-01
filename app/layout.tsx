@@ -5,6 +5,8 @@ import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+const naverSiteVerification = process.env.NAVER_SITE_VERIFICATION?.trim();
 
 
 export const viewport: Viewport = {
@@ -24,6 +26,21 @@ export const metadata: Metadata = {
   publisher: projectConfig.identity.name,
   formatDetection: { email: false, address: false, telephone: false },
   manifest: "/manifest.webmanifest",
+  verification:
+    googleSiteVerification || naverSiteVerification
+      ? {
+          ...(googleSiteVerification
+            ? { google: googleSiteVerification }
+            : {}),
+          ...(naverSiteVerification
+            ? {
+                other: {
+                  "naver-site-verification": naverSiteVerification,
+                },
+              }
+            : {}),
+        }
+      : undefined,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

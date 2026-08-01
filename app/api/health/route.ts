@@ -131,6 +131,8 @@ export function GET(request: NextRequest) {
     sms: Boolean(process.env.SMS_WEBHOOK_URL) || isSolapiConfigured(),
     metaPixel: Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID),
     googleAnalytics: Boolean(process.env.NEXT_PUBLIC_GA_ID),
+    googleSearchConsole: Boolean(process.env.GOOGLE_SITE_VERIFICATION?.trim()),
+    naverSearchAdvisor: Boolean(process.env.NAVER_SITE_VERIFICATION?.trim()),
     googleAds: Boolean(
       process.env.NEXT_PUBLIC_GOOGLE_ADS_ID &&
       process.env.NEXT_PUBLIC_GOOGLE_ADS_LEAD_LABEL,
@@ -223,6 +225,20 @@ export function GET(request: NextRequest) {
       label: "Meta 서버 전환 측정",
       description: "선택 사항이며 Meta 광고 운영 시 측정 누락을 줄여 줍니다.",
       ready: integrations.metaConversionsApi,
+      required: false,
+    },
+    {
+      key: "googleSearchConsole",
+      label: "Google 검색 소유확인",
+      description: "기존 검색 결과를 현재 홈페이지 정보로 교체하고 색인 상태를 관리합니다.",
+      ready: integrations.googleSearchConsole,
+      required: false,
+    },
+    {
+      key: "naverSearchAdvisor",
+      label: "네이버 검색 소유확인",
+      description: "네이버 검색로봇에 현재 홈페이지와 사이트맵을 직접 등록할 수 있게 합니다.",
+      ready: integrations.naverSearchAdvisor,
       required: false,
     },
   ];

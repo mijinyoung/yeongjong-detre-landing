@@ -16,6 +16,8 @@ type HealthData = {
     sms: boolean;
     metaPixel: boolean;
     googleAnalytics: boolean;
+    googleSearchConsole: boolean;
+    naverSearchAdvisor: boolean;
     googleAds: boolean;
     metaConversionsApi: boolean;
     adminSession: boolean;
@@ -57,6 +59,8 @@ const labels: Array<[keyof HealthData["integrations"], string, string]> = [
   ["metaPixel", "Meta Pixel", "브라우저 광고 전환 측정"],
   ["metaConversionsApi", "Meta CAPI", "서버 광고 전환 측정"],
   ["googleAnalytics", "Google Analytics", "방문 행동 분석"],
+  ["googleSearchConsole", "Google 검색 등록", "소유확인과 현재 홈페이지 색인 관리"],
+  ["naverSearchAdvisor", "네이버 검색 등록", "소유확인과 사이트맵 수집 관리"],
   ["googleAds", "Google Ads", "상담 완료 전환 측정"],
   ["adminSession", "관리자 보안", "고객정보 보호 로그인·세션·허용 주소"],
   ["liveLeadMode", "실제 접수 모드", "개발용 테스트 모드 해제 여부"],

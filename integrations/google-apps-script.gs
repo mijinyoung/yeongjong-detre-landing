@@ -1,5 +1,5 @@
 /**
- * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v18.0
+ * 현장 복제형 Google Sheets 저장·관리자 운영용 Apps Script — v19.0
  *
  * 기존 데이터와 서식은 유지하고, 누락된 헤더만 오른쪽 끝에 추가합니다.
  * 시간 열은 한국시간의 실제 날짜 값으로 저장하고 읽기 쉬운 형식만 적용합니다.
@@ -37,7 +37,7 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: PROJECT_CODE + '-google-sheets',
-    version: '18.0.0',
+    version: '19.0.0',
     checkedAt: new Date().toISOString()
   });
 }

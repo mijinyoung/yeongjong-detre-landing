@@ -10,6 +10,8 @@ type HealthData = {
   advertisingReady?: boolean;
   integrations: {
     siteUrl: boolean;
+    customDomain: boolean;
+    domainConnection: boolean;
     googleSheets: boolean;
     sms: boolean;
     metaPixel: boolean;
@@ -19,6 +21,19 @@ type HealthData = {
     adminSession: boolean;
     liveLeadMode: boolean;
     liveTrackingMode: boolean;
+  };
+  domain: {
+    configuredUrl: string;
+    configuredHost: string;
+    currentUrl: string;
+    currentHost: string;
+    customDomain: boolean;
+    https: boolean;
+    hostMatches: boolean;
+    connected: boolean;
+    canonicalUrl: string;
+    sitemapUrl: string;
+    robotsUrl: string;
   };
   launchChecks: Array<{
     key: string;
@@ -35,6 +50,8 @@ type TestTarget = "googleSheets" | "sms";
 
 const labels: Array<[keyof HealthData["integrations"], string, string]> = [
   ["siteUrl", "운영 대표 주소", "실제 HTTPS 도메인과 검색·공유 대표 주소"],
+  ["customDomain", "자체 도메인", "Vercel 기본 주소가 아닌 구매한 광고용 도메인"],
+  ["domainConnection", "도메인·HTTPS", "현재 접속 주소와 대표주소 일치 및 보안 연결"],
   ["googleSheets", "Google Sheets", "관심고객 DB 자동 저장"],
   ["sms", "문자 알림", "신규 문의 담당자 알림 및 시트 상태 기록"],
   ["metaPixel", "Meta Pixel", "브라우저 광고 전환 측정"],
@@ -49,27 +66,27 @@ const labels: Array<[keyof HealthData["integrations"], string, string]> = [
 const setupSteps = [
   {
     number: "01",
-    title: "Google Sheets 웹앱 만들기",
+    title: "Vercel에 도메인 추가",
     description:
-      "integrations/google-apps-script.gs 내용을 Apps Script에 붙여넣고 v16 웹 앱으로 배포합니다.",
+      "Vercel 프로젝트의 Settings → Domains에서 결제한 도메인을 추가하고 Primary로 지정합니다.",
   },
   {
     number: "02",
-    title: "Vercel 환경변수 입력",
+    title: "도메인 업체 DNS 연결",
     description:
-      "GOOGLE_SHEET_WEBHOOK_URL과 문자 알림 설정을 Production 환경에 저장합니다. 시트 연결 비밀번호는 필요하지 않습니다.",
+      "Vercel 화면에 표시되는 DNS 값을 도메인 구입처에 그대로 등록하고 Valid Configuration을 기다립니다.",
   },
   {
     number: "03",
-    title: "테스트 전송 확인",
+    title: "대표주소 환경변수 변경",
     description:
-      "아래 점검 버튼을 눌러 스프레드시트 행 추가와 담당자 문자 수신을 각각 확인합니다.",
+      "NEXT_PUBLIC_SITE_URL과 ADMIN_ALLOWED_ORIGINS를 새 HTTPS 도메인으로 변경한 뒤 재배포합니다.",
   },
   {
     number: "04",
-    title: "실제 상담폼 최종 점검",
+    title: "새 도메인에서 최종 점검",
     description:
-      "테스트 완료 후 홈페이지에서 본인 번호로 관심고객 등록하고, 관심고객 탭의 문자상태 열까지 확인합니다.",
+      "구매한 도메인의 /system-check에서 연결 상태와 시트·문자 테스트를 확인한 후 실제 폼을 접수합니다.",
   },
 ];
 
@@ -216,10 +233,20 @@ export default function SystemCheckClient() {
           </button>
         </section>
 
-        <div className="systemCheckSummary systemCheckSummaryV130">
+        <div className="systemCheckSummary systemCheckSummaryV190">
           <div>
             <span>현재 버전</span>
             <strong>{data?.version || "인증 필요"}</strong>
+          </div>
+          <div>
+            <span>도메인 연결</span>
+            <strong>
+              {data
+                ? data.domain.connected
+                  ? "HTTPS 연결 완료"
+                  : "연결 확인 필요"
+                : "인증 필요"}
+            </strong>
           </div>
           <div>
             <span>상담 운영</span>
@@ -242,6 +269,44 @@ export default function SystemCheckClient() {
             </strong>
           </div>
         </div>
+
+        {data ? (
+          <section className="domainCheckSection" aria-labelledby="domain-check-title">
+            <div className="domainCheckHeading">
+              <div>
+                <p className="systemCheckEyebrow">CUSTOM DOMAIN</p>
+                <h2 id="domain-check-title">도메인 연결 결과</h2>
+              </div>
+              <strong className={data.domain.connected ? "ready" : "attention"}>
+                {data.domain.connected ? "연결 완료" : "설정 확인 필요"}
+              </strong>
+            </div>
+            <div className="domainCheckGrid">
+              <article>
+                <span>Vercel 대표주소</span>
+                <strong>{data.domain.configuredUrl || "미설정"}</strong>
+                <p>{data.domain.customDomain ? "자체 도메인 확인" : "Vercel 기본 주소 또는 임시 주소"}</p>
+              </article>
+              <article>
+                <span>현재 접속주소</span>
+                <strong>{data.domain.currentUrl || "확인 불가"}</strong>
+                <p>{data.domain.hostMatches ? "대표주소와 일치" : "대표주소와 다름"}</p>
+              </article>
+              <article>
+                <span>HTTPS 보안 연결</span>
+                <strong>{data.domain.https ? "적용됨" : "적용 필요"}</strong>
+                <p>{data.domain.connected ? "광고 연결에 사용할 수 있습니다." : "구매한 도메인으로 다시 접속해 확인하세요."}</p>
+              </article>
+            </div>
+            {data.domain.connected ? (
+              <div className="domainCheckLinks">
+                <a href={data.domain.canonicalUrl} target="_blank" rel="noreferrer">대표 홈페이지</a>
+                <a href={data.domain.sitemapUrl} target="_blank" rel="noreferrer">사이트맵 확인</a>
+                <a href={data.domain.robotsUrl} target="_blank" rel="noreferrer">검색 설정 확인</a>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
 
         {data ? (
           <section className="launchCheckSection" aria-labelledby="launch-check-title">
@@ -293,11 +358,11 @@ export default function SystemCheckClient() {
           <div className="systemSetupHeading">
             <div>
               <p className="systemCheckEyebrow">SETUP GUIDE</p>
-              <h2>실제 문의 접수 연결 순서</h2>
+              <h2>새 도메인 연결 순서</h2>
             </div>
             <p>
-              아래 순서대로 설정하면 상담 신청이 스프레드시트에 저장되고,
-              담당자에게 문자로 전달됩니다.
+              구매한 도메인을 Vercel 대표주소로 연결하고 광고에 사용하기 위한
+              순서입니다.
             </p>
           </div>
 

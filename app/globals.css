@@ -894,6 +894,160 @@ body.mobileNavOpen{overflow:hidden}
   }
 }
 
+/* ===== v19 도메인 연결·광고 송출 준비 ===== */
+.systemCheckSummary.systemCheckSummaryV190 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.domainCheckSection {
+  margin: 18px 0 28px;
+  padding: 28px;
+  color: #172033;
+  background: linear-gradient(135deg, #fff, #fbf8f1);
+  border: 1px solid #e2e0d9;
+  border-radius: 18px;
+}
+
+.domainCheckHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.domainCheckHeading h2 {
+  margin: 0;
+  color: #28313d;
+  font-size: 22px;
+}
+
+.domainCheckHeading > strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.domainCheckHeading > strong.ready {
+  color: #17613f;
+  background: #dff5e9;
+}
+
+.domainCheckHeading > strong.attention {
+  color: #8b3b29;
+  background: #ffebe5;
+}
+
+.domainCheckGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.domainCheckGrid article {
+  min-width: 0;
+  padding: 18px;
+  background: rgba(255, 255, 255, .82);
+  border: 1px solid #e5e1d8;
+  border-radius: 12px;
+}
+
+.domainCheckGrid span {
+  display: block;
+  margin-bottom: 10px;
+  color: #8a6b3f;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.domainCheckGrid strong {
+  display: block;
+  overflow: hidden;
+  color: #27313d;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.domainCheckGrid p {
+  margin: 9px 0 0;
+  color: #68727d;
+  font-size: 12px;
+  line-height: 1.55;
+  word-break: keep-all;
+}
+
+.domainCheckLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.domainCheckLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  color: #fff;
+  background: #26364a;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .systemCheckSummary.systemCheckSummaryV190,
+  .domainCheckGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .domainCheckGrid article:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .systemCheckSummary.systemCheckSummaryV190,
+  .domainCheckGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .domainCheckSection {
+    padding: 21px 16px;
+  }
+
+  .domainCheckHeading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .domainCheckHeading > strong {
+    align-self: flex-start;
+  }
+
+  .domainCheckGrid article:last-child {
+    grid-column: auto;
+  }
+
+  .domainCheckLinks {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .domainCheckLinks a {
+    justify-content: center;
+  }
+}
+
 
 /* ===== v6.6 운영 상태 점검 ===== */
 .systemCheckPage {

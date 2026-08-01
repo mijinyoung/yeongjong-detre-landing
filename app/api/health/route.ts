@@ -16,20 +16,78 @@ function safeEqual(value: string, expected: string) {
   );
 }
 
-function isProductionSiteUrlConfigured() {
+function getConfiguredSiteUrl() {
   const value = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (!value) return false;
+  if (!value) return null;
 
   try {
     const url = new URL(value);
-    return (
+    const valid =
       url.protocol === "https:" &&
       url.hostname !== "localhost" &&
-      !url.hostname.endsWith(".example")
-    );
+      !url.hostname.endsWith(".example") &&
+      url.pathname === "/" &&
+      !url.search &&
+      !url.hash;
+    return valid ? url : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function normalizeHost(value: string) {
+  return value
+    .split(",")[0]
+    .trim()
+    .toLowerCase()
+    .replace(/:\d+$/, "")
+    .replace(/\.$/, "");
+}
+
+function getDomainStatus(request: NextRequest) {
+  const configuredUrl = getConfiguredSiteUrl();
+  const forwardedHost = request.headers.get("x-forwarded-host") || request.nextUrl.host;
+  const forwardedProtocol =
+    request.headers.get("x-forwarded-proto")?.split(",")[0].trim() ||
+    request.nextUrl.protocol.replace(":", "");
+  const currentHost = normalizeHost(forwardedHost);
+  const configuredHost = configuredUrl?.hostname.toLowerCase() || "";
+  const customDomain = Boolean(
+    configuredHost &&
+    !configuredHost.endsWith(".vercel.app") &&
+    configuredHost !== "localhost" &&
+    !configuredHost.endsWith(".example"),
+  );
+  const https = forwardedProtocol === "https";
+  const hostMatches = Boolean(configuredHost && currentHost === configuredHost);
+  const connected = Boolean(configuredUrl && customDomain && https && hostMatches);
+  const origin = configuredUrl?.origin || "";
+
+  return {
+    configuredUrl: origin,
+    configuredHost,
+    currentUrl: currentHost ? `${forwardedProtocol}://${currentHost}` : "",
+    currentHost,
+    customDomain,
+    https,
+    hostMatches,
+    connected,
+    canonicalUrl: origin,
+    sitemapUrl: origin ? `${origin}/sitemap.xml` : "",
+    robotsUrl: origin ? `${origin}/robots.txt` : "",
+  };
+}
+
+function isAdminOriginAligned(siteOrigin: string) {
+  if (!siteOrigin) return false;
+  const configured = process.env.ADMIN_ALLOWED_ORIGINS?.trim();
+  if (!configured) return true;
+
+  return configured
+    .split(",")
+    .map((value) => value.trim().replace(/\/$/, ""))
+    .filter(Boolean)
+    .includes(siteOrigin);
 }
 
 export function GET(request: NextRequest) {
@@ -64,8 +122,11 @@ export function GET(request: NextRequest) {
     );
   }
 
+  const domain = getDomainStatus(request);
   const integrations = {
-    siteUrl: isProductionSiteUrlConfigured(),
+    siteUrl: Boolean(domain.configuredUrl),
+    customDomain: domain.customDomain,
+    domainConnection: domain.connected,
     googleSheets: Boolean(process.env.GOOGLE_SHEET_WEBHOOK_URL),
     sms: Boolean(process.env.SMS_WEBHOOK_URL) || isSolapiConfigured(),
     metaPixel: Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID),
@@ -81,7 +142,7 @@ export function GET(request: NextRequest) {
     adminSession: Boolean(
       process.env.ADMIN_DASHBOARD_TOKEN &&
       isAdminSessionConfigured() &&
-      (process.env.ADMIN_ALLOWED_ORIGINS || process.env.NEXT_PUBLIC_SITE_URL),
+      isAdminOriginAligned(domain.configuredUrl),
     ),
     liveLeadMode: process.env.LEAD_TEST_MODE !== "true",
     liveTrackingMode: !(
@@ -93,9 +154,23 @@ export function GET(request: NextRequest) {
   const launchChecks = [
     {
       key: "siteUrl",
-      label: "실제 HTTPS 홈페이지 주소",
-      description: "검색·공유·광고의 대표 주소가 실제 운영 도메인으로 설정되어야 합니다.",
+      label: "대표주소 환경변수",
+      description: "NEXT_PUBLIC_SITE_URL이 경로 없는 실제 HTTPS 주소로 설정되어야 합니다.",
       ready: integrations.siteUrl,
+      required: true,
+    },
+    {
+      key: "customDomain",
+      label: "광고용 자체 도메인",
+      description: "Vercel 기본 주소가 아닌 구매한 도메인이 대표주소로 설정되어야 합니다.",
+      ready: integrations.customDomain,
+      required: true,
+    },
+    {
+      key: "domainConnection",
+      label: "도메인·HTTPS 실제 연결",
+      description: "구매한 도메인으로 접속했을 때 대표주소와 일치하고 HTTPS가 적용되어야 합니다.",
+      ready: integrations.domainConnection,
       required: true,
     },
     {
@@ -166,6 +241,7 @@ export function GET(request: NextRequest) {
       productionReady,
       advertisingReady: Boolean(advertisingReady),
       integrations,
+      domain,
       launchChecks,
       checkedAt: new Date().toISOString(),
     },

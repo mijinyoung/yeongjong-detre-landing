@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "projectCode": "yeongjong-detre",
-  "version": "18.0.0",
+  "version": "19.0.0",
   "identity": {
     "name": "영종 디에트르 라 메르",
     "shortName": "영종 디에트르",
@@ -88,7 +88,7 @@
     }
   ],
   "seo": {
-    "fallbackSiteUrl": "https://yeongjong-detre-landing.vercel.app",
+    "fallbackSiteUrl": "https://exio.kr",
     "title": "영종 디에트르 라 메르 | 관심고객 등록",
     "titleTemplate": "%s | 영종 디에트르 라 메르",
     "description": "청라하늘대교 생활권, 최고 49층 영종 디에트르 라 메르 분양 안내 및 관심고객 등록",

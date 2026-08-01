@@ -1930,9 +1930,57 @@ body.mobileNavOpen{overflow:hidden}
 .adminBadge.processing { color: #76530f; background: #fff0c7; }
 .adminEmpty { padding: 35px; text-align: center; color: #777; }
 .adminFootnote { margin: 18px 0 0; color: #7e8791; font-size: 12px; text-align: center; }
+
+/* v17 campaign quality report */
+.campaignPerformance { margin: 0 0 14px; padding: 24px; background: #fff; border: 1px solid #e2e6e9; border-radius: 16px; box-shadow: 0 8px 24px rgba(35, 42, 52, .05); }
+.campaignPerformanceHeading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
+.campaignPerformanceHeading > div:first-child { min-width: 0; }
+.campaignPerformanceHeading > div:first-child > span,
+.keywordPerformance > div > span { display: block; margin-bottom: 6px; color: #a47738; font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+.campaignPerformanceHeading h2 { margin: 0; color: #28313d; font-size: 22px; }
+.campaignPerformanceHeading p { max-width: 650px; margin: 8px 0 0; color: #69717c; font-size: 12px; line-height: 1.65; word-break: keep-all; }
+.campaignPerformanceControls { display: flex; align-items: flex-end; flex: 0 0 auto; gap: 8px; }
+.campaignPerformanceControls label { display: grid; gap: 6px; }
+.campaignPerformanceControls label > span { color: #5d6773; font-size: 10px; font-weight: 850; }
+.campaignPerformanceControls select,
+.campaignPerformanceControls button { min-height: 42px; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 850; }
+.campaignPerformanceControls select { min-width: 118px; padding: 0 30px 0 11px; color: #33404d; background: #f8fafb; border: 1px solid #d8dde2; }
+.campaignPerformanceControls button { padding: 0 14px; color: #fff; background: #8b632d; border: 0; cursor: pointer; }
+.campaignPerformanceControls button:disabled { opacity: .45; cursor: not-allowed; }
+.campaignPerformanceControls select:focus-visible,
+.campaignPerformanceControls button:focus-visible,
+.campaignPerformanceTableWrap:focus-visible { outline: 3px solid rgba(156, 112, 53, .22); outline-offset: 2px; }
+.campaignPerformanceSummary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin: 20px 0 14px; }
+.campaignPerformanceSummary article { min-width: 0; padding: 15px 17px; background: #f7f9fa; border: 1px solid #e8ebee; border-radius: 11px; }
+.campaignPerformanceSummary span { display: block; color: #737c86; font-size: 10px; font-weight: 850; }
+.campaignPerformanceSummary strong { display: inline-block; margin-top: 8px; color: #2c3743; font-size: 24px; }
+.campaignPerformanceSummary small { margin-left: 8px; color: #9a6d31; font-size: 11px; font-weight: 900; }
+.campaignPerformanceTableWrap { overflow-x: auto; border: 1px solid #e5e9ec; border-radius: 12px; }
+.campaignPerformanceTable { width: 100%; min-width: 950px; border-collapse: collapse; }
+.campaignPerformanceTable th,
+.campaignPerformanceTable td { padding: 13px 12px; border-bottom: 1px solid #edf0f2; text-align: left; white-space: nowrap; font-size: 12px; }
+.campaignPerformanceTable th { color: #68727d; background: #f7f9fa; font-size: 10px; }
+.campaignPerformanceTable tbody tr:last-child td { border-bottom: 0; }
+.campaignPerformanceTable td strong { color: #303a46; }
+.campaignPerformanceTable td small { display: block; max-width: 220px; margin-top: 4px; overflow: hidden; color: #8a929b; font-size: 9px; text-overflow: ellipsis; }
+.campaignSignal { display: inline-flex; padding: 5px 8px; border-radius: 999px; font-size: 9px; font-weight: 900; }
+.campaignSignal.sample { color: #606b76; background: #edf0f2; }
+.campaignSignal.strong { color: #206143; background: #dff4e8; }
+.campaignSignal.attention { color: #9c3b29; background: #ffe8e1; }
+.campaignSignal.steady { color: #76530f; background: #fff0c7; }
+.campaignPerformanceEmpty { margin: 0; padding: 28px; color: #777f89; font-size: 12px; text-align: center; }
+.keywordPerformance { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; margin-top: 16px; padding: 18px; background: #f7f9fa; border-radius: 12px; }
+.keywordPerformance h3 { margin: 0; font-size: 16px; }
+.keywordPerformance ol { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.keywordPerformance li { display: grid; gap: 3px; min-width: 160px; padding: 9px 11px; background: #fff; border: 1px solid #e5e9ec; border-radius: 9px; }
+.keywordPerformance li strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.keywordPerformance li span,
+.keywordPerformance > p { margin: 0; color: #747d87; font-size: 9px; line-height: 1.5; }
+.campaignPerformanceNote { margin: 13px 0 0; color: #7a838d; font-size: 10px; line-height: 1.65; word-break: keep-all; }
 @media (max-width: 1050px) {
   .adminStats { grid-template-columns: repeat(3, 1fr); }
   .adminReports { grid-template-columns: 1fr; }
+  .campaignPerformanceHeading { align-items: flex-start; flex-direction: column; gap: 14px; }
 }
 @media (max-width: 760px) {
   .adminPage { padding: 28px 12px; }
@@ -1996,6 +2044,24 @@ body.mobileNavOpen{overflow:hidden}
   .adminSaveButton { width: 100%; min-width: 0; }
   .adminMemo { min-height: 86px; }
   .adminSaveButton { min-height: 44px; }
+  .campaignPerformance { padding: 19px 14px; }
+  .campaignPerformanceControls { width: 100%; }
+  .campaignPerformanceControls label { flex: 1; }
+  .campaignPerformanceControls select,
+  .campaignPerformanceControls button { width: 100%; }
+  .campaignPerformanceSummary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .campaignPerformanceSummary article { padding: 14px; }
+  .campaignPerformanceTableWrap { overflow: visible; border: 0; }
+  .campaignPerformanceTable { display: block; min-width: 0; }
+  .campaignPerformanceTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .campaignPerformanceTable tbody { display: grid; gap: 10px; }
+  .campaignPerformanceTable tr { display: grid; overflow: hidden; border: 1px solid #e3e7eb; border-radius: 12px; }
+  .campaignPerformanceTable td { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 10px 12px; white-space: normal; }
+  .campaignPerformanceTable td::before { content: attr(data-label); color: #747d87; font-size: 9px; font-weight: 900; }
+  .campaignPerformanceTable td small { max-width: none; }
+  .keywordPerformance { grid-template-columns: 1fr; gap: 12px; }
+  .keywordPerformance ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .keywordPerformance li { min-width: 0; }
 }
 
 /* v9.3 mobile hero: keep the video visible and gather the copy at the bottom */

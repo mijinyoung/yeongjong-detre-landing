@@ -12,6 +12,7 @@ import {
 } from "react";
 import Link from "next/link";
 import CampaignLinkBuilder from "@/components/CampaignLinkBuilder";
+import CampaignPerformanceReport from "@/components/CampaignPerformanceReport";
 
 type Lead = {
   leadId: string;
@@ -788,6 +789,8 @@ export default function AdminDashboardClient({ siteUrl }: { siteUrl: string }) {
                 </div>
               </article>
             </section>
+
+            <CampaignPerformanceReport leads={leads} referenceTime={referenceTime} />
 
             <section className="adminToolbar">
               <input aria-label="접수 목록 검색" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 전화번호, 캠페인·검색어 검색" />

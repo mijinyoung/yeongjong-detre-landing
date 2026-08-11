@@ -52,7 +52,7 @@ type HealthData = {
   requestId?: string;
 };
 
-type TestTarget = "googleSheets" | "sms";
+type TestTarget = "googleSheets" | "sms" | "metaCapi";
 
 const labels: Array<[keyof HealthData["integrations"], string, string]> = [
   ["siteUrl", "운영 대표 주소", "실제 HTTPS 도메인과 검색·공유 대표 주소"],
@@ -228,8 +228,9 @@ export default function SystemCheckClient() {
           </div>
           <label className="systemTokenField">
             <span>운영 점검 비밀번호</span>
-            <input
-              type="password"
+              <input
+                type="password"
+                name="system-check-token"
               value={token}
               onChange={(event) => setToken(event.target.value)}
               onKeyDown={(event) => {
@@ -395,7 +396,7 @@ export default function SystemCheckClient() {
               <h2>연동 테스트 전송</h2>
             </div>
             <p>
-              테스트 시 이름은 ‘연동 테스트’, 번호는 ‘010-0000-0000’으로 전달됩니다. 문자 수신 여부와 Google Sheets의 관심고객 탭을 함께 확인해 주세요.
+              Google Sheets와 문자 테스트는 ‘연동 테스트’ 데이터를 실제 전송합니다. Meta CAPI는 비밀 환경변수 구성만 확인하며, 실제 Lead 전송은 Meta 이벤트 테스트를 연 상태에서 홈페이지 폼으로 확인해 주세요.
             </p>
           </div>
 
@@ -415,6 +416,13 @@ export default function SystemCheckClient() {
               onClick={() => void runTest("sms")}
             >
               {testing === "sms" ? "전송 중..." : "문자 알림 테스트"}
+            </button>
+            <button
+              type="button"
+              disabled={Boolean(testing) || !data?.integrations.metaConversionsApi}
+              onClick={() => void runTest("metaCapi")}
+            >
+              {testing === "metaCapi" ? "확인 중..." : "Meta CAPI 설정 확인"}
             </button>
           </div>
 

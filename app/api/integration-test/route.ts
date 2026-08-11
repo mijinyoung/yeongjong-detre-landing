@@ -1,6 +1,7 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { NextRequest } from "next/server";
 import { apiJson } from "@/lib/api-response";
+import { isMetaCapiConfigured } from "@/lib/meta-capi";
 import { isSolapiConfigured, sendSolapiLeadNotification } from "@/lib/solapi";
 import { getSmsWebhookSecret } from "@/lib/webhook-secrets";
 import { createSheetWebhookPayload } from "@/lib/sheet-auth";
@@ -9,7 +10,7 @@ export const runtime = "nodejs";
 
 const WEBHOOK_TIMEOUT_MS = 15000;
 
-type IntegrationTarget = "googleSheets" | "sms";
+type IntegrationTarget = "googleSheets" | "sms" | "metaCapi";
 
 class IntegrationTestError extends Error {
   constructor(message: string) {
@@ -154,11 +155,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (input.target !== "googleSheets" && input.target !== "sms") {
+    if (
+      input.target !== "googleSheets" &&
+      input.target !== "sms" &&
+      input.target !== "metaCapi"
+    ) {
       return respond(
         { ok: false, message: "점검 대상을 선택해 주세요." },
         { status: 400 },
       );
+    }
+
+    if (input.target === "metaCapi") {
+      if (!isMetaCapiConfigured()) {
+        return respond(
+          {
+            ok: false,
+            message:
+              "META_PIXEL_ID와 META_CAPI_ACCESS_TOKEN을 Vercel 환경변수에 설정해 주세요.",
+          },
+          { status: 503 },
+        );
+      }
+
+      return respond({
+        ok: true,
+        target: "metaCapi",
+        message:
+          "Meta CAPI 환경변수 구성이 확인되었습니다. 실제 전송은 Meta 이벤트 테스트를 연 상태에서 홈페이지 폼을 접수해 확인해 주세요.",
+      });
     }
 
     const lead = createTestLead();

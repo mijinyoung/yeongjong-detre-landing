@@ -127,15 +127,27 @@ export function GET(request: NextRequest) {
     process.env.NEXT_PUBLIC_TRACKING_MODE?.trim().toLowerCase() === "gtm"
       ? "gtm"
       : "direct";
+  const directMetaPixelConfigured = Boolean(
+    process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim(),
+  );
+  const googleTagManagerConfigured = Boolean(
+    process.env.NEXT_PUBLIC_GTM_ID?.trim(),
+  );
+  const metaPixelMode =
+    trackingMode === "gtm" && googleTagManagerConfigured
+      ? "gtm"
+      : directMetaPixelConfigured
+        ? "direct"
+        : "none";
   const integrations = {
     siteUrl: Boolean(domain.configuredUrl),
     customDomain: domain.customDomain,
     domainConnection: domain.connected,
     googleSheets: Boolean(process.env.GOOGLE_SHEET_WEBHOOK_URL),
     sms: Boolean(process.env.SMS_WEBHOOK_URL) || isSolapiConfigured(),
-    metaPixel: Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID),
+    metaPixel: metaPixelMode !== "none",
     googleAnalytics: Boolean(process.env.NEXT_PUBLIC_GA_ID),
-    googleTagManager: Boolean(process.env.NEXT_PUBLIC_GTM_ID),
+    googleTagManager: googleTagManagerConfigured,
     googleSearchConsole: Boolean(process.env.GOOGLE_SITE_VERIFICATION?.trim()),
     naverSearchAdvisor: Boolean(process.env.NAVER_SITE_VERIFICATION?.trim()),
     kakaoPixel: Boolean(process.env.NEXT_PUBLIC_KAKAO_PIXEL_ID?.trim()),
@@ -288,6 +300,7 @@ export function GET(request: NextRequest) {
       productionReady,
       advertisingReady: Boolean(advertisingReady),
       trackingMode,
+      metaPixelMode,
       integrations,
       domain,
       launchChecks,

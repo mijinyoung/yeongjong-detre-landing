@@ -34,6 +34,8 @@ SYSTEM_CHECK_TOKEN=기존 시스템 점검 비밀번호
 
 GA4와 Meta Pixel은 GTM에서 관리하므로 `NEXT_PUBLIC_GA_ID`와 `NEXT_PUBLIC_META_PIXEL_ID`는 비워 둡니다. 직접 설치값까지 동시에 넣으면 페이지 조회와 문의 전환이 중복 집계될 수 있습니다.
 
+`/system-check`는 GTM 모드에서 GTM ID가 설정되어 있으면 `Meta Pixel (GTM 관리)`를 연결됨으로 표시합니다. 이 표시를 위해 `NEXT_PUBLIC_META_PIXEL_ID`를 추가하지 마세요.
+
 ## Google Apps Script
 
 현재 배포된 Apps Script가 이전 버전이면 `integrations/google-apps-script.gs` 전체를 반영한 뒤 웹 앱을 새 버전으로 다시 배포합니다. 기존 웹 앱 URL을 유지해야 Vercel 환경변수를 다시 바꿀 필요가 없습니다.

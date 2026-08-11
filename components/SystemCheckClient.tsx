@@ -9,6 +9,7 @@ type HealthData = {
   productionReady?: boolean;
   advertisingReady?: boolean;
   trackingMode?: "direct" | "gtm";
+  metaPixelMode?: "direct" | "gtm" | "none";
   integrations: {
     siteUrl: boolean;
     customDomain: boolean;
@@ -349,6 +350,14 @@ export default function SystemCheckClient() {
         <div className="systemCheckGrid">
           {labels.map(([key, title, description]) => {
             const configured = data?.integrations[key] ?? false;
+            const managedByGtm =
+              key === "metaPixel" && data?.metaPixelMode === "gtm";
+            const displayTitle = managedByGtm
+              ? `${title} (GTM 관리)`
+              : title;
+            const displayDescription = managedByGtm
+              ? "Google Tag Manager에서 브라우저 광고 전환 측정"
+              : description;
 
             return (
               <article className="systemCheckCard" key={key}>
@@ -359,8 +368,8 @@ export default function SystemCheckClient() {
                 >
                   {data ? (configured ? "연결됨" : "미설정") : "인증 필요"}
                 </span>
-                <h2>{title}</h2>
-                <p>{description}</p>
+                <h2>{displayTitle}</h2>
+                <p>{displayDescription}</p>
               </article>
             );
           })}

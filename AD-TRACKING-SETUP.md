@@ -46,7 +46,7 @@ NEXT_PUBLIC_NAVER_WCS_DOMAIN=exio.kr
 NEXT_PUBLIC_NAVER_WCS_LEAD_TYPE=lead
 ```
 
-`NEXT_PUBLIC_META_PIXEL_ID`와 `META_PIXEL_ID`에는 같은 Pixel ID를 입력합니다. `META_CAPI_ACCESS_TOKEN`은 서버 전용 비밀값이므로 `NEXT_PUBLIC_` 접두사를 붙이지 않습니다.
+GTM 모드에서는 `NEXT_PUBLIC_META_PIXEL_ID`를 비워 두고 `META_PIXEL_ID`에만 Pixel ID를 입력합니다. direct 모드에서만 두 변수에 같은 Pixel ID를 입력합니다. `META_CAPI_ACCESS_TOKEN`은 서버 전용 비밀값이므로 `NEXT_PUBLIC_` 접두사를 붙이지 않습니다.
 
 ## 3. GTM 문의 완료 이벤트
 

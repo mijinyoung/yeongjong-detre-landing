@@ -1,0 +1,14 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.16.0
+2 info using node@v24.18.0
+3 silly config load:file:C:\Program Files\nodejs\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\LEGION5\Documents\Codex\2026-07-28\referenced-chatgpt-conversation-this-is-untrusted\yeongjong-detre-v23-meta-capi\.npmrc
+5 silly config load:file:C:\Users\LEGION5\.npmrc
+6 silly config load:file:C:\Users\LEGION5\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install
+8 verbose argv "install" "--cache" "--no-audit" "--no-fund"
+9 verbose logfile logs-max:10 dir:C:\Users\LEGION5\Documents\Codex\2026-07-28\referenced-chatgpt-conversation-this-is-untrusted\yeongjong-detre-v23-meta-capi\--no-audit\_logs\2026-08-03T03_23_47_362Z-
+10 verbose logfile C:\Users\LEGION5\Documents\Codex\2026-07-28\referenced-chatgpt-conversation-this-is-untrusted\yeongjong-detre-v23-meta-capi\--no-audit\_logs\2026-08-03T03_23_47_362Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with EACCES

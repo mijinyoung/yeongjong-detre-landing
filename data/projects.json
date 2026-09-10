@@ -1,0 +1,32 @@
+[
+  {
+    "projectCode": "yeongjong-detre",
+    "projectName": "영종 디에트르 라 메르",
+    "region": "인천",
+    "subRegion": "영종",
+    "year": 2026,
+    "status": "분양중",
+    "domain": "https://yeongjong.exio.kr",
+    "thumbnail": "/projects/yeongjong-detre.jpg"
+  },
+  {
+    "projectCode": "songdo-ivyone",
+    "projectName": "송도 하늘채 아이비원",
+    "region": "인천",
+    "subRegion": "송도",
+    "year": 2026,
+    "status": "분양중",
+    "domain": "https://main-tau-ten.vercel.app",
+    "thumbnail": "/projects/songdo-ivyone.jpg"
+  },
+  {
+    "projectCode": "bucheon-doosan-zenith-officetel",
+    "projectName": "두산 위브 더 제니스 부천 오피스텔",
+    "region": "경기",
+    "subRegion": "부천",
+    "year": 2026,
+    "status": "분양중",
+    "domain": "https://bucheon.exio.kr",
+    "thumbnail": "/projects/bucheon-doosan-zenith.jpg"
+  }
+]

@@ -1,10 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import type { CSSProperties } from "react";
-import { projectConfig } from "@/data/project-config";
-import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-const siteUrl = getSiteUrl();
 const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim();
 const naverSiteVerification = process.env.NAVER_SITE_VERIFICATION?.trim();
 
@@ -12,18 +8,18 @@ const naverSiteVerification = process.env.NAVER_SITE_VERIFICATION?.trim();
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: projectConfig.theme.browserTheme,
+  themeColor: "#101a2a",
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL("https://exio.kr"),
   title: {
-    default: projectConfig.seo.title,
-    template: projectConfig.seo.titleTemplate,
+    default: "EXIO | 분양 현장 안내",
+    template: "%s | EXIO",
   },
-  applicationName: projectConfig.identity.name,
-  creator: projectConfig.identity.name,
-  publisher: projectConfig.identity.name,
+  applicationName: "EXIO",
+  creator: "EXIO",
+  publisher: "EXIO",
   formatDetection: { email: false, address: false, telephone: false },
   manifest: "/manifest.webmanifest",
   verification:
@@ -44,16 +40,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const themeStyle = {
-    "--navy": projectConfig.theme.primary,
-    "--navy2": projectConfig.theme.primaryAlt,
-    "--gold": projectConfig.theme.accent,
-    "--cream": projectConfig.theme.surface,
-    "--ink": projectConfig.theme.text,
-  } as CSSProperties;
-
   return (
-    <html lang={projectConfig.seo.language.split("-")[0]} style={themeStyle}>
+    <html lang="ko">
       <body><a className="skipLink" href="#main-content">본문으로 바로가기</a>{children}</body>
     </html>
   );

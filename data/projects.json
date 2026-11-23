@@ -27,7 +27,7 @@
     "year": 2026,
     "status": "현장 안내",
     "domain": "https://arkone.exio.kr",
-    "thumbnail": "/projects/cheongna-arkone.jpg"
+    "thumbnail": "https://arkone.exio.kr/assets/arkone-hero-official.jpg"
   },
   {
     "projectCode": "cheongna-tiamo-casa",
@@ -37,7 +37,7 @@
     "year": 2026,
     "status": "입주 가능",
     "domain": "https://cheongna.exio.kr",
-    "thumbnail": "/projects/cheongna-tiamo.webp"
+    "thumbnail": "https://cheongna.exio.kr/assets/customer/optimized/hero.webp"
   },
   {
     "projectCode": "bucheon-doosan-zenith-officetel",
@@ -57,7 +57,7 @@
     "year": 2026,
     "status": "현장 안내",
     "domain": "https://iparkforest.co.kr",
-    "thumbnail": "/projects/unjeong-ipark-forest.jpg"
+    "thumbnail": "https://iparkforest.co.kr/assets/overview.jpg"
   }
 ]
 

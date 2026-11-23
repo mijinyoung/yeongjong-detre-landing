@@ -16,8 +16,28 @@
     "subRegion": "송도",
     "year": 2026,
     "status": "분양중",
-    "domain": "https://main-tau-ten.vercel.app",
+    "domain": "https://songdo.exio.kr",
     "thumbnail": "/projects/songdo-ivyone.jpg"
+  },
+  {
+    "projectCode": "cheongna-arkone-prugio",
+    "projectName": "청라 아크원 푸르지오",
+    "region": "인천",
+    "subRegion": "청라",
+    "year": 2026,
+    "status": "현장 안내",
+    "domain": "https://arkone.exio.kr",
+    "thumbnail": "https://arkone.exio.kr/assets/arkone-hero-official.jpg"
+  },
+  {
+    "projectCode": "cheongna-tiamo-casa",
+    "projectName": "청라 더리브 티아모 까사",
+    "region": "인천",
+    "subRegion": "청라",
+    "year": 2026,
+    "status": "입주 가능",
+    "domain": "https://cheongna.exio.kr",
+    "thumbnail": "https://cheongna.exio.kr/assets/customer/optimized/hero.webp"
   },
   {
     "projectCode": "bucheon-doosan-zenith-officetel",
@@ -28,5 +48,16 @@
     "status": "분양중",
     "domain": "https://bucheon.exio.kr",
     "thumbnail": "/projects/bucheon-doosan-zenith.jpg"
+  },
+  {
+    "projectCode": "unjeong-ipark-forest",
+    "projectName": "운정 아이파크 포레스트",
+    "region": "경기",
+    "subRegion": "운정",
+    "year": 2026,
+    "status": "현장 안내",
+    "domain": "https://iparkforest.co.kr",
+    "thumbnail": "https://iparkforest.co.kr/assets/overview.jpg"
   }
 ]
+

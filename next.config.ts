@@ -14,6 +14,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "arkone.exio.kr", pathname: "/assets/arkone-hero-official.jpg" },
+      { protocol: "https", hostname: "cheongna.exio.kr", pathname: "/assets/customer/optimized/hero.webp" },
+      { protocol: "https", hostname: "iparkforest.co.kr", pathname: "/assets/overview.jpg" },
+    ],
+  },
   async headers() {
     return [
       {
@@ -75,3 +82,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
